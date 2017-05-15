@@ -1,0 +1,525 @@
+with Ada.Text_IO;
+
+package body Tagatha.Registry is
+
+   Trace_Registry : constant Boolean := False;
+
+   procedure Record_Pop (Register : in out Tagatha_Registry;
+                         Size     : in     Tagatha_Size;
+                         Operand  : in     Transfers.Transfer_Operand);
+
+   function Pop
+     (Register : in out Tagatha_Registry)
+      return Expression_Record;
+
+   procedure Push
+     (Register   : in out Tagatha_Registry;
+      Expression : Tagatha.Expressions.Expression;
+      Label      : Tagatha.Labels.Tagatha_Label :=
+        Tagatha.Labels.No_Label);
+
+   procedure Append (Register : in out Tagatha_Registry;
+                     T        : in     Tagatha.Transfers.Transfer);
+
+   procedure Insert (Register : in out Tagatha_Registry;
+                     Sequence : in     Positive;
+                     Ts       : in     Tagatha.Transfers.Array_Of_Transfers);
+
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append
+     (Register : in out Tagatha_Registry;
+      T        : in     Tagatha.Transfers.Transfer)
+   is
+      LT : Tagatha.Transfers.Transfer := T;
+   begin
+      if Labels.Has_Label (Register.Last_Label) then
+         if Trace_Registry then
+            Ada.Text_IO.Put_Line
+              (Tagatha.Labels.Show_All (Register.Last_Label, 'L')
+               & " " & Tagatha.Transfers.Show (LT));
+         end if;
+
+         Transfers.Set_Label (LT, Register.Last_Label);
+         Register.Last_Label := Tagatha.Labels.No_Label;
+      end if;
+      if Register.Last_Line > 0 then
+         Transfers.Set_Location
+           (LT, Register.Last_Line, Register.Last_Column);
+      end if;
+      Register.Push_Index := Register.Push_Index + 1;
+      Register.Transfers.Append ((LT, Register.Push_Index));
+      if Trace_Registry then
+         Ada.Text_IO.Put_Line
+           ("append: transfer"
+            & Positive'Image (Register.Transfers.Last_Index)
+            & " <- " & Tagatha.Transfers.Show (LT));
+      end if;
+   end Append;
+
+   -------------------
+   -- Get_Transfers --
+   -------------------
+
+   procedure Get_Transfers
+     (Register  : in Tagatha_Registry;
+      Transfers : in out Tagatha.Transfers.Transfer_Vectors.Vector)
+   is
+      Reserve_Stack : constant Boolean := Register.Frame_Size > 0;
+   begin
+      Transfers.Clear;
+      if Reserve_Stack then
+         Transfers.Append
+           (Tagatha.Transfers.Reserve_Stack
+              (Register.Frame_Size));
+      end if;
+
+      for I in 1 .. Register.Transfers.Last_Index loop
+         declare
+            T : constant Tagatha.Transfers.Transfer :=
+                  Register.Transfers (I).Transfer;
+         begin
+            Transfers.Append (T);
+         end;
+      end loop;
+
+      if Labels.Has_Label (Register.Last_Label) then
+         declare
+            T : Tagatha.Transfers.Transfer :=
+                  Tagatha.Transfers.Reserve_Stack (0);
+         begin
+            Tagatha.Transfers.Set_Label (T, Register.Last_Label);
+            Transfers.Append (T);
+         end;
+      end if;
+
+      if Reserve_Stack then
+         Transfers.Append
+           (Tagatha.Transfers.Restore_Stack (Register.Frame_Size));
+      end if;
+
+   end Get_Transfers;
+
+   ------------
+   -- Insert --
+   ------------
+
+   procedure Insert
+     (Register : in out Tagatha_Registry;
+      Sequence : in     Positive;
+      Ts       : in     Tagatha.Transfers.Array_Of_Transfers)
+   is
+      use Tagatha.Transfers;
+
+      procedure Make_Room
+        (Start_Index : out Positive);
+
+      procedure Copy (Arr   : Array_Of_Transfers;
+                      Start : Positive);
+
+      ----------
+      -- Copy --
+      ----------
+
+      procedure Copy (Arr   : Array_Of_Transfers;
+                      Start : Positive)
+      is
+         This_Index : Positive := Start;
+         First      : Transfer := Arr (Arr'First);
+      begin
+         if Tagatha.Labels.Has_Label
+           (Register.Last_Label)
+         then
+            Tagatha.Transfers.Set_Label
+              (First, Register.Last_Label);
+            Register.Last_Label := Tagatha.Labels.No_Label;
+         end if;
+
+         for I in Arr'Range loop
+            declare
+               T : constant Transfer :=
+                     (if I = Arr'First then First else Arr (I));
+            begin
+               if Trace_Registry then
+                  Ada.Text_IO.Put_Line
+                    ("insert: transfer" & This_Index'Img
+                     & " <- " & Show (T));
+               end if;
+               Register.Transfers.Replace_Element
+                 (This_Index, (T, Sequence));
+            end;
+            This_Index := This_Index + 1;
+
+         end loop;
+      end Copy;
+
+      ---------------
+      -- Make_Room --
+      ---------------
+
+      procedure Make_Room
+        (Start_Index : out Positive)
+      is
+         use Ada.Containers;
+         Count           : Natural := 0;
+      begin
+         Start_Index := Register.Transfers.Last_Index + 1;
+         Register.Transfers.Set_Length
+           (Register.Transfers.Length
+            + Ada.Containers.Count_Type (Ts'Length));
+         while Start_Index > 1
+           and then Register.Transfers
+             (Start_Index - 1).Source_Index
+           > Sequence
+         loop
+            Start_Index := Start_Index - 1;
+            Count := Count + 1;
+         end loop;
+         for I in reverse 1 .. Count loop
+            declare
+               Target_Index : constant Positive :=
+                                Start_Index + Ts'Length + I - 1;
+               Source_Index : constant Positive :=
+                                Start_Index + I - 1;
+               Transfer     : constant Transfer_Record :=
+                                Register.Transfers.Element
+                                  (Source_Index);
+            begin
+               if Trace_Registry then
+                  Ada.Text_IO.Put_Line
+                    ("move: transfer"
+                     & Positive'Image (Target_Index)
+                     & " <- "
+                     & Show (Transfer.Transfer));
+               end if;
+
+               Register.Transfers.Replace_Element
+                 (Target_Index, Transfer);
+            end;
+         end loop;
+      end Make_Room;
+
+      Start_Index : Positive;
+
+   begin
+
+      Make_Room (Start_Index);
+      Copy (Ts, Start_Index);
+   end Insert;
+
+   ---------
+   -- Pop --
+   ---------
+
+   function Pop
+     (Register : in out Tagatha_Registry)
+      return Expression_Record
+   is
+      E : Expression_Record;
+   begin
+      if Register.Stack.Is_Empty then
+         E :=
+           (Tagatha.Expressions.New_Simple_Expression
+              (Tagatha.Transfers.Stack_Operand),
+            Register.Push_Index,
+            Tagatha.Labels.No_Label);
+         Register.Push_Index := Register.Push_Index + 1;
+      else
+         E := Register.Stack.Last_Element;
+         Register.Stack.Delete_Last;
+      end if;
+      return E;
+   end Pop;
+
+   ----------
+   -- Push --
+   ----------
+
+   procedure Push
+     (Register   : in out Tagatha_Registry;
+      Expression : Tagatha.Expressions.Expression;
+      Label      : Tagatha.Labels.Tagatha_Label :=
+        Tagatha.Labels.No_Label)
+   is
+      use Tagatha.Labels;
+      L : Tagatha_Label := Label;
+   begin
+      if not Has_Label (L) then
+         L := Register.Last_Label;
+      elsif Has_Label (Register.Last_Label) then
+         Link_To (L, Register.Last_Label);
+      end if;
+      Register.Push_Index := Register.Push_Index + 1;
+      Register.Stack.Append
+        ((Expression, Register.Push_Index, L));
+      Register.Last_Label := Tagatha.Labels.No_Label;
+   end Push;
+
+   -----------------
+   -- Record_Call --
+   -----------------
+
+   procedure Record_Call (Register   : in out Tagatha_Registry;
+                          Subroutine : in     Tagatha.Labels.Tagatha_Label)
+   is
+   begin
+      for Operand of Register.Stack loop
+         declare
+            Index     : constant Positive := Operand.Transfer_Index;
+            Label     : constant Tagatha.Labels.Tagatha_Label :=
+                          Operand.Label;
+            Transfers : Tagatha.Transfers.Array_Of_Transfers :=
+                          Tagatha.Expressions.Get_Transfers
+                            (Register.Temps, Operand.Expression,
+                             Tagatha.Transfers.Stack_Operand);
+         begin
+            Tagatha.Transfers.Set_Label
+              (Transfers (Transfers'First), Label);
+            Register.Insert (Index, Transfers);
+         end;
+      end loop;
+
+      Register.Stack.Clear;
+
+      Register.Append
+        (Tagatha.Transfers.Call (Subroutine));
+
+   end Record_Call;
+
+   -----------------
+   -- Record_Drop --
+   -----------------
+
+   procedure Record_Drop (Register : in out Tagatha_Registry;
+                          Size     : in     Tagatha_Size)
+   is
+   begin
+      Record_Pop (Register, Size, Tagatha.Transfers.No_Operand);
+   end Record_Drop;
+
+   -----------------
+   -- Record_Jump --
+   -----------------
+
+   procedure Record_Jump (Register    : in out Tagatha_Registry;
+                          Condition   : in     Tagatha_Condition;
+                          Destination : in     Tagatha.Labels.Tagatha_Label)
+   is
+   begin
+      if Condition /= C_Always then
+         Record_Pop (Register, Default_Address_Size,
+                     Tagatha.Transfers.Condition_Operand);
+      end if;
+      Register.Append
+        (Tagatha.Transfers.Control_Transfer (Condition, Destination));
+
+   end Record_Jump;
+
+   ------------------
+   -- Record_Label --
+   ------------------
+
+   procedure Record_Label
+     (Register   : in out Tagatha_Registry;
+      Label      : in     Tagatha.Labels.Tagatha_Label)
+   is
+      use type Tagatha.Labels.Tagatha_Label;
+   begin
+      if Label /= Tagatha.Labels.No_Label then
+         Tagatha.Labels.Link_To (Label, Register.Last_Label);
+         Register.Last_Label := Label;
+      end if;
+   end Record_Label;
+
+   ---------------------
+   -- Record_Location --
+   ---------------------
+
+   procedure Record_Location (Register : in out Tagatha_Registry;
+                              Line     : in     Positive;
+                              Column   : in     Positive)
+   is
+   begin
+      Register.Last_Line := Line;
+      Register.Last_Column := Column;
+   end Record_Location;
+
+   -----------------
+   -- Record_Loop --
+   -----------------
+
+   procedure Record_Loop (Register   : in out Tagatha_Registry;
+                          Limit      : in     Local_Offset;
+                          Counter    : in     Local_Offset;
+                          End_Label  : in     Tagatha.Labels.Tagatha_Label)
+   is
+      pragma Unreferenced (Register);
+      pragma Unreferenced (Limit);
+      pragma Unreferenced (Counter);
+      pragma Unreferenced (End_Label);
+   begin
+      null;
+   end Record_Loop;
+
+   -----------------------------
+   -- Record_Native_Operation --
+   -----------------------------
+
+   procedure Record_Native_Operation
+     (Register          : in out Tagatha_Registry;
+      Name              : String;
+      Changed_Registers : String;
+      Input_Words       : Natural;
+      Output_Words      : Natural)
+   is
+      pragma Unreferenced (Input_Words);
+   begin
+      for Operand of Register.Stack loop
+         declare
+            Index     : constant Positive := Operand.Transfer_Index;
+            Transfers : Tagatha.Transfers.Array_Of_Transfers :=
+                          Tagatha.Expressions.Get_Transfers
+                            (Register.Temps, Operand.Expression,
+                             Tagatha.Transfers.Stack_Operand);
+         begin
+            Tagatha.Transfers.Set_Label
+              (Transfers (Transfers'First), Operand.Label);
+            Register.Insert (Index, Transfers);
+         end;
+      end loop;
+
+      Register.Stack.Clear;
+
+      Register.Append
+        (Tagatha.Transfers.Native_Transfer (Name, Changed_Registers));
+
+      for I in 1 .. Output_Words loop
+         Register.Push
+           (Expressions.New_Simple_Expression (Transfers.Stack_Operand));
+      end loop;
+   end Record_Native_Operation;
+
+   ----------------------
+   -- Record_Operation --
+   ----------------------
+
+   procedure Record_Operation (Register : in out Tagatha_Registry;
+                               Operator : in     Tagatha_Operator)
+   is
+      use Tagatha.Expressions;
+   begin
+      if Operator in Zero_Argument_Operator then
+         null;
+      elsif Operator in One_Argument_Operator then
+         declare
+            Left : constant Expression_Record := Pop (Register);
+         begin
+            Register.Push
+              (New_Operator_Expression (Operator, Left.Expression),
+               Left.Label);
+         end;
+      else
+         declare
+            Right : constant Expression_Record := Pop (Register);
+            Left  : constant Expression_Record := Pop (Register);
+            Ls    : Tagatha.Labels.Tagatha_Label := Left.Label;
+         begin
+            if not Tagatha.Labels.Has_Label (Ls) then
+               Ls := Right.Label;
+            elsif Tagatha.Labels.Has_Label (Right.Label) then
+               Tagatha.Labels.Link_To (Ls, Right.Label);
+            end if;
+
+            Register.Push
+              (New_Operator_Expression
+                 (Operator, Left.Expression, Right.Expression),
+               Ls);
+         end;
+      end if;
+   end Record_Operation;
+
+   ----------------
+   -- Record_Pop --
+   ----------------
+
+   procedure Record_Pop (Register : in out Tagatha_Registry;
+                         Size     : in     Tagatha_Size;
+                         Operand  : in     Tagatha.Operands.Tagatha_Operand)
+   is
+   begin
+      Record_Pop (Register, Size,
+                  Tagatha.Transfers.To_Transfer (Operand));
+   end Record_Pop;
+
+   ----------------
+   -- Record_Pop --
+   ----------------
+
+   procedure Record_Pop (Register : in out Tagatha_Registry;
+                         Size     : in     Tagatha_Size;
+                         Operand  : in     Transfers.Transfer_Operand)
+   is
+   begin
+      if Register.Stack.Is_Empty then
+         Register.Append
+           (Tagatha.Transfers.Simple_Transfer
+              (From => Tagatha.Transfers.Stack_Operand,
+               To   => Operand));
+      else
+         declare
+            Element   : constant Expression_Record :=
+                          Register.Stack.Element
+                            (Register.Stack.Last_Index);
+            Transfers : Tagatha.Transfers.Array_Of_Transfers :=
+                          Tagatha.Expressions.Get_Transfers
+                            (Register.Temps, Element.Expression,
+                             Operand);
+         begin
+            Tagatha.Transfers.Set_Size
+              (Transfers (Transfers'Last), Size);
+            Tagatha.Transfers.Set_Label
+              (Transfers (Transfers'First), Element.Label);
+            Register.Insert (Element.Transfer_Index, Transfers);
+            Register.Stack.Delete (Register.Stack.Last_Index);
+         end;
+      end if;
+   end Record_Pop;
+
+   -----------------
+   -- Record_Push --
+   -----------------
+
+   procedure Record_Push (Register : in out Tagatha_Registry;
+                          Size     : in     Tagatha_Size;
+                          Operand  : in     Tagatha.Operands.Tagatha_Operand)
+   is
+      use Tagatha.Expressions;
+   begin
+      Register.Push_Index := Register.Push_Index + 1;
+      if Trace_Registry then
+         Ada.Text_IO.Put_Line
+           ("record push at" & Integer'Image (Register.Push_Index) & ": "
+            & Tagatha.Labels.Show_All (Register.Last_Label, 'L')
+            & Tagatha.Operands.Show (Operand));
+      end if;
+      Register.Push
+        (New_Simple_Expression (Transfers.To_Transfer (Operand, Size)));
+   end Record_Push;
+
+   -----------
+   -- Start --
+   -----------
+
+   procedure Start (Register    : in out Tagatha_Registry;
+                    Unit_Label  : in     Tagatha.Labels.Tagatha_Label;
+                    Size        : in     Natural)
+   is
+   begin
+      Register.Unit_Label := Unit_Label;
+      Register.Frame_Size := Size;
+      Register.Temps := Tagatha.Temporaries.New_Source;
+   end Start;
+
+end Tagatha.Registry;

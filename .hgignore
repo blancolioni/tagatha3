@@ -1,0 +1,5 @@
+syntax: glob
+build
+tagatha.gpr
+Makefile
+boot.tag
