@@ -38,6 +38,7 @@ package body Tagatha.Code.Pdp32 is
                           Dest     : in     String);
 
    function Get_Mnemonic (Op : Tagatha_Operator) return String;
+   function Get_Reversed (Op : Tagatha_Operator) return Boolean;
 
    function To_String
      (Item : Tagatha.Transfers.Transfer_Operand;
@@ -267,7 +268,16 @@ package body Tagatha.Code.Pdp32 is
       end case;
    end Get_Mnemonic;
 
-   --------------------
+   ------------------
+   -- Get_Reversed --
+   ------------------
+
+   function Get_Reversed (Op : Tagatha_Operator) return Boolean is
+   begin
+      return Op = Op_Sub;
+   end Get_Reversed;
+
+   -------------------
    -- Get_Translator --
    --------------------
 
@@ -517,9 +527,17 @@ package body Tagatha.Code.Pdp32 is
       Src_2    : constant String := To_Src (Source_2);
       Dst      : constant String := To_Dst (Dest);
       Mnemonic : constant String := Get_Mnemonic (Op);
+      Reversed : constant Boolean := Get_Reversed (Op);
    begin
-      Instruction (Asm, Mnemonic,
-                   Tagatha.Transfers.Get_Size (Dest), Src_1, Src_2, Dst);
+      if Reversed then
+         Instruction (Asm, Mnemonic,
+                      Tagatha.Transfers.Get_Size (Dest),
+                      Src_2, Src_1, Dst);
+      else
+         Instruction (Asm, Mnemonic,
+                      Tagatha.Transfers.Get_Size (Dest),
+                      Src_1, Src_2, Dst);
+      end if;
    end Operate;
 
    ------------------
