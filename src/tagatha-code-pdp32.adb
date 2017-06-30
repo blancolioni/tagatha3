@@ -649,7 +649,27 @@ package body Tagatha.Code.Pdp32 is
             return R;
          end;
       elsif Is_Text (Item) then
-         return """" & Get_Text (Item) & """";
+         declare
+            function Escape (S : String) return String;
+
+            ------------
+            -- Escape --
+            ------------
+
+            function Escape (S : String) return String is
+               Index : constant Natural :=
+                         Ada.Strings.Fixed.Index (S, """");
+            begin
+               if Index = 0 then
+                  return S;
+               else
+                  return S (S'First .. Index) & """"
+                    & Escape (S (Index + 1 .. S'Last));
+               end if;
+            end Escape;
+         begin
+            return """" & Escape (Get_Text (Item)) & """";
+         end;
       else
          raise Constraint_Error with
            "unknown operand type in " & Show (Item);
