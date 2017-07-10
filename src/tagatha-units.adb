@@ -420,6 +420,17 @@ package body Tagatha.Units is
         For_Unit.Current_Sub.Next_Address (For_Segment) + By;
    end Increment_Address;
 
+   -------------------
+   -- Indirect_Call --
+   -------------------
+
+   procedure Indirect_Call
+     (Unit   : in out Tagatha_Unit)
+   is
+   begin
+      Append (Unit, Commands.Indirect_Call);
+   end Indirect_Call;
+
    ----------
    -- Jump --
    ----------
@@ -786,6 +797,19 @@ package body Tagatha.Units is
    begin
       Push_Operand (Unit, Operands.Register_Operand (Name), Default_Size);
    end Push_Register;
+
+   ----------------
+   -- Pop_Result --
+   ----------------
+
+   procedure Push_Result
+     (Unit       : in out Tagatha_Unit;
+      Size       : in     Tagatha_Size  := Default_Integer_Size)
+   is
+   begin
+      Append (Unit,
+              Commands.Push (Operands.Result_Operand, Size));
+   end Push_Result;
 
    ---------------
    -- Push_Text --

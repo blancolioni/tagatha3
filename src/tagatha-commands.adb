@@ -12,7 +12,7 @@ package body Tagatha.Commands is
    begin
       return new Tagatha_Command_Record'(T_Call, Default_Address_Size,
                                          Tagatha.Labels.No_Label, 1, 1, False,
-                                         Target);
+                                         Target, False);
    end Call;
 
    ----------
@@ -83,6 +83,17 @@ package body Tagatha.Commands is
    begin
       return Command.Stack_Op;
    end Get_Stack_Operation;
+
+   -------------------
+   -- Indirect_Call --
+   -------------------
+
+   function Indirect_Call return Tagatha_Command is
+   begin
+      return new Tagatha_Command_Record'(T_Call, Default_Address_Size,
+                                         Tagatha.Labels.No_Label, 1, 1, False,
+                                         Tagatha.Labels.No_Label, True);
+   end Indirect_Call;
 
    ----------
    -- Jump --

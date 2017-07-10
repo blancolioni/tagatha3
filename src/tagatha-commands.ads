@@ -26,6 +26,8 @@ package Tagatha.Commands is
    function Call (Target : Tagatha.Labels.Tagatha_Label)
                  return Tagatha_Command;
 
+   function Indirect_Call return Tagatha_Command;
+
    function Loop_Around (Label        : Tagatha.Labels.Tagatha_Label;
                          Loop_Count   : Local_Offset;
                          Loop_Index   : Local_Offset;
@@ -90,6 +92,7 @@ private
                Operator          : Tagatha_Operator;
             when T_Call =>
                Subroutine        : Tagatha.Labels.Tagatha_Label;
+               Indirect          : Boolean;
             when T_Loop =>
                Limit             : Local_Offset;
                Counter           : Local_Offset;
