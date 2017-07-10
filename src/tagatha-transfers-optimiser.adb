@@ -24,6 +24,20 @@ package body Tagatha.Transfers.Optimiser is
       Result : Tagatha.Transfers.Transfer_Vectors.Vector;
       Label  : Tagatha.Labels.Tagatha_Label := Tagatha.Labels.No_Label;
 
+      function Is_Known (Transfer : Transfer_Operand) return Boolean;
+      function Known_Value
+        (Transfer : Transfer_Operand)
+         return Transfer_Operand
+        with Pre => Is_Known (Transfer);
+
+      procedure Record_Value
+        (Transfer : Transfer_Operand;
+         Value    : Transfer_Operand)
+        with Pre => Transfer.Op = T_External;
+
+      procedure Clear_Value
+        (Transfer : Transfer_Operand);
+
       procedure Clear_Known_Registers
         (Changed_Registers : String);
 
@@ -55,11 +69,96 @@ package body Tagatha.Transfers.Optimiser is
                      --  Safest would be to delete everything
                      Known_Values.Delete (R);
                   end if;
+                  if Known_Values.Contains (R & "-deref") then
+                     Known_Values.Delete (R & "-deref");
+                  end if;
                end;
                Start := Index + 1;
             end if;
          end loop;
       end Clear_Known_Registers;
+
+      -----------------
+      -- Clear_Value --
+      -----------------
+
+      procedure Clear_Value
+        (Transfer : Transfer_Operand)
+      is
+         use Ada.Strings.Unbounded;
+      begin
+         if Transfer.Op = T_External then
+            if not Transfer.Modifiers.Dereferenced
+              and then Known_Values.Contains (Transfer.External_Name)
+            then
+               Known_Values.Delete (Transfer.External_Name);
+            end if;
+
+            if Known_Values.Contains (Transfer.External_Name & "-deref") then
+               Known_Values.Delete (Transfer.External_Name & "-deref");
+            end if;
+         end if;
+      end Clear_Value;
+
+      --------------
+      -- Is_Known --
+      --------------
+
+      function Is_Known (Transfer : Transfer_Operand) return Boolean is
+         use Ada.Strings.Unbounded;
+      begin
+         if Transfer.Op = T_External then
+            if Transfer.Modifiers.Dereferenced then
+               return Known_Values.Contains
+                 (Transfer.External_Name & "-deref");
+            else
+               return Known_Values.Contains
+                 (Transfer.External_Name);
+            end if;
+         else
+            return False;
+         end if;
+      end Is_Known;
+
+      -----------------
+      -- Known_Value --
+      -----------------
+
+      function Known_Value
+        (Transfer : Transfer_Operand)
+         return Transfer_Operand
+      is
+         use Ada.Strings.Unbounded;
+      begin
+         if Transfer.Modifiers.Dereferenced then
+            return Known_Values.Element
+              (Transfer.External_Name & "-deref");
+         else
+            return Known_Values.Element
+              (Transfer.External_Name);
+         end if;
+      end Known_Value;
+
+      ------------------
+      -- Record_Value --
+      ------------------
+
+      procedure Record_Value
+        (Transfer : Transfer_Operand;
+         Value    : Transfer_Operand)
+      is
+         use Ada.Strings.Unbounded;
+         Key : constant Unbounded_String :=
+                 (if Transfer.Modifiers.Dereferenced
+                  then Transfer.External_Name & "-deref"
+                  else Transfer.External_Name);
+      begin
+         if Known_Values.Contains (Key) then
+            Known_Values.Replace (Key, Value);
+         else
+            Known_Values.Insert (Key, Value);
+         end if;
+      end Record_Value;
 
    begin
       while From_Index <= Transfers.Last_Index loop
@@ -100,9 +199,8 @@ package body Tagatha.Transfers.Optimiser is
               and then From.Src_1.Op /= T_Stack
               and then (From.Src_1.Op /= T_External
                         or else From.Src_1.External_Imm)
-              and then From.Dst.Op = T_External
-              and then Known_Values.Contains (From.Dst.External_Name)
-              and then Known_Values (From.Dst.External_Name) = From.Src_1
+              and then Is_Known (From.Dst)
+              and then Known_Value (From.Dst) = From.Src_1
             then
                Copy := False;
             end if;
@@ -114,16 +212,15 @@ package body Tagatha.Transfers.Optimiser is
                   Label := Tagatha.Labels.No_Label;
                end if;
                Result.Append (From);
+
+               Clear_Value (From.Dst);
+
                if From.Trans = T_Data
                  and then From.Op = Op_Nop
                  and then From.Src_1.Op /= T_Stack
                  and then From.Dst.Op = T_External
                then
-                  if Known_Values.Contains (From.Dst.External_Name) then
-                     Known_Values (From.Dst.External_Name) := From.Src_1;
-                  else
-                     Known_Values.Insert (From.Dst.External_Name, From.Src_1);
-                  end if;
+                  Record_Value (From.Dst, From.Src_1);
                elsif From.Trans = T_Native then
                   declare
                      Rs : constant String :=

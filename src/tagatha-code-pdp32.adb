@@ -598,9 +598,17 @@ package body Tagatha.Code.Pdp32 is
       return String
    is
       use Tagatha.Transfers;
+      Deref : constant Boolean := Is_Dereferenced (Item);
+
+      function Deref_Ampersand (S : String) return String
+      is (if Deref then "@" & S else S);
+
+      function Deref_Paren (S : String) return String
+      is (if Deref then "(" & S & ")" else S);
+
    begin
       if Is_Constant (Item) then
-         return "#" & To_String (Get_Value (Item), Item);
+         return Deref_Ampersand ("#" & To_String (Get_Value (Item), Item));
       elsif Is_Argument (Item) or else Is_Local (Item) then
          declare
             Addr : Tagatha_Integer;
@@ -612,31 +620,33 @@ package body Tagatha.Code.Pdp32 is
             end if;
             if Has_Slice (Item) then
                if Slice_Fits (Item, Size_8) then
-                  return Image (Addr + Get_Slice_Octet_Offset (Item)) & "(fp)";
+                  return Deref_Ampersand
+                    (Image (Addr + Get_Slice_Octet_Offset (Item)) & "(fp)");
                elsif Is_Argument (Item) then
-                  return Image (Addr) & "(fp)";
+                  return Deref_Ampersand
+                    (Image (Addr) & "(fp)");
                else
-                  return "-" & Image (Addr) & "(fp)";
+                  return Deref_Ampersand ("-" & Image (Addr) & "(fp)");
                end if;
             elsif Is_Argument (Item) then
-               return Image (Addr) & "(fp)";
+               return Deref_Ampersand (Image (Addr) & "(fp)");
             else
-               return "-" & Image (Addr) & "(fp)";
+               return Deref_Ampersand ("-" & Image (Addr) & "(fp)");
             end if;
          end;
       elsif Is_Result (Item) then
-         return Result_Register;
+         return Deref_Paren (Result_Register);
       elsif Is_Stack (Item) then
          if Source then
-            return "(sp)+";
+            return Deref_Ampersand ("(sp)+");
          else
-            return "-(sp)";
+            return Deref_Ampersand ("-(sp)");
          end if;
       elsif Is_External (Item) then
          if Is_Immediate (Item) then
-            return "#" & External_Name (Item);
+            return Deref_Ampersand ("#" & External_Name (Item));
          else
-            return External_Name (Item);
+            return Deref_Paren (External_Name (Item));
          end if;
       elsif Is_Temporary (Item) then
          declare
@@ -646,7 +656,7 @@ package body Tagatha.Code.Pdp32 is
                        (Get_Temporary (Item)));
          begin
             R (1) := 'r';
-            return R;
+            return Deref_Paren (R);
          end;
       elsif Is_Text (Item) then
          declare

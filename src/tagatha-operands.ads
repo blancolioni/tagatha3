@@ -35,8 +35,10 @@ package Tagatha.Operands is
                               Volatile  : Boolean := False)
                               return Tagatha_Operand;
 
-   function Register_Operand (Name : String)
-                              return Tagatha_Operand;
+   function Register_Operand
+     (Name        : String;
+      Dereference : Boolean := False)
+      return Tagatha_Operand;
 
    function Text_Operand (Text : String)
                           return Tagatha_Operand;
@@ -49,6 +51,7 @@ package Tagatha.Operands is
    function Is_Text (Item : Tagatha_Operand) return Boolean;
    function Is_Immediate (Item : Tagatha_Operand) return Boolean;
    function Is_Unknown (Item : Tagatha_Operand) return Boolean;
+   function Is_Dereferenced (Item : Tagatha_Operand) return Boolean;
 
    function Get_Value (Item : Tagatha_Operand)
                       return Tagatha.Constants.Tagatha_Constant;
@@ -73,6 +76,7 @@ private
 
    type Tagatha_Operand_Record (Operand_Type : Tagatha_Operand_Type) is
       record
+         Dereference : Boolean;
          case Operand_Type is
             when O_Unknown =>
                null;
@@ -95,5 +99,8 @@ private
       end record;
 
    type Tagatha_Operand is access Tagatha_Operand_Record;
+
+   function Is_Dereferenced (Item : Tagatha_Operand) return Boolean
+   is (Item.Dereference);
 
 end Tagatha.Operands;

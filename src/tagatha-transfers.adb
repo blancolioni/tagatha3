@@ -1107,25 +1107,29 @@ package body Tagatha.Transfers is
                         return Transfer_Operand
    is
       use Tagatha.Operands;
+      Transfer : Transfer_Operand;
    begin
       if Is_Constant (Op) then
-         return Constant_Operand (Get_Value (Op));
+         Transfer := Constant_Operand (Get_Value (Op));
       elsif Is_Argument (Op) then
-         return Argument_Operand (Get_Arg_Offset (Op));
+         Transfer := Argument_Operand (Get_Arg_Offset (Op));
       elsif Is_Local (Op) then
-         return Local_Operand (Get_Local_Offset (Op));
+         Transfer := Local_Operand (Get_Local_Offset (Op));
       elsif Is_Result (Op) then
-         return Result_Operand;
+         Transfer := Result_Operand;
       elsif Is_External (Op) then
-         return External_Operand (Get_Name (Op), Is_Immediate (Op));
+         Transfer := External_Operand (Get_Name (Op), Is_Immediate (Op));
       elsif Is_Unknown (Op) then
-         return No_Operand;
+         Transfer := No_Operand;
       elsif Is_Text (Op) then
-         return Text_Operand (Get_Text (Op));
+         Transfer := Text_Operand (Get_Text (Op));
       else
          raise Constraint_Error with
            "unknown operand type: " & Show (Op);
       end if;
+
+      Transfer.Modifiers.Dereferenced := Is_Dereferenced (Op);
+      return Transfer;
    end To_Transfer;
 
    -----------------
