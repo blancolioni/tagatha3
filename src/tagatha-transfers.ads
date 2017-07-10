@@ -128,6 +128,7 @@ package Tagatha.Transfers is
    function Is_Stack    (Item : Transfer_Operand) return Boolean;
    function Is_External (Item : Transfer_Operand) return Boolean;
    function Is_Immediate (Item : Transfer_Operand) return Boolean;
+   function Is_Dereferenced (Item : Transfer_Operand) return Boolean;
 
    function Is_Text     (Item : Transfer_Operand) return Boolean;
    function Get_Text    (Item : Transfer_Operand) return String;
@@ -218,13 +219,14 @@ private
 
    type Source_Modification is
       record
-         Have_Slice : Boolean;
-         Have_Size  : Boolean;
-         Slice      : Bit_Slice;
-         Size       : Tagatha_Size;
+         Have_Slice   : Boolean;
+         Have_Size    : Boolean;
+         Dereferenced : Boolean;
+         Slice        : Bit_Slice;
+         Size         : Tagatha_Size;
       end record;
 
-   No_Modification : constant Source_Modification := (False, False,
+   No_Modification : constant Source_Modification := (False, False, False,
                                                       (0, 0),
                                                       Default_Integer_Size);
 
@@ -285,5 +287,8 @@ private
          Dst               : Transfer_Operand;
          Op                : Tagatha_Operator;
       end record;
+
+   function Is_Dereferenced (Item : Transfer_Operand) return Boolean
+   is (Item.Modifiers.Dereferenced);
 
 end Tagatha.Transfers;

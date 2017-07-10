@@ -10,7 +10,7 @@ package body Tagatha.Operands is
                              return Tagatha_Operand
    is
    begin
-      return new Tagatha_Operand_Record'(O_Argument, Offset);
+      return new Tagatha_Operand_Record'(O_Argument, False, Offset);
    end Argument_Operand;
 
    ----------------------
@@ -21,7 +21,7 @@ package body Tagatha.Operands is
                              return Tagatha_Operand
    is
    begin
-      return new Tagatha_Operand_Record'(O_Constant, Value);
+      return new Tagatha_Operand_Record'(O_Constant, False, Value);
    end Constant_Operand;
 
    ----------------------
@@ -57,7 +57,7 @@ package body Tagatha.Operands is
    is
    begin
       return new Tagatha_Operand_Record'
-        (O_External, Ada.Strings.Unbounded.To_Unbounded_String (Name),
+        (O_External, False, Ada.Strings.Unbounded.To_Unbounded_String (Name),
          Ext_Immediate => Immediate,
          Ext_Register  => False,
          Ext_Volatile  => Volatile);
@@ -201,7 +201,7 @@ package body Tagatha.Operands is
                           return Tagatha_Operand
    is
    begin
-      return new Tagatha_Operand_Record'(O_Local, Offset);
+      return new Tagatha_Operand_Record'(O_Local, False, Offset);
    end Local_Operand;
 
    ------------------
@@ -217,12 +217,15 @@ package body Tagatha.Operands is
    -- Register_Operand --
    ----------------------
 
-   function Register_Operand (Name : String)
-                              return Tagatha_Operand
+   function Register_Operand
+     (Name        : String;
+      Dereference : Boolean := False)
+      return Tagatha_Operand
    is
    begin
       return new Tagatha_Operand_Record'
         (Operand_Type  => O_External,
+         Dereference   => Dereference,
          Ext_Label     => Ada.Strings.Unbounded.To_Unbounded_String (Name),
          Ext_Immediate => False,
          Ext_Register  => True,
@@ -235,7 +238,8 @@ package body Tagatha.Operands is
 
    function Result_Operand return Tagatha_Operand is
    begin
-      return new Tagatha_Operand_Record'(Operand_Type => O_Result);
+      return new Tagatha_Operand_Record'
+        (Operand_Type => O_Result, Dereference => False);
    end Result_Operand;
 
    ----------
@@ -280,7 +284,7 @@ package body Tagatha.Operands is
    is
    begin
       return new Tagatha_Operand_Record'
-        (O_Text, Ada.Strings.Unbounded.To_Unbounded_String (Text));
+        (O_Text, False, Ada.Strings.Unbounded.To_Unbounded_String (Text));
    end Text_Operand;
 
    ---------------------
@@ -291,7 +295,8 @@ package body Tagatha.Operands is
    begin
       if Local_Unknown_Operand = null then
          Local_Unknown_Operand :=
-           new Tagatha_Operand_Record'(Operand_Type => O_Unknown);
+           new Tagatha_Operand_Record'
+             (Operand_Type => O_Unknown, Dereference => False);
       end if;
       return Local_Unknown_Operand;
    end Unknown_Operand;
