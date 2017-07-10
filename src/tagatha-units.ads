@@ -117,6 +117,10 @@ package Tagatha.Units is
      (Unit : in out Tagatha_Unit;
       Name : in     String);
 
+   procedure Push_Result
+     (Unit    : in out Tagatha_Unit;
+      Size    : in     Tagatha_Size := Default_Integer_Size);
+
    --  procedure Push_Label_Address (Unit       : in out Tagatha_Unit;
    --                                Label_Name : String);
 
@@ -159,6 +163,9 @@ package Tagatha.Units is
 
    procedure Call (Unit   : in out Tagatha_Unit;
                    Target : in     String);
+
+   procedure Indirect_Call (Unit   : in out Tagatha_Unit);
+   --  like call, but target address is on top of the stack
 
    procedure Jump (Unit      : in out Tagatha_Unit;
                    Target    : in     Integer;

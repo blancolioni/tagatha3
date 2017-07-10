@@ -106,8 +106,18 @@ package body Tagatha.Code.Pdp32 is
             T.Reverse_Test := False;
          end;
       elsif Is_Call (Item) then
-         Asm.Put_Line
-           ("    jsr " & Tagatha.Labels.Show (Get_Destination (Item), 'L'));
+         declare
+            use Tagatha.Labels;
+            Dest : constant Tagatha_Label := Get_Destination (Item);
+         begin
+            if Dest = No_Label then
+               Asm.Put_Line
+                 ("    call 0,(sp)+");
+            else
+               Asm.Put_Line
+                 ("    jsr " & Tagatha.Labels.Show (Dest, 'L'));
+            end if;
+         end;
       elsif Is_Frame_Reservation (Item) then
          declare
             Reservation : constant String :=
