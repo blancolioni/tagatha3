@@ -138,6 +138,10 @@ package body Tagatha.Code.Pdp32 is
          Asm.Put_Line ("    " & Get_Native_Text (Item));
       elsif Is_Simple (Item) then
          Move (Asm, Get_Source (Item), Get_Destination (Item));
+      elsif Get_Operator (Item) = Op_Test then
+         Instruction (Asm, "tst",
+                      Get_Size (Get_Source_1 (Item)),
+                      To_String (Get_Source_1 (Item), True));
       elsif Get_Operator (Item) in One_Argument_Operator then
          if Same_Operand (Get_Source (Item), Get_Destination (Item)) then
             Operate (Asm, Get_Operator (Item),
@@ -156,7 +160,7 @@ package body Tagatha.Code.Pdp32 is
                Operate (Asm, Op_Compare,
                         Get_Source_1 (Item), Get_Source_2 (Item));
             end if;
-            T.Reverse_Test := True;
+            --  T.Reverse_Test := True;
          elsif Same_Operand (Get_Source_2 (Item), Get_Destination (Item))
            and then not Is_Stack (Get_Destination (Item))
          then
