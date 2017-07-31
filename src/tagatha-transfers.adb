@@ -899,7 +899,10 @@ package body Tagatha.Transfers is
          when T_Control =>
             return Label_Image
               & "jump " & Tagatha_Condition'Image (Item.Condition)
-              & " " & Tagatha.Labels.Show (Item.Destination, 'L');
+              & " "
+              & (if Tagatha.Labels.Has_Label (Item.Destination)
+                 then Tagatha.Labels.Show (Item.Destination, 'L')
+                 else "<>");
          when T_Data =>
             declare
                Dst    : constant String := Show (Item.Dst);
