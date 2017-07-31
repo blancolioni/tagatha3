@@ -11,7 +11,7 @@ package body Tagatha.Commands is
    is
    begin
       return new Tagatha_Command_Record'(T_Call, Default_Address_Size,
-                                         Tagatha.Labels.No_Label, 1, 1, False,
+                                         Tagatha.Labels.No_Label, 0, 0, False,
                                          Target, False);
    end Call;
 
@@ -25,7 +25,7 @@ package body Tagatha.Commands is
    begin
       return new Tagatha_Command_Record'(T_Stack, Size,
                                          Tagatha.Labels.No_Label,
-                                         1, 1, False,
+                                         0, 0, False,
                                          S_Drop, Operands.Null_Operand);
    end Drop;
 
@@ -90,9 +90,15 @@ package body Tagatha.Commands is
 
    function Indirect_Call return Tagatha_Command is
    begin
-      return new Tagatha_Command_Record'(T_Call, Default_Address_Size,
-                                         Tagatha.Labels.No_Label, 1, 1, False,
-                                         Tagatha.Labels.No_Label, True);
+      return new Tagatha_Command_Record'
+        (Instruction       => T_Call,
+         Size              => Default_Address_Size,
+         Label             => Tagatha.Labels.No_Label,
+         Line              => 0,
+         Column            => 0,
+         Negate            => False,
+         Subroutine        => Tagatha.Labels.No_Label,
+         Indirect          => True);
    end Indirect_Call;
 
    ----------
@@ -107,7 +113,7 @@ package body Tagatha.Commands is
    begin
       return new Tagatha_Command_Record'(T_Jump, Size,
                                          Tagatha.Labels.No_Label,
-                                         1, 1, False, Cond, Target);
+                                         0, 0, False, Cond, Target);
    end Jump;
 
    -----------------
@@ -123,7 +129,7 @@ package body Tagatha.Commands is
    begin
       return new Tagatha_Command_Record'(T_Loop, Size,
                                          Tagatha.Labels.No_Label,
-                                         1, 1, False,
+                                         0, 0, False,
                                          Loop_Count, Loop_Index, Label);
    end Loop_Around;
 
@@ -171,7 +177,7 @@ package body Tagatha.Commands is
    is
    begin
       return new Tagatha_Command_Record'(T_Operate, Size,
-                                         Tagatha.Labels.No_Label, 1, 1,
+                                         Tagatha.Labels.No_Label, 0, 0,
                                          Neg, Op);
    end Operate;
 
@@ -186,7 +192,7 @@ package body Tagatha.Commands is
    begin
       return new Tagatha_Command_Record'(T_Stack, Size,
                                          Tagatha.Labels.No_Label,
-                                         1, 1, False,
+                                         0, 0, False,
                                          S_Pop, Operand);
    end Pop;
 
@@ -201,7 +207,7 @@ package body Tagatha.Commands is
    begin
       return new Tagatha_Command_Record'(T_Stack, Size,
                                          Tagatha.Labels.No_Label,
-                                         1, 1, False,
+                                         0, 0, False,
                                          S_Push, Operand);
    end Push;
 
