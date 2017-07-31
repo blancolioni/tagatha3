@@ -289,8 +289,10 @@ package body Tagatha.Commands is
                            when T_Operate =>
                               Command.Operator'Img,
                            when T_Call    =>
-                              "call " &
-                              Tagatha.Labels.Show (Command.Subroutine, 'L'),
+                          (if Command.Indirect
+                           then "call (indirect)"
+                           else "call " &
+                             Tagatha.Labels.Show (Command.Subroutine, 'L')),
                            when T_Loop    =>
                               "loop" &
                               Command.Limit'Img & Command.Counter'Img &
