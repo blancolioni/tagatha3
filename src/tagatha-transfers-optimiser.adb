@@ -178,9 +178,17 @@ package body Tagatha.Transfers.Optimiser is
               and then Transfers (From_Index + 2).Trans = T_Control
               and then Transfers (From_Index + 2).Condition /= C_Always
             then
+               From := Transfers (From_Index + 1);
+               From.Src_1 := Transfers (From_Index).Src_1;
+               Result.Append (From);
+
                From := Transfers (From_Index + 2);
                From.Condition := Negate (From.Condition);
+               Result.Append (From);
+
                From_Index := From_Index + 2;
+               Copy := False;
+
             elsif From_Index < Transfers.Last_Index
               and then Transfers (From_Index).Op = Op_Not
               and then Transfers (From_Index + 1).Trans = T_Control
