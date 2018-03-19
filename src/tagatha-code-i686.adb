@@ -191,6 +191,9 @@ package body Tagatha.Code.I686 is
             return "bic";
          when Op_Bit_Set =>
             return "bis";
+         when Op_Equal .. Op_Less_Equal =>
+            raise Constraint_Error with
+              "compare operators not implemented on i686";
          when Op_Bit_Slice =>
             raise Constraint_Error with
               "no native slicing on the i686";
