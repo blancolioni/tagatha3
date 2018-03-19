@@ -262,6 +262,18 @@ package body Tagatha.Code.Pdp32 is
             return "bic";
          when Op_Bit_Set =>
             return "bis";
+         when Op_Equal =>
+            return "seq";
+         when Op_Not_Equal =>
+            return "sne";
+         when Op_Greater =>
+            return "sgt";
+         when Op_Less =>
+            return "slt";
+         when Op_Greater_Equal =>
+            return "sge";
+         when Op_Less_Equal =>
+            return "sle";
          when Op_Bit_Slice =>
             raise Constraint_Error with
               "no native slicing on the pdp-32";

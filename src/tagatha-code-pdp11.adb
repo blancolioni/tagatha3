@@ -193,6 +193,9 @@ package body Tagatha.Code.Pdp11 is
             return "bic";
          when Op_Bit_Set =>
             return "bis";
+         when Op_Equal .. Op_Less_Equal =>
+            raise Constraint_Error with
+              "compare operators not implemented on pdp-11";
          when Op_Bit_Slice =>
             raise Constraint_Error with
               "no native slicing on the pdp-11";

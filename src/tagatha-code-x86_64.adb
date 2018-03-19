@@ -251,6 +251,9 @@ package body Tagatha.Code.X86_64 is
             return "bic";
          when Op_Bit_Set =>
             return "bis";
+         when Op_Equal .. Op_Less_Equal =>
+            raise Constraint_Error with
+              "compare operators not implemented on x86_64";
          when Op_Bit_Slice =>
             raise Constraint_Error with
               "no native slicing on the x86_64";
