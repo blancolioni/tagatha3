@@ -1,6 +1,9 @@
 with Ada.Strings.Unbounded;
 private with Ada.Containers.Doubly_Linked_Lists;
 private with Ada.Containers.Vectors;
+
+private with WL.String_Maps;
+
 private with Tagatha.Commands.Command_Vectors;
 private with Tagatha.Transfers.Transfer_Vectors;
 
@@ -168,6 +171,9 @@ package Tagatha.Units is
    --  like call, but target address is on top of the stack
 
    procedure Jump (Unit      : in out Tagatha_Unit;
+                   Target    : in     String);
+
+   procedure Jump (Unit      : in out Tagatha_Unit;
                    Target    : in     Integer;
                    Condition : in     Tagatha_Condition := C_Always);
 
@@ -204,6 +210,21 @@ package Tagatha.Units is
    --  Changed_Registers should be a comma-separated list
    --  of registers that can be changed by this operation
    --  If empty, no (relevant) registers are changed
+
+   procedure Set_Property
+     (Unit  : in out Tagatha_Unit;
+      Name  : String;
+      Value : String);
+
+   procedure Clear_Property
+     (Unit  : in out Tagatha_Unit;
+      Name  : String);
+
+   function Get_Property
+     (Unit    : Tagatha_Unit;
+      Name    : String;
+      Default : String := "")
+      return String;
 
 private
 
@@ -284,6 +305,9 @@ private
      new Ada.Containers.Doubly_Linked_Lists
        (Tagatha_Subprogram);
 
+   package Property_Maps is
+      new WL.String_Maps (String);
+
    type Tagatha_Unit is tagged
       record
          Name               : Ada.Strings.Unbounded.Unbounded_String;
@@ -295,6 +319,16 @@ private
          Next_Label         : Positive := 1;
          Subprograms        : List_Of_Subprograms.List;
          Current_Sub        : Tagatha_Subprogram;
+         Properties         : Property_Maps.Map;
       end record;
+
+   function Get_Property
+     (Unit    : Tagatha_Unit;
+      Name    : String;
+      Default : String := "")
+      return String
+   is (if Unit.Properties.Contains (Name)
+       then Unit.Properties.Element (Name)
+       else Default);
 
 end Tagatha.Units;

@@ -161,6 +161,20 @@ package body Tagatha.Units is
       Append (Unit, Commands.Call (Label));
    end Call;
 
+   --------------------
+   -- Clear_Property --
+   --------------------
+
+   procedure Clear_Property
+     (Unit  : in out Tagatha_Unit;
+      Name  : String)
+   is
+   begin
+      if Unit.Properties.Contains (Name) then
+         Unit.Properties.Delete (Name);
+      end if;
+   end Clear_Property;
+
    -------------
    -- Command --
    -------------
@@ -445,6 +459,21 @@ package body Tagatha.Units is
       Tagatha.Labels.Reference_Label (Unit.Labels, Label,
                                       Target);
       Append (Unit, Tagatha.Commands.Jump (Label, Condition));
+   end Jump;
+
+   ----------
+   -- Jump --
+   ----------
+
+   procedure Jump (Unit      : in out Tagatha_Unit;
+                   Target    : in     String)
+
+   is
+      Label : Tagatha.Labels.Tagatha_Label;
+   begin
+      Tagatha.Labels.Reference_Label (Unit.Labels, Label, Target,
+                                      Import => True);
+      Append (Unit, Tagatha.Commands.Jump (Label, C_Always));
    end Jump;
 
    -----------
@@ -846,6 +875,23 @@ package body Tagatha.Units is
    begin
       Unit.Current_Segment := Seg;
    end Segment;
+
+   ------------------
+   -- Set_Property --
+   ------------------
+
+   procedure Set_Property
+     (Unit  : in out Tagatha_Unit;
+      Name  : String;
+      Value : String)
+   is
+   begin
+      if Unit.Properties.Contains (Name) then
+         Unit.Properties.Replace (Name, Value);
+      else
+         Unit.Properties.Insert (Name, Value);
+      end if;
+   end Set_Property;
 
    ---------------------
    -- Source_Position --

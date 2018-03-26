@@ -1,2 +1,3 @@
 project_name = Tagatha
 source_dir = src
+depend = { project = WLib version = any }
