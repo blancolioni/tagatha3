@@ -91,6 +91,9 @@ package body Tagatha.Code.Pdp32 is
    begin
 
       while Label /= Tagatha.Labels.No_Label loop
+         if Tagatha.Labels.Exported (Label) then
+            Asm.Put_Line (".export " & Tagatha.Labels.Show (Label, 'L'));
+         end if;
          Asm.Put_Line (Tagatha.Labels.Show (Label, 'L') & ":");
          Label := Tagatha.Labels.Next_Linked_Label (Label);
       end loop;
@@ -375,6 +378,9 @@ package body Tagatha.Code.Pdp32 is
    begin
 
       while L /= Tagatha.Labels.No_Label loop
+         if Tagatha.Labels.Exported (L) then
+            Asm.Put_Line (".export " & Tagatha.Labels.Show (L, 'L'));
+         end if;
          Asm.Put_Line (Tagatha.Labels.Show (L, 'L') & ":");
          L := Tagatha.Labels.Next_Linked_Label (L);
       end loop;
