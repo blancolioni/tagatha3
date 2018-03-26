@@ -49,6 +49,10 @@ package Tagatha.Labels is
                   Local_Prefix : Character)
                  return String;
 
+   function Exported
+     (Item         : Tagatha_Label)
+      return Boolean;
+
    function Show_All
      (Item         : Tagatha_Label;
       Local_Prefix : Character)
@@ -74,6 +78,11 @@ private
       end record;
 
    type Tagatha_Label is access Tagatha_Label_Record;
+
+   function Exported
+     (Item         : Tagatha_Label)
+      return Boolean
+   is (Item.Exported);
 
    No_Label : constant Tagatha_Label := null;
 
