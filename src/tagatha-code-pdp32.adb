@@ -498,6 +498,12 @@ package body Tagatha.Code.Pdp32 is
 
    begin
 
+      if Op = Op_Not then
+         Instruction (Asm, "seq #0,", Get_Size (Dest),
+                      To_Src (Source), To_Dst (Dest));
+         return;
+      end if;
+
       if Op in Two_Argument_Operator and then Is_Constant (Source) then
          for I in Quick_Ops'Range loop
             if Quick_Ops (I).Op = Op and then
