@@ -180,6 +180,12 @@ package body Tagatha.Transfers.Optimiser is
             then
                From := Transfers (From_Index + 1);
                From.Src_1 := Transfers (From_Index).Src_1;
+               if Tagatha.Labels.Has_Label
+                 (Transfers.Element (From_Index).Label)
+               then
+                  From.Label := Transfers.Element (From_Index).Label;
+               end if;
+
                Result.Append (From);
 
                From := Transfers (From_Index + 2);
@@ -195,6 +201,11 @@ package body Tagatha.Transfers.Optimiser is
               and then Transfers (From_Index + 1).Condition /= C_Always
             then
                From := Transfers (From_Index + 1);
+               if Tagatha.Labels.Has_Label
+                 (Transfers.Element (From_Index).Label)
+               then
+                  From.Label := Transfers.Element (From_Index).Label;
+               end if;
                From.Condition := Negate (From.Condition);
                From_Index := From_Index + 1;
             elsif From.Trans = T_Data
