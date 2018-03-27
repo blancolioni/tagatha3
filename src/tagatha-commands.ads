@@ -24,7 +24,8 @@ package Tagatha.Commands is
                      return Tagatha_Command;
 
    function Call (Target : Tagatha.Labels.Tagatha_Label)
-                 return Tagatha_Command;
+                  return Tagatha_Command
+     with Pre => Tagatha.Labels.Has_Label (Target);
 
    function Indirect_Call return Tagatha_Command;
 
@@ -37,7 +38,8 @@ package Tagatha.Commands is
    function Jump (Target : Tagatha.Labels.Tagatha_Label;
                   Cond   : Tagatha_Condition := C_Always;
                   Size   : Tagatha_Size      := Default_Address_Size)
-                 return Tagatha_Command;
+                  return Tagatha_Command
+     with Pre => Tagatha.Labels.Has_Label (Target);
 
    function Native_Command
      (Name              : String;

@@ -88,7 +88,8 @@ package Tagatha.Transfers is
 
    function Control_Transfer (Condition   : Tagatha_Condition;
                               Destination : Tagatha.Labels.Tagatha_Label)
-                             return Transfer;
+                              return Transfer
+     with Pre => Tagatha.Labels.Has_Label (Destination);
 
    function Native_Transfer (Name              : String;
                              Changed_Registers : String)
