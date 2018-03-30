@@ -77,6 +77,27 @@ package body Tagatha.Code is
       return Word_Size (Translator'Class (T));
    end Integer_Size;
 
+   -------------
+   -- Segment --
+   -------------
+
+   procedure Segment
+     (T     : Translator;
+      Asm   : in out Assembly'Class;
+      Seg   : Tagatha_Segment)
+   is
+      pragma Unreferenced (T);
+   begin
+      case Seg is
+         when Executable =>
+            Asm.Put_Line (".code");
+         when Read_Only =>
+            Asm.Put_Line (".text");
+         when Read_Write =>
+            Asm.Put_Line (".data");
+      end case;
+   end Segment;
+
    ---------------
    -- To_String --
    ---------------

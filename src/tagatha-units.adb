@@ -1030,6 +1030,8 @@ package body Tagatha.Units is
          end;
       end loop;
 
+      Target.Segment (File_Assembly_Type'Class (File), Read_Only);
+
       for Sub of Unit.Subprograms loop
 
          for Datum of Sub.Read_Only_Segment loop
