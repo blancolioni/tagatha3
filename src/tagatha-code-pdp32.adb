@@ -644,6 +644,12 @@ package body Tagatha.Code.Pdp32 is
       function Deref_Paren (S : String) return String
       is (if Deref then "(" & S & ")" else S);
 
+      function Predec return String
+      is (if Has_Predecrement (Item) then "-" else "");
+
+      function Postinc return String
+      is (if Has_Postincrement (Item) then "+" else "");
+
    begin
       if Is_Constant (Item) then
          return Deref_Ampersand ("#" & To_String (Get_Value (Item), Item));
@@ -684,7 +690,7 @@ package body Tagatha.Code.Pdp32 is
          if Is_Immediate (Item) then
             return Deref_Ampersand ("#" & External_Name (Item));
          else
-            return Deref_Paren (External_Name (Item));
+            return Predec & Deref_Paren (External_Name (Item)) & Postinc;
          end if;
       elsif Is_Temporary (Item) then
          declare

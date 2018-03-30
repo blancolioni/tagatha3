@@ -60,7 +60,9 @@ package body Tagatha.Operands is
         (O_External, False, Ada.Strings.Unbounded.To_Unbounded_String (Name),
          Ext_Immediate => Immediate,
          Ext_Register  => False,
-         Ext_Volatile  => Volatile);
+         Ext_Volatile  => Volatile,
+         Ext_Predec    => False,
+         Ext_Postinc   => False);
    end External_Operand;
 
    --------------------
@@ -219,7 +221,9 @@ package body Tagatha.Operands is
 
    function Register_Operand
      (Name        : String;
-      Dereference : Boolean := False)
+      Dereference : Boolean := False;
+      Predec      : Boolean := False;
+      Postinc     : Boolean := False)
       return Tagatha_Operand
    is
    begin
@@ -229,6 +233,8 @@ package body Tagatha.Operands is
          Ext_Label     => Ada.Strings.Unbounded.To_Unbounded_String (Name),
          Ext_Immediate => False,
          Ext_Register  => True,
+         Ext_Predec    => Predec,
+         Ext_Postinc   => Postinc,
          Ext_Volatile  => False);
    end Register_Operand;
 

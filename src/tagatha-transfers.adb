@@ -149,13 +149,15 @@ package body Tagatha.Transfers is
 
    function External_Operand
      (Name      : String;
-      Immediate : Boolean)
+      Immediate : Boolean;
+      Predec    : Boolean;
+      Postinc   : Boolean)
       return Transfer_Operand
    is
    begin
       return (T_External, No_Modification,
               Ada.Strings.Unbounded.To_Unbounded_String (Name),
-              Immediate);
+              Immediate, Predec, Postinc);
    end External_Operand;
 
    --------------------
@@ -1121,7 +1123,10 @@ package body Tagatha.Transfers is
       elsif Is_Result (Op) then
          Transfer := Result_Operand;
       elsif Is_External (Op) then
-         Transfer := External_Operand (Get_Name (Op), Is_Immediate (Op));
+         Transfer :=
+           External_Operand
+             (Get_Name (Op), Is_Immediate (Op),
+              Has_Predecrement (Op), Has_Postincrement (Op));
       elsif Is_Unknown (Op) then
          Transfer := No_Operand;
       elsif Is_Text (Op) then

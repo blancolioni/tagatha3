@@ -37,7 +37,9 @@ package Tagatha.Operands is
 
    function Register_Operand
      (Name        : String;
-      Dereference : Boolean := False)
+      Dereference : Boolean := False;
+      Predec      : Boolean := False;
+      Postinc     : Boolean := False)
       return Tagatha_Operand;
 
    function Text_Operand (Text : String)
@@ -52,6 +54,8 @@ package Tagatha.Operands is
    function Is_Immediate (Item : Tagatha_Operand) return Boolean;
    function Is_Unknown (Item : Tagatha_Operand) return Boolean;
    function Is_Dereferenced (Item : Tagatha_Operand) return Boolean;
+   function Has_Predecrement (Item : Tagatha_Operand) return Boolean;
+   function Has_Postincrement (Item : Tagatha_Operand) return Boolean;
 
    function Get_Value (Item : Tagatha_Operand)
                       return Tagatha.Constants.Tagatha_Constant;
@@ -93,6 +97,8 @@ private
                Ext_Immediate : Boolean;
                Ext_Register  : Boolean;
                Ext_Volatile  : Boolean;
+               Ext_Predec    : Boolean;
+               Ext_Postinc   : Boolean;
             when O_Text =>
                Text          : Ada.Strings.Unbounded.Unbounded_String;
          end case;
@@ -102,5 +108,13 @@ private
 
    function Is_Dereferenced (Item : Tagatha_Operand) return Boolean
    is (Item.Dereference);
+
+   function Has_Predecrement (Item : Tagatha_Operand) return Boolean
+   is (Item.Operand_Type = O_External
+       and then Item.Ext_Predec);
+
+   function Has_Postincrement (Item : Tagatha_Operand) return Boolean
+   is (Item.Operand_Type = O_External
+       and then Item.Ext_Postinc);
 
 end Tagatha.Operands;

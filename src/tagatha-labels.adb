@@ -39,10 +39,7 @@ package body Tagatha.Labels is
             Positive'Image (Label.Location) & " and" &
             Positive'Image (Location);
          end if;
-         if Label.Segment /= Segment then
-            raise Constraint_Error with
-            "Label '" & Name & "': mismatched segments";
-         end if;
+         Label.Segment := Segment;
          Label.Location := Location;
          Label.Has_Location := True;
          Label.Linked_To := Linked_To;

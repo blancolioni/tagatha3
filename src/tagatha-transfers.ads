@@ -43,7 +43,9 @@ package Tagatha.Transfers is
 
    function External_Operand
      (Name      : String;
-      Immediate : Boolean)
+      Immediate : Boolean;
+      Predec    : Boolean;
+      Postinc   : Boolean)
       return Transfer_Operand;
 
    function Text_Operand
@@ -130,6 +132,8 @@ package Tagatha.Transfers is
    function Is_External (Item : Transfer_Operand) return Boolean;
    function Is_Immediate (Item : Transfer_Operand) return Boolean;
    function Is_Dereferenced (Item : Transfer_Operand) return Boolean;
+   function Has_Predecrement (Item : Transfer_Operand) return Boolean;
+   function Has_Postincrement (Item : Transfer_Operand) return Boolean;
 
    function Is_Text     (Item : Transfer_Operand) return Boolean;
    function Get_Text    (Item : Transfer_Operand) return String;
@@ -254,6 +258,8 @@ private
             when T_External =>
                External_Name : Ada.Strings.Unbounded.Unbounded_String;
                External_Imm  : Boolean;
+               External_Predec : Boolean;
+               External_Postinc : Boolean;
             when T_Text =>
                Text          : Ada.Strings.Unbounded.Unbounded_String;
          end case;
@@ -261,6 +267,12 @@ private
 
    No_Operand : constant Transfer_Operand :=
                   (T_No_Operand, No_Modification);
+
+   function Has_Predecrement (Item : Transfer_Operand) return Boolean
+   is (Item.Op = T_External and then Item.External_Predec);
+
+   function Has_Postincrement (Item : Transfer_Operand) return Boolean
+   is (Item.Op = T_External and then Item.External_Postinc);
 
    type Array_Of_Operands is array (Positive range <>) of Transfer_Operand;
 
