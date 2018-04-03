@@ -622,8 +622,13 @@ package body Tagatha.Code.Pdp32 is
      (Item        : Tagatha.Transfers.Transfer_Operand)
      return String
    is
+      Base : constant String := To_Src (Item);
    begin
-      return "@" & To_Src (Item);
+      if Ada.Strings.Fixed.Index (Base, "(") > 0 then
+         return "@" & Base;
+      else
+         return "(" & Base & ")";
+      end if;
    end To_Dereferenced_String;
 
    ---------------
