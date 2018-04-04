@@ -153,10 +153,14 @@ package body Tagatha.Transfers.Optimiser is
                   then Transfer.External_Name & "-deref"
                   else Transfer.External_Name);
       begin
-         if Known_Values.Contains (Key) then
-            Known_Values.Replace (Key, Value);
-         else
-            Known_Values.Insert (Key, Value);
+         if not Transfer.External_Predec
+           and then not Transfer.External_Postinc
+         then
+            if Known_Values.Contains (Key) then
+               Known_Values.Replace (Key, Value);
+            else
+               Known_Values.Insert (Key, Value);
+            end if;
          end if;
       end Record_Value;
 
