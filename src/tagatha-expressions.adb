@@ -120,6 +120,36 @@ package body Tagatha.Expressions is
       return Expression_Transfers (Expr, Dst);
    end Get_Transfers;
 
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Expr : Expression) return String is
+   begin
+      case Expr.Class is
+         when Simple =>
+            return Tagatha.Transfers.Show (Expr.Term);
+         when Structured =>
+            if Expr.Right = null then
+               return Tagatha_Operator'Image (Expr.Op)
+                 & " "
+                 & (if Expr.Left.Class = Simple
+                    then Image (Expr.Left)
+                    else "(" & Image (Expr.Left) & ")");
+            else
+               return Tagatha_Operator'Image (Expr.Op)
+                 & " "
+                 & (if Expr.Left.Class = Simple
+                    then Image (Expr.Left)
+                    else "(" & Image (Expr.Left) & ")")
+                 & " "
+                 & (if Expr.Right.Class = Simple
+                    then Image (Expr.Right)
+                    else "(" & Image (Expr.Right) & ")");
+            end if;
+      end case;
+   end Image;
+
    -----------------------------
    -- New_Operator_Expression --
    -----------------------------
