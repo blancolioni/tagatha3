@@ -8,6 +8,8 @@ package Tagatha.Expressions is
    function New_Simple_Expression (Term : Tagatha.Transfers.Transfer_Operand)
                                   return Expression;
 
+   function Image (Expr : Expression) return String;
+
    function New_Operator_Expression
      (Op   : Zero_Argument_Operator)
      return Expression;
