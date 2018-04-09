@@ -225,11 +225,7 @@ package body Tagatha.Code.Pdp32 is
    function General_Registers (T : Pdp32_Translator) return Positive is
       pragma Unreferenced (T);
    begin
-      --  Registers are used for argument passing, so we
-      --  only reserve a small number of general purpose ones.
-      --  R13 is the frame pointer.
-      --  R14 is the stack, R15 is the PC
-      return 2;
+      return 6;
    end General_Registers;
 
    ------------------
