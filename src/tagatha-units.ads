@@ -26,6 +26,8 @@ package Tagatha.Units is
 
    procedure Finish_Unit (Unit : in out Tagatha_Unit);
 
+   function Unit_Name (Unit : Tagatha_Unit'Class) return String;
+
    procedure Source_Position
      (Unit         : in out Tagatha_Unit;
       Line, Column : Positive);
@@ -330,5 +332,8 @@ private
    is (if Unit.Properties.Contains (Name)
        then Unit.Properties.Element (Name)
        else Default);
+
+   function Unit_Name (Unit : Tagatha_Unit'Class) return String
+   is (Ada.Strings.Unbounded.To_String (Unit.Name));
 
 end Tagatha.Units;
