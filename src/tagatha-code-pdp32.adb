@@ -323,9 +323,18 @@ package body Tagatha.Code.Pdp32 is
                           Dest     : in     String)
    is
    begin
-      Asm.Put_Line
-        ("    " & Mnemonic & To_Suffix (Size)
-         & " " & Source & ", " & Dest);
+      if Mnemonic = "neg" then
+         Asm.Put_Line
+           ("    mov" & To_Suffix (Size)
+            & " " & Source & ", " & Dest);
+         Asm.Put_Line
+           ("    " & Mnemonic & To_Suffix (Size)
+            & " " & Dest);
+      else
+         Asm.Put_Line
+           ("    " & Mnemonic & To_Suffix (Size)
+            & " " & Source & ", " & Dest);
+      end if;
    end Instruction;
 
    -----------------
