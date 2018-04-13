@@ -27,6 +27,7 @@ package Tagatha.Units is
    procedure Finish_Unit (Unit : in out Tagatha_Unit);
 
    function Unit_Name (Unit : Tagatha_Unit'Class) return String;
+   function Unit_Label_Name (Unit : Tagatha_Unit'Class) return String;
 
    procedure Source_Position
      (Unit         : in out Tagatha_Unit;
@@ -319,6 +320,7 @@ private
          Labels             : Tagatha.Labels.Tagatha_Label_List;
          Last_Label         : Last_Label_Array;
          Next_Label         : Positive := 1;
+         Next_String        : Positive := 1;
          Subprograms        : List_Of_Subprograms.List;
          Current_Sub        : Tagatha_Subprogram;
          Properties         : Property_Maps.Map;
