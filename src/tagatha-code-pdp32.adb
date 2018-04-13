@@ -298,8 +298,9 @@ package body Tagatha.Code.Pdp32 is
    ------------------
 
    function Get_Reversed (Op : Tagatha_Operator) return Boolean is
+      pragma Unreferenced (Op);
    begin
-      return Op = Op_Sub;
+      return False; --  Op = Op_Sub;
    end Get_Reversed;
 
    -------------------
