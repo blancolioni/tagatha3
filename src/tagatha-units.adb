@@ -10,6 +10,7 @@ with Tagatha.Transfers;
 with Tagatha.Transfers.Optimiser;
 
 with Tagatha.Registry;
+with Ada.Strings.Fixed;
 
 package body Tagatha.Units is
 
@@ -848,8 +849,25 @@ package body Tagatha.Units is
      (Unit : in out Tagatha_Unit;
       Text : String)
    is
+      Index_Image : String := Integer'Image (Unit.Next_String);
+      Label       : constant String :=
+                      "__tagatha$string_"
+                      & Unit.Unit_Label_Name
+                      & Ada.Strings.Fixed.Trim (Index_Image, Ada.Strings.Left);
    begin
-      Push_Operand (Unit, Operands.Text_Operand (Text), Default_Size);
+      Unit.Next_String := Unit.Next_String + 1;
+      Index_Image (Index_Image'First) := '_';
+
+      Unit.Segment (Read_Only);
+      Unit.Label (Label);
+      Unit.Data (Text'Length);
+
+      for Ch of Text loop
+         Unit.Data (Character'Pos (Ch));
+      end loop;
+
+      Unit.Segment (Tagatha.Executable);
+      Unit.Push_Label (Label);
    end Push_Text;
 
    ------------------------
@@ -907,6 +925,21 @@ package body Tagatha.Units is
          Unit.Current_Sub.Last_Column := Column;
       end if;
    end Source_Position;
+
+   ---------------------
+   -- Unit_Label_Name --
+   ---------------------
+
+   function Unit_Label_Name (Unit : Tagatha_Unit'Class) return String is
+      Result : String := Unit.Unit_Name;
+   begin
+      for Ch of Result loop
+         if Ch = '-' then
+            Ch := '_';
+         end if;
+      end loop;
+      return Result;
+   end Unit_Label_Name;
 
    -----------
    -- Write --
