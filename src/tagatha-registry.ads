@@ -84,15 +84,15 @@ private
 
    type Tagatha_Registry is tagged
       record
-         Frame_Size  : Natural;
-         Unit_Label  : Tagatha.Labels.Tagatha_Label;
-         Stack       : Expression_Vectors.Vector;
-         Transfers   : Transfer_Vectors.Vector;
-         Temps       : Tagatha.Temporaries.Temporary_Source;
-         Last_Label  : Tagatha.Labels.Tagatha_Label;
-         Last_Line   : Natural := 0;
-         Last_Column : Natural := 0;
-         Push_Index  : Natural := 0;
+         Frame_Size    : Natural;
+         Unit_Label    : Tagatha.Labels.Tagatha_Label;
+         Stack         : Expression_Vectors.Vector;
+         Transfers     : Transfer_Vectors.Vector;
+         Temps         : Tagatha.Temporaries.Temporary_Source;
+         Current_Label : Tagatha.Labels.Tagatha_Label;
+         Last_Line     : Natural := 0;
+         Last_Column   : Natural := 0;
+         Push_Index    : Natural := 0;
       end record;
 
 end Tagatha.Registry;
