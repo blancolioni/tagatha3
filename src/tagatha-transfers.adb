@@ -88,6 +88,17 @@ package body Tagatha.Transfers is
               Op                => Op_Nop);
    end Call;
 
+   -----------------
+   -- Clear_Label --
+   -----------------
+
+   procedure Clear_Label
+     (T       : in out Transfer)
+   is
+   begin
+      T.Label := Tagatha.Labels.No_Label;
+   end Clear_Label;
+
    -----------------------
    -- Condition_Operand --
    -----------------------

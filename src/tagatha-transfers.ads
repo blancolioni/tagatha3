@@ -109,6 +109,9 @@ package Tagatha.Transfers is
    function Get_Label (T : Transfer)
                       return Tagatha.Labels.Tagatha_Label;
 
+   procedure Clear_Label
+     (T       : in out Transfer);
+
    function Is_Frame_Reservation (T : Transfer) return Boolean;
    function Get_Reservation (T : Transfer) return Integer;
 

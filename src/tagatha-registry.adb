@@ -35,15 +35,15 @@ package body Tagatha.Registry is
    is
       LT : Tagatha.Transfers.Transfer := T;
    begin
-      if Labels.Has_Label (Register.Last_Label) then
+      if Labels.Has_Label (Register.Current_Label) then
          if Trace_Registry then
             Ada.Text_IO.Put_Line
-              (Tagatha.Labels.Show_All (Register.Last_Label, 'L')
+              (Tagatha.Labels.Show_All (Register.Current_Label, 'L')
                & " " & Tagatha.Transfers.Show (LT));
          end if;
 
-         Transfers.Set_Label (LT, Register.Last_Label);
-         Register.Last_Label := Tagatha.Labels.No_Label;
+         Transfers.Set_Label (LT, Register.Current_Label);
+         Register.Current_Label := Tagatha.Labels.No_Label;
       end if;
       if Register.Last_Line > 0 then
          Transfers.Set_Location
@@ -85,12 +85,12 @@ package body Tagatha.Registry is
          end;
       end loop;
 
-      if Labels.Has_Label (Register.Last_Label) then
+      if Labels.Has_Label (Register.Current_Label) then
          declare
             T : Tagatha.Transfers.Transfer :=
                   Tagatha.Transfers.Reserve_Stack (0);
          begin
-            Tagatha.Transfers.Set_Label (T, Register.Last_Label);
+            Tagatha.Transfers.Set_Label (T, Register.Current_Label);
             Transfers.Append (T);
          end;
       end if;
@@ -113,6 +113,9 @@ package body Tagatha.Registry is
    is
       use Tagatha.Transfers;
 
+      Label       : Tagatha.Labels.Tagatha_Label :=
+                      Tagatha.Labels.No_Label;
+
       procedure Make_Room
         (Start_Index : out Positive);
 
@@ -129,13 +132,27 @@ package body Tagatha.Registry is
          This_Index : Positive := Start;
          First      : Transfer := Arr (Arr'First);
       begin
-         if Tagatha.Labels.Has_Label
-           (Register.Last_Label)
-         then
-            Tagatha.Transfers.Set_Label
-              (First, Register.Last_Label);
-            Register.Last_Label := Tagatha.Labels.No_Label;
+         if Tagatha.Labels.Has_Label (Label) then
+            Tagatha.Labels.Link_To (Label, Register.Current_Label);
+         else
+            Label := Register.Current_Label;
          end if;
+         Register.Current_Label := Tagatha.Labels.No_Label;
+
+         if Tagatha.Labels.Has_Label (Label) then
+            if Trace_Registry then
+               Ada.Text_IO.Put_Line
+                 ("insert: "
+                  & Tagatha.Labels.Show_All (Label, 'L')
+                  & " at"
+                  & Start'Img);
+            end if;
+
+            Tagatha.Transfers.Set_Label
+              (First, Label);
+         end if;
+
+         Register.Current_Label := Tagatha.Labels.No_Label;
 
          for I in Arr'Range loop
             declare
@@ -183,7 +200,7 @@ package body Tagatha.Registry is
                                 Start_Index + Ts'Length + I - 1;
                Source_Index : constant Positive :=
                                 Start_Index + I - 1;
-               Transfer     : constant Transfer_Record :=
+               Transfer     : Transfer_Record :=
                                 Register.Transfers.Element
                                   (Source_Index);
             begin
@@ -195,6 +212,22 @@ package body Tagatha.Registry is
                      & Show (Transfer.Transfer));
                end if;
 
+               if I = 1 then
+                  if Trace_Registry
+                    and then Tagatha.Labels.Has_Label
+                      (Tagatha.Transfers.Get_Label (Transfer.Transfer))
+                  then
+                     Ada.Text_IO.Put_Line
+                       ("move: saving label: "
+                        & Tagatha.Labels.Show_All
+                          (Tagatha.Transfers.Get_Label (Transfer.Transfer),
+                          'L'));
+                  end if;
+
+                  Label := Tagatha.Transfers.Get_Label (Transfer.Transfer);
+                  Tagatha.Transfers.Clear_Label (Transfer.Transfer);
+               end if;
+
                Register.Transfers.Replace_Element
                  (Target_Index, Transfer);
             end;
@@ -202,9 +235,7 @@ package body Tagatha.Registry is
       end Make_Room;
 
       Start_Index : Positive;
-
    begin
-
       Make_Room (Start_Index);
       Copy (Ts, Start_Index);
    end Insert;
@@ -244,17 +275,14 @@ package body Tagatha.Registry is
         Tagatha.Labels.No_Label)
    is
       use Tagatha.Labels;
-      L : Tagatha_Label := Label;
    begin
-      if not Has_Label (L) then
-         L := Register.Last_Label;
-      elsif Has_Label (Register.Last_Label) then
-         Link_To (L, Register.Last_Label);
+      if Has_Label (Label) then
+         Tagatha.Labels.Link_To (Label, Register.Current_Label);
+         Register.Current_Label := Label;
       end if;
       Register.Push_Index := Register.Push_Index + 1;
       Register.Stack.Append
-        ((Expression, Register.Push_Index, L));
-      Register.Last_Label := Tagatha.Labels.No_Label;
+        ((Expression, Register.Push_Index, Label));
    end Push;
 
    -----------------
@@ -328,8 +356,8 @@ package body Tagatha.Registry is
       use type Tagatha.Labels.Tagatha_Label;
    begin
       if Label /= Tagatha.Labels.No_Label then
-         Tagatha.Labels.Link_To (Label, Register.Last_Label);
-         Register.Last_Label := Label;
+         Tagatha.Labels.Link_To (Label, Register.Current_Label);
+         Register.Current_Label := Label;
       end if;
    end Record_Label;
 
@@ -410,6 +438,10 @@ package body Tagatha.Registry is
    is
       use Tagatha.Expressions;
    begin
+      if Trace_Registry then
+         Ada.Text_IO.Put_Line ("record operator: " & Operator'Img);
+      end if;
+
       if Operator in Zero_Argument_Operator then
          null;
       elsif Operator in One_Argument_Operator then
@@ -430,6 +462,16 @@ package body Tagatha.Registry is
                Ls := Right.Label;
             elsif Tagatha.Labels.Has_Label (Right.Label) then
                Tagatha.Labels.Link_To (Ls, Right.Label);
+            end if;
+
+            if Trace_Registry then
+               Ada.Text_IO.Put_Line
+                 ("   push: "
+                  & Tagatha.Labels.Show_All (Ls, 'L')
+                  & ": "
+                  & Tagatha.Expressions.Image
+                    (New_Operator_Expression
+                      (Operator, Left.Expression, Right.Expression)));
             end if;
 
             Register.Push
@@ -462,6 +504,11 @@ package body Tagatha.Registry is
                          Operand  : in     Transfers.Transfer_Operand)
    is
    begin
+      if Trace_Registry then
+         Ada.Text_IO.Put_Line ("Record_Pop: "
+                               & Transfers.Show (Operand));
+      end if;
+
       if Register.Stack.Is_Empty then
          Register.Append
            (Tagatha.Transfers.Simple_Transfer
@@ -477,6 +524,16 @@ package body Tagatha.Registry is
                             (Register.Temps, Element.Expression,
                              Operand);
          begin
+            if Labels.Has_Label (Element.Label) then
+               if Trace_Registry then
+                  Ada.Text_IO.Put_Line
+                    ("Record_Pop: "
+                     & Tagatha.Transfers.Show (Operand)
+                     & Labels.Show_All (Element.Label, 'L')
+                     & " -> "
+                     & Tagatha.Transfers.Show (Transfers (Transfers'First)));
+               end if;
+            end if;
             Tagatha.Transfers.Set_Size
               (Transfers (Transfers'Last), Size);
             Tagatha.Transfers.Set_Label
@@ -501,7 +558,7 @@ package body Tagatha.Registry is
       if Trace_Registry then
          Ada.Text_IO.Put_Line
            ("record push at" & Integer'Image (Register.Push_Index) & ": "
-            & Tagatha.Labels.Show_All (Register.Last_Label, 'L')
+            & Tagatha.Labels.Show_All (Register.Current_Label, 'L')
             & Tagatha.Operands.Show (Operand));
       end if;
       Register.Push
