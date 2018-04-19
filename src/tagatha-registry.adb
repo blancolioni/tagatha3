@@ -356,6 +356,20 @@ package body Tagatha.Registry is
       use type Tagatha.Labels.Tagatha_Label;
    begin
       if Label /= Tagatha.Labels.No_Label then
+         for Operand of Register.Stack loop
+            declare
+               Index     : constant Positive := Operand.Transfer_Index;
+               Transfers : Tagatha.Transfers.Array_Of_Transfers :=
+                             Tagatha.Expressions.Get_Transfers
+                               (Register.Temps, Operand.Expression,
+                                Tagatha.Transfers.Stack_Operand);
+            begin
+               Tagatha.Transfers.Set_Label
+                 (Transfers (Transfers'First), Operand.Label);
+               Register.Insert (Index, Transfers);
+            end;
+         end loop;
+         Register.Stack.Clear;
          Tagatha.Labels.Link_To (Label, Register.Current_Label);
          Register.Current_Label := Label;
       end if;
