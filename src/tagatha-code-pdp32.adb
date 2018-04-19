@@ -630,7 +630,9 @@ package body Tagatha.Code.Pdp32 is
    is
       Base : constant String := To_Src (Item);
    begin
-      if Ada.Strings.Fixed.Index (Base, "(") > 0 then
+      if Base (Base'First) = '#'
+        or else Ada.Strings.Fixed.Index (Base, "(") > 0
+      then
          return "@" & Base;
       else
          return "(" & Base & ")";
