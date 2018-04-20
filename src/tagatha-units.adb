@@ -187,6 +187,18 @@ package body Tagatha.Units is
       Append (Unit, Command);
    end Command;
 
+   ---------------
+   -- Copy_Item --
+   ---------------
+
+   procedure Copy_Item
+     (Unit : in out Tagatha_Unit;
+      Size : Tagatha_Size := Default_Size)
+   is
+   begin
+      Append (Unit, Commands.Copy_Item (Size));
+   end Copy_Item;
+
    -----------------
    -- Create_Unit --
    -----------------
@@ -347,6 +359,26 @@ package body Tagatha.Units is
    begin
       Append (Unit, Commands.Drop (Size));
    end Drop;
+
+   ---------------
+   -- Duplicate --
+   ---------------
+
+   procedure Duplicate (Unit : in out Tagatha_Unit) is
+   begin
+      Append (Unit, Commands.Duplicate);
+   end Duplicate;
+
+   --------------
+   -- End_Copy --
+   --------------
+
+   procedure End_Copy
+     (Unit : in out Tagatha_Unit)
+   is
+   begin
+      Append (Unit, Commands.End_Copy);
+   end End_Copy;
 
    -----------------
    -- End_Routine --
@@ -678,18 +710,6 @@ package body Tagatha.Units is
       Append (Unit, Commands.Pop (Op, Size));
    end Pop_Operand;
 
-   ------------------
-   -- Pop_Register --
-   ------------------
-
-   procedure Pop_Register
-     (Unit : in out Tagatha_Unit;
-      Name : in     String)
-   is
-   begin
-      Pop_Operand (Unit, Operands.Register_Operand (Name), Default_Size);
-   end Pop_Register;
-
    ----------------
    -- Pop_Result --
    ----------------
@@ -816,18 +836,6 @@ package body Tagatha.Units is
       Append (Unit, Commands.Push (Op, Size));
    end Push_Operand;
 
-   -------------------
-   -- Push_Register --
-   -------------------
-
-   procedure Push_Register
-     (Unit : in out Tagatha_Unit;
-      Name : in     String)
-   is
-   begin
-      Push_Operand (Unit, Operands.Register_Operand (Name), Default_Size);
-   end Push_Register;
-
    ----------------
    -- Pop_Result --
    ----------------
@@ -840,6 +848,19 @@ package body Tagatha.Units is
       Append (Unit,
               Commands.Push (Operands.Result_Operand, Size));
    end Push_Result;
+
+   -----------------
+   -- Push_Return --
+   -----------------
+
+   procedure Push_Return
+     (Unit       : in out Tagatha_Unit;
+      Size       : in     Tagatha_Size  := Default_Integer_Size)
+   is
+   begin
+      Append (Unit,
+              Commands.Push (Operands.Return_Operand, Size));
+   end Push_Return;
 
    ---------------
    -- Push_Text --
@@ -883,6 +904,24 @@ package body Tagatha.Units is
 --          (O_Local, True, Offset)));
 --     end Push_Local_Address;
 
+   -----------------
+   -- Restore_Top --
+   -----------------
+
+   procedure Restore_Top (Unit : in out Tagatha_Unit) is
+   begin
+      Append (Unit, Commands.Restore);
+   end Restore_Top;
+
+   --------------
+   -- Save_Top --
+   --------------
+
+   procedure Save_Top (Unit : in out Tagatha_Unit) is
+   begin
+      Append (Unit, Commands.Save);
+   end Save_Top;
+
    -------------
    -- Segment --
    -------------
@@ -925,6 +964,49 @@ package body Tagatha.Units is
          Unit.Current_Sub.Last_Column := Column;
       end if;
    end Source_Position;
+
+   -----------
+   -- Store --
+   -----------
+
+   procedure Store
+     (Unit : in out Tagatha_Unit;
+      Size : Tagatha_Size := Default_Size)
+   is
+   begin
+      Append (Unit, Commands.Store (Size));
+   end Store;
+
+   ----------
+   -- Swap --
+   ----------
+
+   procedure Swap (Unit : in out Tagatha_Unit) is
+   begin
+      Append (Unit, Commands.Swap);
+   end Swap;
+
+   ---------------------
+   -- Start_Copy_From --
+   ---------------------
+
+   procedure Start_Copy_From
+     (Unit      : in out Tagatha_Unit)
+   is
+   begin
+      Append (Unit, Commands.Start_Copy (Commands.From));
+   end Start_Copy_From;
+
+   -------------------
+   -- Start_Copy_To --
+   -------------------
+
+   procedure Start_Copy_To
+     (Unit      : in out Tagatha_Unit)
+   is
+   begin
+      Append (Unit, Commands.Start_Copy (Commands.To));
+   end Start_Copy_To;
 
    ---------------------
    -- Unit_Label_Name --

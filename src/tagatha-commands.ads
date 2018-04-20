@@ -18,6 +18,24 @@ package Tagatha.Commands is
    function Drop  (Size       : Tagatha_Size     := Default_Integer_Size)
                    return Tagatha_Command;
 
+   function Duplicate return Tagatha_Command;
+   function Swap return Tagatha_Command;
+   function Store
+     (Size : Tagatha_Size := Default_Size)
+      return Tagatha_Command;
+   function Save return Tagatha_Command;
+   function Restore return Tagatha_Command;
+
+   type Copy_Direction is (From, To);
+
+   function Start_Copy (Direction : Copy_Direction) return Tagatha_Command;
+
+   function Copy_Item
+     (Size       : Tagatha_Size := Default_Size)
+      return Tagatha_Command;
+
+   function End_Copy return Tagatha_Command;
+
    function Operate (Op   : Tagatha_Operator;
                      Neg  : Boolean           := False;
                      Size : Tagatha_Size      := Default_Integer_Size)
@@ -62,7 +80,8 @@ package Tagatha.Commands is
 
 private
 
-   type Stack_Operation is (S_Push, S_Pop, S_Drop);
+   type Stack_Operation is (S_Push, S_Pop, S_Drop,
+                            S_Duplicate, S_Store, S_Swap);
 
    type Tagatha_Instruction is
      (T_Stack,     --  push or pop
@@ -112,6 +131,11 @@ private
 
    type Tagatha_Command is access Tagatha_Command_Record;
 
+   function Stack_Command
+     (Op   : Stack_Operation;
+      Size : Tagatha_Size := Default_Size)
+      return Tagatha_Command;
+
    function Get_Command_Operator (Command : Tagatha_Command)
                                   return Tagatha_Operator;
 
@@ -123,5 +147,16 @@ private
 
    function Get_Stack_Operation (Command : Tagatha_Command)
                                  return Stack_Operation;
+
+   function Duplicate return Tagatha_Command
+   is (Stack_Command (S_Duplicate));
+
+   function Swap return Tagatha_Command
+   is (Stack_Command (S_Swap));
+
+   function Store
+     (Size : Tagatha_Size := Default_Size)
+      return Tagatha_Command
+   is (Stack_Command (S_Store, Size));
 
 end Tagatha.Commands;

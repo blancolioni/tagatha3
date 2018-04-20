@@ -119,11 +119,11 @@ package Tagatha.Units is
                             Offset  : in     Argument_Offset;
                             Size    : Tagatha_Size := Default_Integer_Size);
 
-   procedure Push_Register
-     (Unit : in out Tagatha_Unit;
-      Name : in     String);
-
    procedure Push_Result
+     (Unit    : in out Tagatha_Unit;
+      Size    : in     Tagatha_Size := Default_Integer_Size);
+
+   procedure Push_Return
      (Unit    : in out Tagatha_Unit;
       Size    : in     Tagatha_Size := Default_Integer_Size);
 
@@ -156,12 +156,13 @@ package Tagatha.Units is
      (Unit    : in out Tagatha_Unit;
       Size    : in     Tagatha_Size := Default_Integer_Size);
 
-   procedure Pop_Register
-     (Unit : in out Tagatha_Unit;
-      Name : in     String);
-
    procedure Dereference (Unit : in out Tagatha_Unit;
                           Size : in     Tagatha_Size := Default_Integer_Size);
+
+   procedure Store (Unit : in out Tagatha_Unit;
+                    Size : Tagatha_Size := Default_Size);
+   --  Top two stack values contain an address and a value, respectively.
+   --  Store the value at the address
 
    procedure Operate (Unit   : in out Tagatha_Unit;
                       Op     : Tagatha_Operator;
@@ -198,6 +199,32 @@ package Tagatha.Units is
    procedure Push_Operand (Unit      : in out Tagatha_Unit;
                            Op        : in     Operands.Tagatha_Operand;
                            Size      : in     Tagatha_Size);
+
+   procedure Duplicate (Unit : in out Tagatha_Unit);
+
+   procedure Swap (Unit : in out Tagatha_Unit);
+
+   procedure Save_Top (Unit : in out Tagatha_Unit);
+   procedure Restore_Top (Unit : in out Tagatha_Unit);
+
+   procedure Start_Copy_From
+     (Unit      : in out Tagatha_Unit);
+
+   procedure Start_Copy_To
+     (Unit      : in out Tagatha_Unit);
+
+   --  Start a bulk copy operation.  The address on top of the stack
+   --  is either the source (if Direction = From) or the target
+   --  (if Direction = To) of the copy.
+
+   procedure Copy_Item
+     (Unit : in out Tagatha_Unit;
+      Size : Tagatha_Size := Default_Size);
+   --  Copy an item of the given size using the current copy parameters
+   --  to or from the top of the stack
+
+   procedure End_Copy
+     (Unit : in out Tagatha_Unit);
 
    procedure Native_Operation
      (Unit               : in out Tagatha_Unit;

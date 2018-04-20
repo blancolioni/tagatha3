@@ -248,6 +248,16 @@ package body Tagatha.Operands is
         (Operand_Type => O_Result, Dereference => False);
    end Result_Operand;
 
+   --------------------
+   -- Return_Operand --
+   --------------------
+
+   function Return_Operand return Tagatha_Operand is
+   begin
+      return new Tagatha_Operand_Record'
+        (Operand_Type => O_Return, Dereference => False);
+   end Return_Operand;
+
    ----------
    -- Show --
    ----------
@@ -273,6 +283,8 @@ package body Tagatha.Operands is
             return "loc" & Local_Offset'Image (-Operand.Loc_Offset);
          when O_Result =>
             return "result";
+         when O_Return =>
+            return "return";
          when O_Text =>
             return """" & Ada.Strings.Unbounded.To_String (Operand.Text)
               & """";
