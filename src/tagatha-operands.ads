@@ -29,6 +29,7 @@ package Tagatha.Operands is
                            return Tagatha_Operand;
 
    function Result_Operand return Tagatha_Operand;
+   function Return_Operand return Tagatha_Operand;
 
    function External_Operand (Name : String;
                               Immediate : Boolean;
@@ -75,6 +76,7 @@ private
       O_Argument,
       O_Local,
       O_Result,
+      O_Return,
       O_External,
       O_Text);
 
@@ -90,7 +92,7 @@ private
                Arg_Offset    : Argument_Offset;
             when O_Local =>
                Loc_Offset    : Local_Offset;
-            when O_Result =>
+            when O_Result | O_Return =>
                null;
             when O_External =>
                Ext_Label     : Ada.Strings.Unbounded.Unbounded_String;
