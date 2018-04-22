@@ -24,6 +24,13 @@ package Tagatha.Expressions is
       Left, Right : Expression)
      return Expression;
 
+   function Get_Transfers
+     (Temps   : Tagatha.Temporaries.Temporary_Source;
+      Address : Expression;
+      Value   : Expression)
+      return Tagatha.Transfers.Array_Of_Transfers;
+   --  address is destination to store value
+
    function Get_Transfers (Temps : Tagatha.Temporaries.Temporary_Source;
                            Expr  : Expression;
                            Dst   : Tagatha.Transfers.Transfer_Operand)

@@ -25,6 +25,12 @@ package body Tagatha.Commands.Registry is
                   Register.Record_Pop (Command.Size, Command.Operand);
                when S_Drop =>
                   Register.Record_Drop (Command.Size);
+               when S_Duplicate =>
+                  Register.Record_Duplicate (Command.Size);
+               when S_Swap =>
+                  Register.Record_Swap (Command.Size);
+               when S_Store =>
+                  Register.Record_Store (Command.Size);
             end case;
          when T_Operate =>
             Register.Record_Operation (Command.Operator);

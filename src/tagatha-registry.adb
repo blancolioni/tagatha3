@@ -327,6 +327,23 @@ package body Tagatha.Registry is
       Record_Pop (Register, Size, Tagatha.Transfers.No_Operand);
    end Record_Drop;
 
+   ----------------------
+   -- Record_Duplicate --
+   ----------------------
+
+   procedure Record_Duplicate
+     (Register : in out Tagatha_Registry;
+      Size     : in     Tagatha_Size)
+   is
+      T : constant Tagatha.Operands.Tagatha_Operand :=
+            Tagatha.Operands.Temporary_Operand
+              (Tagatha.Temporaries.Next_Temporary (Register.Temps));
+   begin
+      Record_Pop (Register, Size, T);
+      Record_Push (Register, Size, T);
+      Record_Push (Register, Size, T);
+   end Record_Duplicate;
+
    -----------------
    -- Record_Jump --
    -----------------
@@ -504,9 +521,30 @@ package body Tagatha.Registry is
                          Size     : in     Tagatha_Size;
                          Operand  : in     Tagatha.Operands.Tagatha_Operand)
    is
+      Transfer : Tagatha.Transfers.Transfer_Operand;
    begin
-      Record_Pop (Register, Size,
-                  Tagatha.Transfers.To_Transfer (Operand));
+      if Tagatha.Operands.Is_Shelf (Operand) then
+         declare
+            Name : constant String := Tagatha.Operands.Get_Name (Operand);
+            T    : constant Tagatha.Temporaries.Temporary :=
+                     Tagatha.Temporaries.Next_Temporary (Register.Temps);
+         begin
+            if Name = "_" then
+               Register.Default_Shelf := T;
+            else
+               if Register.Named_Shelves.Contains (Name) then
+                  Register.Named_Shelves.Replace (Name, T);
+               else
+                  Register.Named_Shelves.Insert (Name, T);
+               end if;
+            end if;
+            Transfer :=
+              Tagatha.Transfers.Temporary_Operand (T);
+         end;
+      else
+         Transfer := Transfers.To_Transfer (Operand, Size);
+      end if;
+      Record_Pop (Register, Size, Transfer);
    end Record_Pop;
 
    ----------------
@@ -548,11 +586,14 @@ package body Tagatha.Registry is
                      & Tagatha.Transfers.Show (Transfers (Transfers'First)));
                end if;
             end if;
-            Tagatha.Transfers.Set_Size
-              (Transfers (Transfers'Last), Size);
-            Tagatha.Transfers.Set_Label
-              (Transfers (Transfers'First), Element.Label);
-            Register.Insert (Element.Transfer_Index, Transfers);
+            if Transfers'Length > 0 then
+               Tagatha.Transfers.Set_Size
+                 (Transfers (Transfers'Last), Size);
+               Tagatha.Transfers.Set_Label
+                 (Transfers (Transfers'First), Element.Label);
+               Register.Insert (Element.Transfer_Index, Transfers);
+            end if;
+
             Register.Stack.Delete (Register.Stack.Last_Index);
          end;
       end if;
@@ -567,6 +608,7 @@ package body Tagatha.Registry is
                           Operand  : in     Tagatha.Operands.Tagatha_Operand)
    is
       use Tagatha.Expressions;
+      Transfer : Tagatha.Transfers.Transfer_Operand;
    begin
       Register.Push_Index := Register.Push_Index + 1;
       if Trace_Registry then
@@ -575,9 +617,87 @@ package body Tagatha.Registry is
             & Tagatha.Labels.Show_All (Register.Current_Label, 'L')
             & Tagatha.Operands.Show (Operand));
       end if;
+      if Tagatha.Operands.Is_Shelf (Operand) then
+         declare
+            Name : constant String := Tagatha.Operands.Get_Name (Operand);
+         begin
+            if Name = "_" then
+               Transfer :=
+                 Tagatha.Transfers.Temporary_Operand (Register.Default_Shelf);
+            else
+               Transfer :=
+                 Tagatha.Transfers.Temporary_Operand
+                   (Register.Named_Shelves.Element (Name));
+            end if;
+         end;
+      else
+         Transfer := Transfers.To_Transfer (Operand, Size);
+      end if;
+
       Register.Push
-        (New_Simple_Expression (Transfers.To_Transfer (Operand, Size)));
+        (New_Simple_Expression (Transfer));
    end Record_Push;
+
+   ------------------
+   -- Record_Store --
+   ------------------
+
+   procedure Record_Store
+     (Register : in out Tagatha_Registry;
+      Size     : in     Tagatha_Size)
+   is
+      T_Address : constant Tagatha.Temporaries.Temporary :=
+                    Tagatha.Temporaries.Next_Temporary
+                      (Register.Temps);
+      T_Value   : constant Tagatha.Temporaries.Temporary :=
+                    Tagatha.Temporaries.Next_Temporary
+                      (Register.Temps);
+      Src_1     : constant Tagatha.Transfers.Transfer_Operand :=
+                    Tagatha.Transfers.Temporary_Operand
+                      (T_Address);
+      Src_2     : constant Tagatha.Transfers.Transfer_Operand :=
+                    Tagatha.Transfers.Temporary_Operand
+                      (T_Value);
+      Dst       : constant Tagatha.Transfers.Transfer_Operand :=
+                    Tagatha.Transfers.Temporary_Operand
+                      (T_Address, Indirect => True);
+   begin
+      Record_Pop (Register, Default_Address_Size, Src_1);
+      Record_Pop (Register, Size, Src_2);
+      Register.Append
+        (Tagatha.Transfers.Simple_Transfer
+           (From => Src_2,
+            To   => Dst));
+      if Trace_Registry then
+         Ada.Text_IO.Put_Line
+           ("Record_Store");
+      end if;
+   end Record_Store;
+
+   -----------------
+   -- Record_Swap --
+   -----------------
+
+   procedure Record_Swap
+     (Register : in out Tagatha_Registry;
+      Size     : in     Tagatha_Size)
+   is
+      pragma Unreferenced (Size);
+      Top : Expression_Record :=
+              Register.Stack.Element
+                (Register.Stack.Last_Index);
+      Penultimate : Expression_Record :=
+                      Register.Stack.Element
+                        (Register.Stack.Last_Index - 1);
+      T : constant Tagatha.Expressions.Expression := Top.Expression;
+   begin
+      Top.Expression := Penultimate.Expression;
+      Penultimate.Expression := T;
+      Register.Stack.Replace_Element
+        (Register.Stack.Last_Index - 1, Top);
+      Register.Stack.Replace_Element
+        (Register.Stack.Last_Index, Penultimate);
+   end Record_Swap;
 
    -----------
    -- Start --

@@ -120,6 +120,34 @@ package body Tagatha.Expressions is
       return Expression_Transfers (Expr, Dst);
    end Get_Transfers;
 
+   -------------------
+   -- Get_Transfers --
+   -------------------
+
+   function Get_Transfers
+     (Temps   : Tagatha.Temporaries.Temporary_Source;
+      Address : Expression;
+      Value   : Expression)
+      return Tagatha.Transfers.Array_Of_Transfers
+   is
+      use Tagatha.Transfers;
+      T_Address : constant Transfers.Transfer_Operand :=
+                    Transfers.Temporary_Operand
+                      (Tagatha.Temporaries.Next_Temporary (Temps));
+      T_Value   : constant Transfers.Transfer_Operand :=
+                    Transfers.Temporary_Operand
+                      (Tagatha.Temporaries.Next_Temporary (Temps));
+      Addr_Ts   : constant Tagatha.Transfers.Array_Of_Transfers :=
+                    Get_Transfers (Temps, Address, T_Address);
+      Value_Ts  : constant Tagatha.Transfers.Array_Of_Transfers :=
+                    Get_Transfers (Temps, Value, T_Value);
+   begin
+      return Addr_Ts
+        & Value_Ts
+        & Tagatha.Transfers.Simple_Transfer
+        (T_Value, T_Address, To_Address => True);
+   end Get_Transfers;
+
    -----------
    -- Image --
    -----------

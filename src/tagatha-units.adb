@@ -191,13 +191,25 @@ package body Tagatha.Units is
    -- Copy_Item --
    ---------------
 
-   procedure Copy_Item
+   procedure Copy_From
      (Unit : in out Tagatha_Unit;
       Size : Tagatha_Size := Default_Size)
    is
    begin
-      Append (Unit, Commands.Copy_Item (Size));
-   end Copy_Item;
+      Append (Unit, Commands.Copy_Item (Tagatha.Commands.From, Size));
+   end Copy_From;
+
+   -------------
+   -- Copy_To --
+   -------------
+
+   procedure Copy_To
+     (Unit : in out Tagatha_Unit;
+      Size : Tagatha_Size := Default_Size)
+   is
+   begin
+      Append (Unit, Commands.Copy_Item (Tagatha.Commands.To, Size));
+   end Copy_To;
 
    -----------------
    -- Create_Unit --
@@ -375,10 +387,7 @@ package body Tagatha.Units is
 
    procedure End_Copy
      (Unit : in out Tagatha_Unit)
-   is
-   begin
-      Append (Unit, Commands.End_Copy);
-   end End_Copy;
+   is null;
 
    -----------------
    -- End_Routine --
@@ -965,6 +974,13 @@ package body Tagatha.Units is
       end if;
    end Source_Position;
 
+   procedure Start_Copy
+     (Unit      : in out Tagatha_Unit)
+   is
+   begin
+      Append (Unit, Commands.Start_Iteration);
+   end Start_Copy;
+
    -----------
    -- Store --
    -----------
@@ -985,28 +1001,6 @@ package body Tagatha.Units is
    begin
       Append (Unit, Commands.Swap);
    end Swap;
-
-   ---------------------
-   -- Start_Copy_From --
-   ---------------------
-
-   procedure Start_Copy_From
-     (Unit      : in out Tagatha_Unit)
-   is
-   begin
-      Append (Unit, Commands.Start_Copy (Commands.From));
-   end Start_Copy_From;
-
-   -------------------
-   -- Start_Copy_To --
-   -------------------
-
-   procedure Start_Copy_To
-     (Unit      : in out Tagatha_Unit)
-   is
-   begin
-      Append (Unit, Commands.Start_Copy (Commands.To));
-   end Start_Copy_To;
 
    ---------------------
    -- Unit_Label_Name --

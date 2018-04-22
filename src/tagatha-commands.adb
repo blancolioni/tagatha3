@@ -15,6 +15,24 @@ package body Tagatha.Commands is
                                          Target, False);
    end Call;
 
+   ---------------
+   -- Copy_Item --
+   ---------------
+
+   function Copy_Item
+     (Direction  : Copy_Direction;
+      Size       : Tagatha_Size := Default_Size)
+      return Tagatha_Command
+   is
+   begin
+      case Direction is
+         when From =>
+            return Push (Tagatha.Operands.Iterator_Copy_Operand, Size);
+         when To =>
+            return Pop (Tagatha.Operands.Iterator_Copy_Operand, Size);
+      end case;
+   end Copy_Item;
+
    ----------
    -- Drop --
    ----------
@@ -211,42 +229,23 @@ package body Tagatha.Commands is
                                          S_Push, Operand);
    end Push;
 
-   ----------------------
-   -- Register_Command --
-   ----------------------
+   -------------
+   -- Restore --
+   -------------
 
---     procedure Register_Command
---       (Register  : in out Tagatha.Registry.Tagatha_Registry;
---        Command   : in     Tagatha_Command)
---     is
---     begin
---        Register.Record_Label (Get_Label (Command));
---        case Command.Instruction is
---           when T_Stack =>
---              case Command.Stack_Op is
---                 when S_Push =>
---                    Register.Record_Push (Command.Size, Command.Operand);
---                 when S_Pop =>
---                    Register.Record_Pop (Command.Size, Command.Operand);
---                 when S_Drop =>
---                    Register.Record_Drop (Command.Size);
---              end case;
---           when T_Operate =>
---              Register.Record_Operation (Command.Operator);
---           when T_Call =>
---              Register.Record_Call (Command.Subroutine);
---           when T_Loop =>
---              Register.Record_Loop (Command.Limit,
---                                    Command.Counter, Command.End_Label);
---           when T_Jump =>
---              Register.Record_Jump (Command.Condition,
---                                    Command.Destination);
---           when T_Native =>
---              Register.Record_Native_Operation
---                (Ada.Strings.Unbounded.To_String (Command.Native_Name),
---                 Command.Input_Words, Command.Output_Words);
---        end case;
---     end Register_Command;
+   function Restore return Tagatha_Command is
+   begin
+      return Push (Tagatha.Operands.Shelf_Operand ("_"));
+   end Restore;
+
+   ----------
+   -- Save --
+   ----------
+
+   function Save return Tagatha_Command is
+   begin
+      return Pop (Tagatha.Operands.Shelf_Operand ("_"));
+   end Save;
 
    ---------------
    -- Set_Label --
@@ -291,7 +290,13 @@ package body Tagatha.Commands is
                                  "pop  " &
                                  Tagatha.Operands.Show (Command.Operand),
                               when S_Drop =>
-                                 "drop"),
+                                 "drop",
+                              when S_Duplicate =>
+                                 "dup",
+                              when S_Store     =>
+                                 "store",
+                              when S_Swap      =>
+                                 "swap"),
                            when T_Operate =>
                               Command.Operator'Img,
                            when T_Call    =>
@@ -317,5 +322,32 @@ package body Tagatha.Commands is
       end loop;
       return To_String (Label_Text) & Command_Text;
    end Show;
+
+   -------------------
+   -- Stack_Command --
+   -------------------
+
+   function Stack_Command
+     (Op      : Stack_Operation;
+      Size    : Tagatha_Size := Default_Size;
+      Operand : Tagatha.Operands.Tagatha_Operand :=
+        Tagatha.Operands.Null_Operand)
+      return Tagatha_Command
+   is
+   begin
+      return new Tagatha_Command_Record'(T_Stack, Size,
+                                         Tagatha.Labels.No_Label,
+                                         0, 0, False,
+                                         Op, Operand);
+   end Stack_Command;
+
+   ---------------------
+   -- Start_Iteration --
+   ---------------------
+
+   function Start_Iteration return Tagatha_Command is
+   begin
+      return Pop (Tagatha.Operands.Iterator_New_Operand);
+   end Start_Iteration;
 
 end Tagatha.Commands;

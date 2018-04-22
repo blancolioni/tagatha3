@@ -28,13 +28,12 @@ package Tagatha.Commands is
 
    type Copy_Direction is (From, To);
 
-   function Start_Copy (Direction : Copy_Direction) return Tagatha_Command;
+   function Start_Iteration return Tagatha_Command;
 
    function Copy_Item
-     (Size       : Tagatha_Size := Default_Size)
+     (Direction  : Copy_Direction;
+      Size       : Tagatha_Size := Default_Size)
       return Tagatha_Command;
-
-   function End_Copy return Tagatha_Command;
 
    function Operate (Op   : Tagatha_Operator;
                      Neg  : Boolean           := False;
@@ -132,8 +131,10 @@ private
    type Tagatha_Command is access Tagatha_Command_Record;
 
    function Stack_Command
-     (Op   : Stack_Operation;
-      Size : Tagatha_Size := Default_Size)
+     (Op      : Stack_Operation;
+      Size    : Tagatha_Size := Default_Size;
+      Operand : Tagatha.Operands.Tagatha_Operand :=
+        Tagatha.Operands.Null_Operand)
       return Tagatha_Command;
 
    function Get_Command_Operator (Command : Tagatha_Command)
