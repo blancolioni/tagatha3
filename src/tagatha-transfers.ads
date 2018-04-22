@@ -40,6 +40,9 @@ package Tagatha.Transfers is
                           return Transfer_Operand;
 
    function Result_Operand return Transfer_Operand;
+   function Return_Operand return Transfer_Operand;
+   function Iterator_New_Operand return Transfer_Operand;
+   function Iterator_Copy_Operand return Transfer_Operand;
 
    function External_Operand
      (Name      : String;
@@ -52,18 +55,22 @@ package Tagatha.Transfers is
      (Text      : String)
       return Transfer_Operand;
 
-   function To_Transfer (Op   : Tagatha.Operands.Tagatha_Operand)
-                        return Transfer_Operand;
+   function To_Transfer
+     (Op    : Tagatha.Operands.Tagatha_Operand)
+      return Transfer_Operand;
 
-   function To_Transfer (Op   : Tagatha.Operands.Tagatha_Operand;
-                         Size : Tagatha_Size)
-                        return Transfer_Operand;
+   function To_Transfer
+     (Op   : Tagatha.Operands.Tagatha_Operand;
+      Size  : Tagatha_Size)
+      return Transfer_Operand;
 
    function Label_Operand (Label         : Tagatha.Labels.Tagatha_Label)
                           return Transfer_Operand;
 
-   function Temporary_Operand (Temp          : Tagatha.Temporaries.Temporary)
-                              return Transfer_Operand;
+   function Temporary_Operand
+     (Temp       : Tagatha.Temporaries.Temporary;
+      Indirect   : Boolean := False)
+      return Transfer_Operand;
 
    function Stack_Operand return Transfer_Operand;
 
@@ -79,7 +86,8 @@ package Tagatha.Transfers is
    function Get_Size (Item : in Transfer_Operand) return Tagatha_Size;
 
    function Simple_Transfer (From          : Transfer_Operand;
-                             To            : Transfer_Operand)
+                             To            : Transfer_Operand;
+                             To_Address    : Boolean := False)
                             return Transfer;
 
    function Operation_Transfer (Src_1         : Transfer_Operand;
@@ -131,6 +139,7 @@ package Tagatha.Transfers is
    function Is_Argument (Item : Transfer_Operand) return Boolean;
    function Is_Local    (Item : Transfer_Operand) return Boolean;
    function Is_Result   (Item : Transfer_Operand) return Boolean;
+   function Is_Return   (Item : Transfer_Operand) return Boolean;
    function Is_Stack    (Item : Transfer_Operand) return Boolean;
    function Is_External (Item : Transfer_Operand) return Boolean;
    function Is_Immediate (Item : Transfer_Operand) return Boolean;
@@ -145,6 +154,9 @@ package Tagatha.Transfers is
    function Get_Temporary
      (Item : Transfer_Operand)
       return Tagatha.Temporaries.Temporary;
+
+   function Is_Iterator_New (Item : Transfer_Operand) return Boolean;
+   function Is_Iterator_Copy (Item : Transfer_Operand) return Boolean;
 
    function External_Name (Item : Transfer_Operand) return String;
 
@@ -216,7 +228,9 @@ private
 
    type Transfer_Operand_Type is
      (T_No_Operand, T_Stack, T_Temporary,
-      T_Local, T_Argument, T_Result, T_Immediate, T_External,
+      T_Local, T_Argument, T_Result, T_Return,
+      T_Immediate, T_External,
+      T_Iterator,
       T_Condition, T_Text);
 
    type Bit_Slice is
@@ -254,10 +268,13 @@ private
                Loc_Offset : Local_Offset;
             when T_Argument =>
                Arg_Offset : Argument_Offset;
-            when T_Result =>
+            when T_Result | T_Return =>
                null;
             when T_Immediate =>
                Value      : Tagatha.Constants.Tagatha_Constant;
+            when T_Iterator =>
+               New_Iterator  : Boolean;
+               Copy_Iterator : Boolean;
             when T_External =>
                External_Name : Ada.Strings.Unbounded.Unbounded_String;
                External_Imm  : Boolean;
@@ -276,6 +293,12 @@ private
 
    function Has_Postincrement (Item : Transfer_Operand) return Boolean
    is (Item.Op = T_External and then Item.External_Postinc);
+
+   function Is_Iterator_New (Item : Transfer_Operand) return Boolean
+   is (Item.Op = T_Iterator and then Item.New_Iterator);
+
+   function Is_Iterator_Copy (Item : Transfer_Operand) return Boolean
+   is (Item.Op = T_Iterator and then Item.Copy_Iterator);
 
    type Array_Of_Operands is array (Positive range <>) of Transfer_Operand;
 
@@ -302,6 +325,7 @@ private
          Src_2             : Transfer_Operand;
          Dst               : Transfer_Operand;
          Op                : Tagatha_Operator;
+         To_Address        : Boolean;
       end record;
 
    function Is_Dereferenced (Item : Transfer_Operand) return Boolean

@@ -89,7 +89,15 @@ package body Tagatha.Operands is
 
    function Get_Name (Item : Tagatha_Operand) return String is
    begin
-      return Ada.Strings.Unbounded.To_String (Item.Ext_Label);
+      case Item.Operand_Type is
+         when O_External =>
+            return Ada.Strings.Unbounded.To_String (Item.Ext_Label);
+         when O_Shelf =>
+            return Ada.Strings.Unbounded.To_String (Item.Shelf_Name);
+         when others =>
+            raise Constraint_Error with
+              "Get_Name called on " & Show (Item);
+      end case;
    end Get_Name;
 
    --------------
@@ -184,6 +192,26 @@ package body Tagatha.Operands is
       return Item.Operand_Type = O_Unknown;
    end Is_Unknown;
 
+   ---------------------------
+   -- Iterator_Copy_Operand --
+   ---------------------------
+
+   function Iterator_Copy_Operand return Tagatha_Operand is
+   begin
+      return new Tagatha_Operand_Record'
+        (Operand_Type => O_Iterator, Dereference => False, Copy => True);
+   end Iterator_Copy_Operand;
+
+   --------------------------
+   -- Iterator_New_Operand --
+   --------------------------
+
+   function Iterator_New_Operand return Tagatha_Operand is
+   begin
+      return new Tagatha_Operand_Record'
+        (Operand_Type => O_Iterator, Dereference => False, Copy => False);
+   end Iterator_New_Operand;
+
    -------------------
    -- Label_Operand --
    -------------------
@@ -258,6 +286,18 @@ package body Tagatha.Operands is
         (Operand_Type => O_Return, Dereference => False);
    end Return_Operand;
 
+   -------------------
+   -- Shelf_Operand --
+   -------------------
+
+   function Shelf_Operand (Name : String) return Tagatha_Operand is
+   begin
+      return new Tagatha_Operand_Record'
+        (Operand_Type  => O_Shelf,
+         Dereference   => False,
+         Shelf_Name    => Ada.Strings.Unbounded.To_Unbounded_String (Name));
+   end Shelf_Operand;
+
    ----------
    -- Show --
    ----------
@@ -281,10 +321,25 @@ package body Tagatha.Operands is
             end if;
          when O_Local =>
             return "loc" & Local_Offset'Image (-Operand.Loc_Offset);
+         when O_Temporary =>
+            return Tagatha.Temporaries.Show (Operand.Temporary);
          when O_Result =>
             return "result";
          when O_Return =>
             return "return";
+         when O_Iterator =>
+            return "iterator";
+         when O_Shelf =>
+            declare
+               Name : constant String :=
+                        Ada.Strings.Unbounded.To_String (Operand.Shelf_Name);
+            begin
+               if Name = "_" then
+                  return "shelf";
+               else
+                  return "shelf-" & Name;
+               end if;
+            end;
          when O_Text =>
             return """" & Ada.Strings.Unbounded.To_String (Operand.Text)
               & """";
@@ -292,6 +347,19 @@ package body Tagatha.Operands is
             return "?";
       end case;
    end Show;
+
+   -----------------------
+   -- Temporary_Operand --
+   -----------------------
+
+   function Temporary_Operand
+     (T : Tagatha.Temporaries.Temporary)
+      return Tagatha_Operand
+   is
+   begin
+      return new Tagatha_Operand_Record'
+        (O_Temporary, False, T);
+   end Temporary_Operand;
 
    ------------------
    -- Text_Operand --

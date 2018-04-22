@@ -691,7 +691,7 @@ package body Tagatha.Code.Pdp32 is
                return Deref_Ampersand ("-" & Image (Addr) & "(fp)");
             end if;
          end;
-      elsif Is_Result (Item) then
+      elsif Is_Result (Item) or else Is_Return (Item) then
          return Deref_Paren (Result_Register);
       elsif Is_Stack (Item) then
          if Source then
@@ -715,6 +715,10 @@ package body Tagatha.Code.Pdp32 is
             R (1) := 'r';
             return Deref_Paren (R);
          end;
+      elsif Is_Iterator_New (Item) then
+         return "agg";
+      elsif Is_Iterator_Copy (Item) then
+         return "(agg)+";
       elsif Is_Text (Item) then
          declare
             function Escape (S : String) return String;

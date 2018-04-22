@@ -1,4 +1,5 @@
 private with Ada.Containers.Vectors;
+private with WL.String_Maps;
 
 private with Tagatha.Expressions;
 private with Tagatha.Temporaries;
@@ -26,6 +27,17 @@ package Tagatha.Registry is
 
    procedure Record_Drop (Register : in out Tagatha_Registry;
                           Size     : in     Tagatha_Size);
+
+   procedure Record_Duplicate
+     (Register : in out Tagatha_Registry;
+      Size     : in     Tagatha_Size);
+
+   procedure Record_Swap (Register : in out Tagatha_Registry;
+                          Size     : in     Tagatha_Size);
+
+   procedure Record_Store
+     (Register : in out Tagatha_Registry;
+      Size     : in     Tagatha_Size);
 
    procedure Record_Operation (Register : in out Tagatha_Registry;
                                Operator : in     Tagatha_Operator);
@@ -82,6 +94,10 @@ private
    package Transfer_Vectors is
      new Ada.Containers.Vectors (Positive, Transfer_Record);
 
+   package Shelf_Maps is
+     new WL.String_Maps (Tagatha.Temporaries.Temporary,
+                         Tagatha.Temporaries."=");
+
    type Tagatha_Registry is tagged
       record
          Frame_Size    : Natural;
@@ -90,6 +106,8 @@ private
          Transfers     : Transfer_Vectors.Vector;
          Temps         : Tagatha.Temporaries.Temporary_Source;
          Current_Label : Tagatha.Labels.Tagatha_Label;
+         Default_Shelf : Tagatha.Temporaries.Temporary;
+         Named_Shelves : Shelf_Maps.Map;
          Last_Line     : Natural := 0;
          Last_Column   : Natural := 0;
          Push_Index    : Natural := 0;

@@ -85,6 +85,7 @@ package body Tagatha.Transfers is
               Src_1             => No_Operand,
               Src_2             => No_Operand,
               Dst               => No_Operand,
+              To_Address        => False,
               Op                => Op_Nop);
    end Call;
 
@@ -142,6 +143,7 @@ package body Tagatha.Transfers is
               Src_1             => No_Operand,
               Src_2             => No_Operand,
               Dst               => No_Operand,
+              To_Address        => False,
               Op                => Op_Nop);
    end Control_Transfer;
 
@@ -574,6 +576,15 @@ package body Tagatha.Transfers is
    end Is_Result;
 
    ---------------
+   -- Is_Return --
+   ---------------
+
+   function Is_Return   (Item : Transfer_Operand) return Boolean is
+   begin
+      return Item.Op = T_Return;
+   end Is_Return;
+
+   ---------------
    -- Is_Simple --
    ---------------
 
@@ -608,6 +619,26 @@ package body Tagatha.Transfers is
    begin
       return Item.Op = T_Text;
    end Is_Text;
+
+   ---------------------------
+   -- Iterator_Copy_Operand --
+   ---------------------------
+
+   function Iterator_Copy_Operand return Transfer_Operand is
+   begin
+      return (T_Iterator, No_Modification,
+              New_Iterator => False, Copy_Iterator => True);
+   end Iterator_Copy_Operand;
+
+   --------------------------
+   -- Iterator_New_Operand --
+   --------------------------
+
+   function Iterator_New_Operand return Transfer_Operand is
+   begin
+      return (T_Iterator, No_Modification,
+              New_Iterator => True, Copy_Iterator => False);
+   end Iterator_New_Operand;
 
    -------------------
    -- Label_Operand --
@@ -657,6 +688,7 @@ package body Tagatha.Transfers is
               Src_1             => No_Operand,
               Src_2             => No_Operand,
               Dst               => No_Operand,
+              To_Address        => False,
               Op                => Op_Nop);
    end Native_Transfer;
 
@@ -696,6 +728,7 @@ package body Tagatha.Transfers is
               Src_1             => Src_1,
               Src_2             => Src_2,
               Dst               => To,
+              To_Address        => False,
               Op                => Op);
    end Operation_Transfer;
 
@@ -804,6 +837,15 @@ package body Tagatha.Transfers is
       return (T_Result, No_Modification);
    end Result_Operand;
 
+   --------------------
+   -- Return_Operand --
+   --------------------
+
+   function Return_Operand return Transfer_Operand is
+   begin
+      return (T_Return, No_Modification);
+   end Return_Operand;
+
    ------------------
    -- Same_Operand --
    ------------------
@@ -815,6 +857,8 @@ package body Tagatha.Transfers is
       use type Tagatha.Temporaries.Temporary;
    begin
       if Left.Op /= Right.Op then
+         return False;
+      elsif Left.Modifiers /= Right.Modifiers then
          return False;
       else
          case Left.Op is
@@ -832,8 +876,12 @@ package body Tagatha.Transfers is
                return Left.Arg_Offset = Right.Arg_Offset;
             when T_Result =>
                return True;
+            when T_Return =>
+               return True;
             when T_Immediate =>
                return Left.Value = Right.Value;
+            when T_Iterator =>
+               return False;
             when T_External =>
                return Left.External_Name = Right.External_Name
                  and then Left.External_Imm = Right.External_Imm;
@@ -883,6 +931,10 @@ package body Tagatha.Transfers is
       Item.Modifiers.Have_Size := True;
       Item.Modifiers.Size     := Size;
    end Set_Size;
+
+   --------------
+   -- Set_Size --
+   --------------
 
    procedure Set_Size (Item : in out Transfer;
                        Size : in Tagatha_Size)
@@ -974,6 +1026,16 @@ package body Tagatha.Transfers is
               Integer'Image (-1 * Integer (Item.Arg_Offset));
          when T_Result =>
             return "result";
+         when T_Return =>
+            return "return";
+         when T_Iterator =>
+            if Item.New_Iterator then
+               return "new iterator";
+            elsif Item.Copy_Iterator then
+               return "(iterator)+";
+            else
+               return "iterator";
+            end if;
          when T_Local =>
             return "frm" &
             Integer'Image (-1 * Integer (Item.Loc_Offset));
@@ -1003,8 +1065,9 @@ package body Tagatha.Transfers is
    -- Simple_Transfer --
    ---------------------
 
-   function Simple_Transfer (From : Transfer_Operand;
-                             To   : Transfer_Operand)
+   function Simple_Transfer (From          : Transfer_Operand;
+                             To            : Transfer_Operand;
+                             To_Address    : Boolean := False)
                              return Transfer
    is
    begin
@@ -1022,6 +1085,7 @@ package body Tagatha.Transfers is
               Src_1             => From,
               Src_2             => No_Operand,
               Dst               => To,
+              To_Address        => To_Address,
               Op                => Op_Nop);
    end Simple_Transfer;
 
@@ -1064,15 +1128,19 @@ package body Tagatha.Transfers is
       return (T_Stack, No_Modification);
    end Stack_Operand;
 
-   ----------------------
-   -- Temprary_Operand --
-   ----------------------
+   -----------------------
+   -- Temporary_Operand --
+   -----------------------
 
-   function Temporary_Operand (Temp          : Tagatha.Temporaries.Temporary)
-                               return Transfer_Operand
+   function Temporary_Operand
+     (Temp       : Tagatha.Temporaries.Temporary;
+      Indirect   : Boolean := False)
+      return Transfer_Operand
    is
    begin
-      return (T_Temporary, No_Modification, Temp);
+      return (T_Temporary,
+              (No_Modification with delta Dereferenced => Indirect),
+              Temp);
    end Temporary_Operand;
 
    ------------------
@@ -1112,6 +1180,7 @@ package body Tagatha.Transfers is
               Src_1             => Src_1,
               Src_2             => Src_2,
               Dst               => (T_Temporary, No_Modification, Dst),
+              To_Address        => False,
               Op                => Op);
    end To_Temporary;
 
@@ -1119,8 +1188,9 @@ package body Tagatha.Transfers is
    -- To_Transfer --
    -----------------
 
-   function To_Transfer (Op   : Tagatha.Operands.Tagatha_Operand)
-                        return Transfer_Operand
+   function To_Transfer
+     (Op    : Tagatha.Operands.Tagatha_Operand)
+      return Transfer_Operand
    is
       use Tagatha.Operands;
       Transfer : Transfer_Operand;
@@ -1133,11 +1203,19 @@ package body Tagatha.Transfers is
          Transfer := Local_Operand (Get_Local_Offset (Op));
       elsif Is_Result (Op) then
          Transfer := Result_Operand;
+      elsif Is_Return (Op) then
+         Transfer := Return_Operand;
+      elsif Is_Temporary (Op) then
+         Transfer := Temporary_Operand (Get_Temporary (Op));
       elsif Is_External (Op) then
          Transfer :=
            External_Operand
              (Get_Name (Op), Is_Immediate (Op),
               Has_Predecrement (Op), Has_Postincrement (Op));
+      elsif Is_Iterator_New (Op) then
+         Transfer := Iterator_New_Operand;
+      elsif Is_Iterator_Copy (Op) then
+         Transfer := Iterator_Copy_Operand;
       elsif Is_Unknown (Op) then
          Transfer := No_Operand;
       elsif Is_Text (Op) then

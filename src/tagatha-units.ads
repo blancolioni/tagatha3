@@ -207,21 +207,22 @@ package Tagatha.Units is
    procedure Save_Top (Unit : in out Tagatha_Unit);
    procedure Restore_Top (Unit : in out Tagatha_Unit);
 
-   procedure Start_Copy_From
+   procedure Start_Copy
      (Unit      : in out Tagatha_Unit);
-
-   procedure Start_Copy_To
-     (Unit      : in out Tagatha_Unit);
-
    --  Start a bulk copy operation.  The address on top of the stack
-   --  is either the source (if Direction = From) or the target
-   --  (if Direction = To) of the copy.
+   --  is the address of the beginning of the block.
 
-   procedure Copy_Item
+   procedure Copy_To
      (Unit : in out Tagatha_Unit;
       Size : Tagatha_Size := Default_Size);
-   --  Copy an item of the given size using the current copy parameters
-   --  to or from the top of the stack
+   --  Copy an item of the given size from stack top to the current
+   --  bulk copy address.  Increment the address.
+
+   procedure Copy_From
+     (Unit : in out Tagatha_Unit;
+      Size : Tagatha_Size := Default_Size);
+   --  Push an item of the given size from the current bulk copy address.
+   --  Increment the address.
 
    procedure End_Copy
      (Unit : in out Tagatha_Unit);
