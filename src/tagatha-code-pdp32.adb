@@ -421,6 +421,14 @@ package body Tagatha.Code.Pdp32 is
          end if;
       elsif Is_Condition_Operand (Dest) then
          Instruction (Asm, "tst", Transfer_Size, To_Src (Source));
+      elsif (Is_Constant (Source) or else Is_Immediate (Source))
+        and then Is_Dereferenced (Source)
+      then
+         Instruction (Asm, "mov", Transfer_Size,
+                      To_Src (Source),
+                      "r0");
+         Instruction (Asm, "mov", Transfer_Size,
+                      "r0", To_Dst (Dest));
       else
          Instruction (Asm, "mov", Transfer_Size,
                       To_Src (Source),
@@ -527,9 +535,20 @@ package body Tagatha.Code.Pdp32 is
       end if;
 
       if Op = Op_Dereference then
-         Instruction (Asm, "mov", Get_Size (Dest),
-                      To_Dereferenced_String (Source),
-                      To_Dst (Dest));
+         declare
+            Src : constant String := To_Src (Source);
+         begin
+            if Src (Src'First) = '#' then
+               Instruction (Asm, "mov", Get_Size (Dest),
+                            Src, "r0");
+               Instruction (Asm, "mov", Get_Size (Dest),
+                            "(r0)", To_Dst (Dest));
+            else
+               Instruction (Asm, "mov", Get_Size (Dest),
+                            To_Dereferenced_String (Source),
+                            To_Dst (Dest));
+            end if;
+         end;
          return;
       end if;
 
@@ -544,6 +563,13 @@ package body Tagatha.Code.Pdp32 is
          begin
             Instruction (Asm, Mnemonic, Get_Size (Source), Src);
          end;
+      elsif (Is_Constant (Source) or else Is_Immediate (Source))
+        and then Is_Dereferenced (Source)
+      then
+         Instruction (Asm, "mov", Get_Size (Dest),
+                      To_Src (Source), "r0");
+         Instruction (Asm, Get_Mnemonic (Op),
+                      Get_Size (Dest), "(r0)", To_Dst (Dest));
       else
          declare
             Src      : constant String := To_Src (Source);
@@ -665,7 +691,7 @@ package body Tagatha.Code.Pdp32 is
 
    begin
       if Is_Constant (Item) then
-         return Deref_Ampersand ("#" & To_String (Get_Value (Item), Item));
+         return "#" & To_String (Get_Value (Item), Item);
       elsif Is_Argument (Item) or else Is_Local (Item) then
          declare
             Addr : Tagatha_Integer;
@@ -701,7 +727,7 @@ package body Tagatha.Code.Pdp32 is
          end if;
       elsif Is_External (Item) then
          if Is_Immediate (Item) then
-            return Deref_Ampersand ("#" & External_Name (Item));
+            return "#" & External_Name (Item);
          else
             return Predec & Deref_Paren (External_Name (Item)) & Postinc;
          end if;
