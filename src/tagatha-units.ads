@@ -123,10 +123,6 @@ package Tagatha.Units is
      (Unit    : in out Tagatha_Unit;
       Size    : in     Tagatha_Size := Default_Integer_Size);
 
-   procedure Push_Return
-     (Unit    : in out Tagatha_Unit;
-      Size    : in     Tagatha_Size := Default_Integer_Size);
-
    --  procedure Push_Label_Address (Unit       : in out Tagatha_Unit;
    --                                Label_Name : String);
 

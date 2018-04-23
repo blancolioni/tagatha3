@@ -862,14 +862,14 @@ package body Tagatha.Units is
    -- Push_Return --
    -----------------
 
-   procedure Push_Return
-     (Unit       : in out Tagatha_Unit;
-      Size       : in     Tagatha_Size  := Default_Integer_Size)
-   is
-   begin
-      Append (Unit,
-              Commands.Push (Operands.Return_Operand, Size));
-   end Push_Return;
+--     procedure Push_Return
+--       (Unit       : in out Tagatha_Unit;
+--        Size       : in     Tagatha_Size  := Default_Integer_Size)
+--     is
+--     begin
+--        Append (Unit,
+--                Commands.Push (Operands.Return_Operand, Size));
+--     end Push_Return;
 
    ---------------
    -- Push_Text --
@@ -1080,9 +1080,11 @@ package body Tagatha.Units is
             Target.Start (File_Assembly_Type'Class (File),
                           Subprogram_Name (Sub), True);
 
-            Target.Begin_Frame (File_Assembly_Type'Class (File),
-                                Sub.Argument_Words,
-                                Sub.Frame_Words);
+            Target.Begin_Frame
+              (File_Assembly_Type'Class (File),
+               Return_Count => Sub.Result_Words,
+               Arg_Count    => Sub.Argument_Words,
+               Local_Count  => Sub.Frame_Words);
 
             for I in 1 .. Sub.Transfers.Last_Index loop
 

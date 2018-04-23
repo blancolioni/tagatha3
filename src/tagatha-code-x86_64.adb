@@ -79,10 +79,12 @@ package body Tagatha.Code.X86_64 is
 
    overriding
    procedure Begin_Frame (T           : in out X86_64_Translator;
-                          Asm  : in out Assembly'Class;
+                          Asm         : in out Assembly'Class;
+                          Return_Count : in Natural;
                           Arg_Count   : in     Natural;
-                          Local_Count : in     Natural)
+                          Local_Count  : in     Natural)
    is
+      pragma Unreferenced (Return_Count);
       Arg_Reg : constant array (1 .. 6) of String (1 .. 3) :=
         ("edi", "esi", "edx", "ecx", "r8d", "r9d");
    begin
