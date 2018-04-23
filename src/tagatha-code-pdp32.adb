@@ -9,28 +9,30 @@ with Tagatha.Temporaries;
 
 package body Tagatha.Code.Pdp32 is
 
-   Result_Register : constant String := "r0";
-
    function To_String (Cond    : Tagatha_Condition;
                        Negated : Boolean)
                       return String;
 
-   procedure Move (Asm       : in out Assembly'Class;
-                   Source    : in     Tagatha.Transfers.Transfer_Operand;
-                   Dest      : in     Tagatha.Transfers.Transfer_Operand);
+   procedure Move (Translator : Pdp32_Translator'Class;
+                   Asm        : in out Assembly'Class;
+                   Source     : in     Tagatha.Transfers.Transfer_Operand;
+                   Dest       : in     Tagatha.Transfers.Transfer_Operand);
 
-   procedure Instruction (Asm      : in out Assembly'Class;
+   procedure Instruction (Translator : Pdp32_Translator'Class;
+                          Asm        : in out Assembly'Class;
                           Mnemonic : in     String;
                           Size     : in     Tagatha_Size;
                           Dest     : in     String);
 
-   procedure Instruction (Asm      : in out Assembly'Class;
+   procedure Instruction (Translator : Pdp32_Translator'Class;
+                          Asm        : in out Assembly'Class;
                           Mnemonic : in     String;
                           Size     : in     Tagatha_Size;
                           Source   : in     String;
                           Dest     : in     String);
 
-   procedure Instruction (Asm      : in out Assembly'Class;
+   procedure Instruction (Translator : Pdp32_Translator'Class;
+                          Asm        : in out Assembly'Class;
                           Mnemonic : in     String;
                           Size     : in     Tagatha_Size;
                           Source_1 : in     String;
@@ -40,50 +42,58 @@ package body Tagatha.Code.Pdp32 is
    function Get_Mnemonic (Op : Tagatha_Operator) return String;
    function Get_Reversed (Op : Tagatha_Operator) return Boolean;
 
-   function To_String
-     (Item : Tagatha.Transfers.Transfer_Operand;
-      Source : Boolean)
-      return String;
-
-   function To_Src (Item : Tagatha.Transfers.Transfer_Operand) return String
-   is (To_String (Item, True));
-
-   function To_Dst (Item : Tagatha.Transfers.Transfer_Operand) return String
-   is (To_String (Item, False));
-
-   function To_Dereferenced_String (Item : Tagatha.Transfers.Transfer_Operand)
-                                   return String;
-
    function To_Suffix
      (Size : Tagatha_Size)
       return String;
 
    procedure Operate
-     (Asm      : in out Assembly'Class;
+     (Translator : Pdp32_Translator'Class;
+      Asm        : in out Assembly'Class;
       Op       : in     Tagatha_Operator;
       Source   : in     Tagatha.Transfers.Transfer_Operand;
       Dest     : in     Tagatha.Transfers.Transfer_Operand);
 
    procedure Operate
-     (Asm      : in out Assembly'Class;
+     (Translator : Pdp32_Translator'Class;
+      Asm        : in out Assembly'Class;
       Op       : in     Tagatha_Operator;
       Source_1 : in     Tagatha.Transfers.Transfer_Operand;
       Source_2 : in     Tagatha.Transfers.Transfer_Operand;
       Dest     : in     Tagatha.Transfers.Transfer_Operand);
 
    procedure Operate
-     (Asm      : in out Assembly'Class;
+     (Translator : Pdp32_Translator'Class;
+      Asm        : in out Assembly'Class;
       Op       : in     One_Argument_Operator;
       Dest     : in     Tagatha.Transfers.Transfer_Operand);
+
+   -----------------
+   -- Begin_Frame --
+   -----------------
+
+   overriding procedure Begin_Frame
+     (T            : in out Pdp32_Translator;
+      Asm          : in out Assembly'Class;
+      Return_Count : in Natural;
+      Arg_Count    : in     Natural;
+      Local_Count  : in     Natural)
+   is
+      pragma Unreferenced (Asm);
+   begin
+      T.Ret_Count := Return_Count;
+      T.Local_Count := Local_Count;
+      T.Arg_Count := Arg_Count;
+      T.Stack_Count.all := 0;
+   end Begin_Frame;
 
    ------------
    -- Encode --
    ------------
 
    overriding procedure Encode
-     (T    : in out Pdp32_Translator;
-      Asm  : in out Assembly'Class;
-      Item : in     Tagatha.Transfers.Transfer)
+     (Translator : in out Pdp32_Translator;
+      Asm        : in out Assembly'Class;
+      Item       : in     Tagatha.Transfers.Transfer)
    is
       use Tagatha.Transfers;
       use type Tagatha.Labels.Tagatha_Label;
@@ -104,9 +114,10 @@ package body Tagatha.Code.Pdp32 is
             Cond : constant Tagatha_Condition := Get_Condition (Item);
             Dest : constant Tagatha_Label     := Get_Destination (Item);
          begin
-            Asm.Put_Line ("    b" & To_String (Cond, T.Reverse_Test) &
+            Asm.Put_Line ("    b"
+                          & To_String (Cond, Translator.Reverse_Test) &
                             " " & Show (Dest, 'L'));
-            T.Reverse_Test := False;
+            Translator.Reverse_Test := False;
          end;
       elsif Is_Call (Item) then
          declare
@@ -114,8 +125,14 @@ package body Tagatha.Code.Pdp32 is
             Dest : constant Tagatha_Label := Get_Destination (Item);
          begin
             if Dest = No_Label then
-               Asm.Put_Line
-                 ("    call 0,(sp)+");
+               Translator.Stack_Count.all :=
+                 Translator.Stack_Count.all - 1;
+               declare
+                  Dest : String := Natural'Image (Translator.Stack_Count.all);
+               begin
+                  Dest (Dest'First) := 'r';
+                  Asm.Put_Line ("    call 0," & Dest);
+               end;
             else
                Asm.Put_Line
                  ("    jsr " & Tagatha.Labels.Show (Dest, 'L'));
@@ -140,40 +157,46 @@ package body Tagatha.Code.Pdp32 is
       elsif Is_Native (Item) then
          Asm.Put_Line ("    " & Get_Native_Text (Item));
       elsif Is_Simple (Item) then
-         Move (Asm, Get_Source (Item), Get_Destination (Item));
+         Translator.Move (Asm, Get_Source (Item), Get_Destination (Item));
       elsif Get_Operator (Item) = Op_Test then
-         Instruction (Asm, "tst",
-                      Get_Size (Get_Source_1 (Item)),
-                      To_String (Get_Source_1 (Item), True));
+         Translator.Instruction
+           (Asm, "tst",
+            Get_Size (Get_Source_1 (Item)),
+            Translator.To_String (Get_Source_1 (Item), True));
       elsif Get_Operator (Item) in One_Argument_Operator then
          if Same_Operand (Get_Source (Item), Get_Destination (Item)) then
-            Operate (Asm, Get_Operator (Item),
-                     Get_Destination (Item));
+            Translator.Operate
+              (Asm, Get_Operator (Item),
+               Get_Destination (Item));
          else
-            Operate (Asm, Get_Operator (Item),
-                     Get_Source (Item), Get_Destination (Item));
+            Translator.Operate
+              (Asm, Get_Operator (Item),
+               Get_Source (Item), Get_Destination (Item));
          end if;
       else
          if Get_Operator (Item) = Op_Compare then
             if Is_Constant_Zero (Get_Source_2 (Item)) then
-               Instruction (Asm, "tst",
+               Translator.Instruction (Asm, "tst",
                             Get_Size (Get_Source_1 (Item)),
-                            To_String (Get_Source_1 (Item), True));
+                            Translator.To_String (Get_Source_1 (Item), True));
             else
-               Operate (Asm, Op_Compare,
-                        Get_Source_1 (Item), Get_Source_2 (Item));
+               Translator.Operate
+                 (Asm, Op_Compare,
+                  Get_Source_1 (Item), Get_Source_2 (Item));
             end if;
             --  T.Reverse_Test := True;
          elsif Same_Operand (Get_Source_2 (Item), Get_Destination (Item))
            and then not Is_Stack (Get_Destination (Item))
          then
-            Operate (Asm, Get_Operator (Item), Get_Source_1 (Item),
-                     Get_Destination (Item));
+            Translator.Operate
+              (Asm, Get_Operator (Item), Get_Source_1 (Item),
+               Get_Destination (Item));
          else
-            Operate (Asm, Get_Operator (Item),
-                     Get_Source_1 (Item),
-                     Get_Source_2 (Item),
-                     Get_Destination (Item));
+            Translator.Operate
+              (Asm, Get_Operator (Item),
+               Get_Source_1 (Item),
+               Get_Source_2 (Item),
+               Get_Destination (Item));
          end if;
       end if;
 
@@ -210,11 +233,13 @@ package body Tagatha.Code.Pdp32 is
    procedure Finish (T   : in out Pdp32_Translator;
                      Asm : in out Assembly'Class)
    is
-      pragma Unreferenced (T);
    begin
-      Asm.Put_Line ("    mov fp, sp");
-      Asm.Put_Line ("    mov (sp)+, fp");
-      Asm.Put_Line ("    rts");
+      Asm.Put_Line ("    return" & T.Ret_Count'Img);
+      T.Ret_Count := 0;
+      T.Arg_Count := 0;
+      T.Local_Count := 0;
+      T.Stack_Count.all := 0;
+
    end Finish;
 
    -----------------------
@@ -310,6 +335,7 @@ package body Tagatha.Code.Pdp32 is
    function Get_Translator return Translator'Class is
       Result : Pdp32_Translator;
    begin
+      Result.Stack_Count := new Natural'(0);
       return Translator'Class (Result);
    end Get_Translator;
 
@@ -317,12 +343,15 @@ package body Tagatha.Code.Pdp32 is
    -- Instruction --
    -----------------
 
-   procedure Instruction (Asm      : in out Assembly'Class;
-                          Mnemonic : in     String;
-                          Size     : in     Tagatha_Size;
-                          Source   : in     String;
-                          Dest     : in     String)
+   procedure Instruction
+     (Translator : Pdp32_Translator'Class;
+      Asm        : in out Assembly'Class;
+      Mnemonic   : in     String;
+      Size       : in     Tagatha_Size;
+      Source     : in     String;
+      Dest       : in     String)
    is
+      pragma Unreferenced (Translator);
    begin
       if Mnemonic = "neg" then
          Asm.Put_Line
@@ -342,13 +371,15 @@ package body Tagatha.Code.Pdp32 is
    -- Instruction --
    -----------------
 
-   procedure Instruction (Asm      : in out Assembly'Class;
+   procedure Instruction (Translator : Pdp32_Translator'Class;
+                          Asm        : in out Assembly'Class;
                           Mnemonic : in     String;
                           Size     : in     Tagatha_Size;
                           Source_1 : in     String;
                           Source_2 : in     String;
                           Dest     : in     String)
    is
+      pragma Unreferenced (Translator);
    begin
       Asm.Put_Line
         ("    " & Mnemonic & To_Suffix (Size)
@@ -359,11 +390,13 @@ package body Tagatha.Code.Pdp32 is
    -- Instruction --
    -----------------
 
-   procedure Instruction (Asm      : in out Assembly'Class;
+   procedure Instruction (Translator : Pdp32_Translator'Class;
+                          Asm        : in out Assembly'Class;
                           Mnemonic : in     String;
                           Size     : in     Tagatha_Size;
-                          Dest     : in     String)
+                          Dest       : in     String)
    is
+      pragma Unreferenced (Translator);
    begin
       Asm.Put_Line ("    " & Mnemonic & To_Suffix (Size) & " " & Dest);
    end Instruction;
@@ -373,11 +406,12 @@ package body Tagatha.Code.Pdp32 is
    -----------
 
    overriding
-   procedure Label (T     : in out Pdp32_Translator;
-                    Asm   : in out Assembly'Class;
-                    Label : in     Tagatha.Labels.Tagatha_Label)
+   procedure Label
+     (Translator : in out Pdp32_Translator;
+      Asm        : in out Assembly'Class;
+      Label      : in     Tagatha.Labels.Tagatha_Label)
    is
-      pragma Unreferenced (T);
+      pragma Unreferenced (Translator);
       use type Tagatha.Labels.Tagatha_Label;
       L : Tagatha.Labels.Tagatha_Label := Label;
 
@@ -397,9 +431,10 @@ package body Tagatha.Code.Pdp32 is
    -- Move --
    ----------
 
-   procedure Move (Asm       : in out Assembly'Class;
-                   Source    : in     Tagatha.Transfers.Transfer_Operand;
-                   Dest      : in     Tagatha.Transfers.Transfer_Operand)
+   procedure Move (Translator : Pdp32_Translator'Class;
+                   Asm        : in out Assembly'Class;
+                   Source     : in     Tagatha.Transfers.Transfer_Operand;
+                   Dest       : in     Tagatha.Transfers.Transfer_Operand)
    is
       use Tagatha.Transfers;
       Transfer_Size : Tagatha_Size := Size_32;
@@ -410,29 +445,24 @@ package body Tagatha.Code.Pdp32 is
 
       if Is_Null_Operand (Dest) then
          if Source = Stack_Operand then
-            case Transfer_Size is
-               when Size_8 | Size_16 | Size_32
-                  | Default_Size
-                  | Default_Integer_Size | Default_Address_Size =>
-                  Asm.Put_Line ("    tst (sp)+");
-               when Size_64 =>
-                  Asm.Put_Line ("    add #8, sp");
-            end case;
+            Translator.Stack_Count.all :=
+              Translator.Stack_Count.all - 1;
          end if;
       elsif Is_Condition_Operand (Dest) then
-         Instruction (Asm, "tst", Transfer_Size, To_Src (Source));
+         Translator.Instruction (Asm, "tst", Transfer_Size,
+                                 Translator.To_Src (Source));
       elsif (Is_Constant (Source) or else Is_Immediate (Source))
         and then Is_Dereferenced (Source)
       then
-         Instruction (Asm, "mov", Transfer_Size,
-                      To_Src (Source),
+         Translator.Instruction (Asm, "mov", Transfer_Size,
+                      Translator.To_Src (Source),
                       "r0");
-         Instruction (Asm, "mov", Transfer_Size,
-                      "r0", To_Dst (Dest));
+         Translator.Instruction (Asm, "mov", Transfer_Size,
+                      "r0", Translator.To_Dst (Dest));
       else
-         Instruction (Asm, "mov", Transfer_Size,
-                      To_Src (Source),
-                      To_Dst (Dest));
+         Translator.Instruction (Asm, "mov", Transfer_Size,
+                                 Translator.To_Src (Source),
+                                 Translator.To_Dst (Dest));
       end if;
    end Move;
 
@@ -441,7 +471,8 @@ package body Tagatha.Code.Pdp32 is
    -------------
 
    procedure Operate
-     (Asm      : in out Assembly'Class;
+     (Translator : Pdp32_Translator'Class;
+      Asm        : in out Assembly'Class;
       Op       : in     One_Argument_Operator;
       Dest     : in     Tagatha.Transfers.Transfer_Operand)
    is
@@ -450,17 +481,25 @@ package body Tagatha.Code.Pdp32 is
    begin
       case Op is
          when Op_Negate =>
-            Instruction (Asm, "neg", Size, To_Dst (Dest));
+            Translator.Instruction
+              (Asm, "neg", Size, Translator.To_Dst (Dest));
          when Op_Complement =>
-            Instruction (Asm, "not", Size, To_Dst (Dest));
+            Translator.Instruction
+              (Asm, "not", Size,
+               Translator.To_Dst (Dest));
          when Op_Not =>
-            Instruction (Asm, "not", Size, To_Dst (Dest));
+            Translator.Instruction
+              (Asm, "not", Size,
+               Translator.To_Dst (Dest));
          when Op_Test =>
-            Instruction (Asm, "tst", Size, To_Dst (Dest));
+            Translator.Instruction
+              (Asm, "tst", Size,
+               Translator.To_Dst (Dest));
          when Op_Dereference =>
-            Instruction (Asm, "mov", Size,
-                         To_Dereferenced_String (Dest),
-                         To_Dst (Dest));
+            Translator.Instruction
+              (Asm, "mov", Size,
+               Translator.To_Dereferenced_String (Dest),
+               Translator.To_Dst (Dest));
       end case;
 
    end Operate;
@@ -470,8 +509,9 @@ package body Tagatha.Code.Pdp32 is
    -------------
 
    procedure Operate
-     (Asm      : in out Assembly'Class;
-      Op       : in     Tagatha_Operator;
+     (Translator : Pdp32_Translator'Class;
+      Asm        : in out Assembly'Class;
+      Op         : in     Tagatha_Operator;
       Source   : in     Tagatha.Transfers.Transfer_Operand;
       Dest     : in     Tagatha.Transfers.Transfer_Operand)
    is
@@ -513,8 +553,9 @@ package body Tagatha.Code.Pdp32 is
    begin
 
       if Op = Op_Not then
-         Instruction (Asm, "seq #0,", Get_Size (Dest),
-                      To_Src (Source), To_Dst (Dest));
+         Translator.Instruction
+           (Asm, "seq #0,", Get_Size (Dest),
+            Translator.To_Src (Source), Translator.To_Dst (Dest));
          return;
       end if;
 
@@ -523,11 +564,11 @@ package body Tagatha.Code.Pdp32 is
             if Quick_Ops (I).Op = Op and then
               Quick_Ops (I).Source_Value = Get_Value (Source)
             then
-               Instruction
+               Translator.Instruction
                  (Asm,
                   Trim (Quick_Ops (I).Mnemonic, Right),
                   Get_Size (Dest),
-                  To_Dst (Dest));
+                  Translator.To_Dst (Dest));
                return;
             end if;
          end loop;
@@ -536,17 +577,20 @@ package body Tagatha.Code.Pdp32 is
 
       if Op = Op_Dereference then
          declare
-            Src : constant String := To_Src (Source);
+            Src : constant String := Translator.To_Src (Source);
          begin
             if Src (Src'First) = '#' then
-               Instruction (Asm, "mov", Get_Size (Dest),
-                            Src, "r0");
-               Instruction (Asm, "mov", Get_Size (Dest),
-                            "(r0)", To_Dst (Dest));
+               Translator.Instruction
+                 (Asm, "mov", Get_Size (Dest),
+                  Src, "r0");
+               Translator.Instruction
+                 (Asm, "mov", Get_Size (Dest),
+                  "(r0)", Translator.To_Dst (Dest));
             else
-               Instruction (Asm, "mov", Get_Size (Dest),
-                            To_Dereferenced_String (Source),
-                            To_Dst (Dest));
+               Translator.Instruction
+                 (Asm, "mov", Get_Size (Dest),
+                  Translator.To_Dereferenced_String (Source),
+                  Translator.To_Dst (Dest));
             end if;
          end;
          return;
@@ -558,25 +602,29 @@ package body Tagatha.Code.Pdp32 is
 
       if Is_Condition_Operand (Dest) then
          declare
-            Src      : constant String := To_Src (Source);
+            Src      : constant String := Translator.To_Src (Source);
             Mnemonic : constant String := Get_Mnemonic (Op);
          begin
-            Instruction (Asm, Mnemonic, Get_Size (Source), Src);
+            Translator.Instruction
+              (Asm, Mnemonic, Get_Size (Source), Src);
          end;
       elsif (Is_Constant (Source) or else Is_Immediate (Source))
         and then Is_Dereferenced (Source)
       then
-         Instruction (Asm, "mov", Get_Size (Dest),
-                      To_Src (Source), "r0");
-         Instruction (Asm, Get_Mnemonic (Op),
-                      Get_Size (Dest), "(r0)", To_Dst (Dest));
+         Translator.Instruction
+           (Asm, "mov", Get_Size (Dest),
+            Translator.To_Src (Source), "r0");
+         Translator.Instruction
+           (Asm, Get_Mnemonic (Op),
+            Get_Size (Dest), "(r0)", Translator.To_Dst (Dest));
       else
          declare
-            Src      : constant String := To_Src (Source);
-            Dst      : constant String := To_Dst (Dest);
+            Src      : constant String := Translator.To_Src (Source);
+            Dst      : constant String := Translator.To_Dst (Dest);
             Mnemonic : constant String := Get_Mnemonic (Op);
          begin
-            Instruction (Asm, Mnemonic, Get_Size (Dest), Src, Dst);
+            Translator.Instruction
+              (Asm, Mnemonic, Get_Size (Dest), Src, Dst);
          end;
       end if;
 
@@ -587,24 +635,25 @@ package body Tagatha.Code.Pdp32 is
    -------------
 
    procedure Operate
-     (Asm      : in out Assembly'Class;
-      Op       : in     Tagatha_Operator;
+     (Translator : Pdp32_Translator'Class;
+      Asm        : in out Assembly'Class;
+      Op         : in     Tagatha_Operator;
       Source_1 : in     Tagatha.Transfers.Transfer_Operand;
       Source_2 : in     Tagatha.Transfers.Transfer_Operand;
       Dest     : in     Tagatha.Transfers.Transfer_Operand)
    is
-      Src_1    : constant String := To_Src (Source_1);
-      Src_2    : constant String := To_Src (Source_2);
-      Dst      : constant String := To_Dst (Dest);
+      Src_1    : constant String := Translator.To_Src (Source_1);
+      Src_2    : constant String := Translator.To_Src (Source_2);
+      Dst      : constant String := Translator.To_Dst (Dest);
       Mnemonic : constant String := Get_Mnemonic (Op);
       Reversed : constant Boolean := Get_Reversed (Op);
    begin
       if Reversed then
-         Instruction (Asm, Mnemonic,
+         Translator.Instruction (Asm, Mnemonic,
                       Tagatha.Transfers.Get_Size (Dest),
                       Src_2, Src_1, Dst);
       else
-         Instruction (Asm, Mnemonic,
+         Translator.Instruction (Asm, Mnemonic,
                       Tagatha.Transfers.Get_Size (Dest),
                       Src_1, Src_2, Dst);
       end if;
@@ -642,8 +691,6 @@ package body Tagatha.Code.Pdp32 is
          Asm.Put_Line (".export " & Name);
       end if;
       Asm.Put_Line (Name & ":");
-      Asm.Put_Line ("    mov fp, -(sp)");
-      Asm.Put_Line ("    mov sp, fp");
    end Start;
 
    ----------------------------
@@ -651,10 +698,11 @@ package body Tagatha.Code.Pdp32 is
    ----------------------------
 
    function To_Dereferenced_String
-     (Item        : Tagatha.Transfers.Transfer_Operand)
-     return String
+     (Translator : Pdp32_Translator'Class;
+      Item       : Tagatha.Transfers.Transfer_Operand)
+      return String
    is
-      Base : constant String := To_Src (Item);
+      Base : constant String := Translator.To_Src (Item);
    begin
       if Base (Base'First) = '#'
         or else Ada.Strings.Fixed.Index (Base, "(") > 0
@@ -670,8 +718,9 @@ package body Tagatha.Code.Pdp32 is
    ---------------
 
    function To_String
-     (Item : Tagatha.Transfers.Transfer_Operand;
-      Source : Boolean)
+     (Translator : Pdp32_Translator'Class;
+      Item       : Tagatha.Transfers.Transfer_Operand;
+      Source     : Boolean)
       return String
    is
       use Tagatha.Transfers;
@@ -689,41 +738,49 @@ package body Tagatha.Code.Pdp32 is
       function Postinc return String
       is (if Has_Postincrement (Item) then "+" else "");
 
+      function R (Index : Natural) return String;
+      function Local_R (Index : Natural) return String
+      is (R (Translator.Ret_Count
+             + Translator.Arg_Count
+             + Translator.Local_Count
+             + Translator.Stack_Count.all
+             + Index));
+
+      -------
+      -- R --
+      -------
+
+      function R (Index : Natural) return String is
+         Result : String := Natural'Image (Index);
+      begin
+         Result (Result'First) := 'r';
+         return Result;
+      end R;
+
    begin
       if Is_Constant (Item) then
          return "#" & To_String (Get_Value (Item), Item);
       elsif Is_Argument (Item) or else Is_Local (Item) then
          declare
-            Addr : Tagatha_Integer;
+            Index : constant Natural :=
+                      (if Is_Argument (Item)
+                       then Translator.Ret_Count
+                       + Natural (Get_Arg_Offset (Item) - 1)
+                       else Natural (Get_Local_Offset (Item))
+                       + Translator.Ret_Count
+                       + Translator.Arg_Count);
          begin
-            if Is_Argument (Item) then
-               Addr := Tagatha_Integer (Get_Arg_Offset (Item) * 4 + 4);
-            else
-               Addr := Tagatha_Integer (Get_Local_Offset (Item) * 4);
-            end if;
-            if Has_Slice (Item) then
-               if Slice_Fits (Item, Size_8) then
-                  return Deref_Ampersand
-                    (Image (Addr + Get_Slice_Octet_Offset (Item)) & "(fp)");
-               elsif Is_Argument (Item) then
-                  return Deref_Ampersand
-                    (Image (Addr) & "(fp)");
-               else
-                  return Deref_Ampersand ("-" & Image (Addr) & "(fp)");
-               end if;
-            elsif Is_Argument (Item) then
-               return Deref_Ampersand (Image (Addr) & "(fp)");
-            else
-               return Deref_Ampersand ("-" & Image (Addr) & "(fp)");
-            end if;
+            return Deref_Paren (R (Index));
          end;
       elsif Is_Result (Item) or else Is_Return (Item) then
-         return Deref_Paren (Result_Register);
+         return Deref_Paren (R (0));
       elsif Is_Stack (Item) then
          if Source then
-            return Deref_Ampersand ("(sp)+");
+            Translator.Stack_Count.all := Translator.Stack_Count.all - 1;
+            return Deref_Ampersand (Local_R (Translator.Stack_Count.all));
          else
-            return Deref_Ampersand ("-(sp)");
+            Translator.Stack_Count.all := Translator.Stack_Count.all + 1;
+            return Deref_Ampersand (Local_R (Translator.Stack_Count.all - 1));
          end if;
       elsif Is_External (Item) then
          if Is_Immediate (Item) then
@@ -732,15 +789,10 @@ package body Tagatha.Code.Pdp32 is
             return Predec & Deref_Paren (External_Name (Item)) & Postinc;
          end if;
       elsif Is_Temporary (Item) then
-         declare
-            R : String :=
-                  Positive'Image
-                    (Tagatha.Temporaries.Get_Register
-                       (Get_Temporary (Item)));
-         begin
-            R (1) := 'r';
-            return Deref_Paren (R);
-         end;
+         return Deref_Paren
+           (Local_R
+              (Tagatha.Temporaries.Get_Register
+                   (Get_Temporary (Item)) - 1));
       elsif Is_Iterator_New (Item) then
          return "agg";
       elsif Is_Iterator_Copy (Item) then

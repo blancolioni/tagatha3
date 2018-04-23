@@ -23,15 +23,29 @@ package Tagatha.Code.Pdp32 is
    procedure Finish (T   : in out Pdp32_Translator;
                      Asm : in out Assembly'Class);
 
-   overriding
-   procedure Encode (T    : in out Pdp32_Translator;
-                     Asm  : in out Assembly'Class;
-                     Item : in     Tagatha.Transfers.Transfer);
+   overriding procedure Begin_Frame
+     (T            : in out Pdp32_Translator;
+      Asm          : in out Assembly'Class;
+      Return_Count : in Natural;
+      Arg_Count    : in     Natural;
+      Local_Count  : in     Natural);
 
-   overriding
-   procedure Label (T     : in out Pdp32_Translator;
-                    Asm   : in out Assembly'Class;
-                    Label : in     Tagatha.Labels.Tagatha_Label);
+   overriding procedure End_Frame
+     (T           : in out Pdp32_Translator;
+      Asm         : in out Assembly'Class;
+      Arg_Count   : in     Natural;
+      Local_Count : in     Natural)
+   is null;
+
+   overriding procedure Encode
+     (Translator : in out Pdp32_Translator;
+      Asm        : in out Assembly'Class;
+      Item       : in     Tagatha.Transfers.Transfer);
+
+   overriding procedure Label
+     (Translator : in out Pdp32_Translator;
+      Asm        : in out Assembly'Class;
+      Label      : in     Tagatha.Labels.Tagatha_Label);
 
    overriding
    function General_Registers (T : Pdp32_Translator) return Positive;
@@ -51,6 +65,33 @@ private
    type Pdp32_Translator is new Translator with
       record
          Reverse_Test : Boolean := False;
+         Ret_Count    : Natural := 0;
+         Arg_Count    : Natural := 0;
+         Local_Count  : Natural := 0;
+         Stack_Count  : access Natural;
       end record;
+
+   function To_String
+     (Translator : Pdp32_Translator'Class;
+      Item       : Tagatha.Transfers.Transfer_Operand;
+      Source     : Boolean)
+      return String;
+
+   function To_Dereferenced_String
+     (Translator : Pdp32_Translator'Class;
+      Item       : Tagatha.Transfers.Transfer_Operand)
+      return String;
+
+   function To_Src
+     (Translator : Pdp32_Translator'Class;
+      Item       : Tagatha.Transfers.Transfer_Operand)
+      return String
+   is (Translator.To_String (Item, True));
+
+   function To_Dst
+     (Translator : Pdp32_Translator'Class;
+      Item       : Tagatha.Transfers.Transfer_Operand)
+      return String
+   is (Translator.To_String (Item, False));
 
 end Tagatha.Code.Pdp32;
