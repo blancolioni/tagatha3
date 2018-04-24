@@ -30,7 +30,6 @@ package Tagatha.Operands is
                            return Tagatha_Operand;
 
    function Result_Operand return Tagatha_Operand;
-   function Return_Operand return Tagatha_Operand;
 
    function External_Operand (Name : String;
                               Immediate : Boolean;
@@ -59,7 +58,6 @@ package Tagatha.Operands is
    function Is_Argument (Item : Tagatha_Operand) return Boolean;
    function Is_Local    (Item : Tagatha_Operand) return Boolean;
    function Is_Result   (Item : Tagatha_Operand) return Boolean;
-   function Is_Return   (Item : Tagatha_Operand) return Boolean;
    function Is_External (Item : Tagatha_Operand) return Boolean;
    function Is_Temporary (Item : Tagatha_Operand) return Boolean;
    function Is_Iterator_New (Item : Tagatha_Operand) return Boolean;
@@ -93,7 +91,6 @@ private
       O_Argument,
       O_Local,
       O_Result,
-      O_Return,
       O_Iterator,
       O_External,
       O_Temporary,
@@ -114,7 +111,7 @@ private
                Loc_Offset    : Local_Offset;
             when O_Temporary =>
                Temporary     : Tagatha.Temporaries.Temporary;
-            when O_Result | O_Return =>
+            when O_Result =>
                null;
             when O_Iterator =>
                Copy          : Boolean;
@@ -133,9 +130,6 @@ private
       end record;
 
    type Tagatha_Operand is access Tagatha_Operand_Record;
-
-   function Is_Return   (Item : Tagatha_Operand) return Boolean
-   is (Item.Operand_Type = O_Return);
 
    function Is_Iterator_Copy (Item : Tagatha_Operand) return Boolean
    is (Item.Operand_Type = O_Iterator and then Item.Copy);

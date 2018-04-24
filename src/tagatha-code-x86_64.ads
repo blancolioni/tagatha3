@@ -27,9 +27,10 @@ package Tagatha.Code.X86_64 is
    overriding
    procedure Begin_Frame (T           : in out X86_64_Translator;
                           Asm         : in out Assembly'Class;
-                          Return_Count : in Natural;
-                          Arg_Count   : in     Natural;
-                          Local_Count : in     Natural);
+                          Return_Count    : Natural;
+                          Arg_Count       : Natural;
+                          Local_Count     : Natural;
+                          Temporary_Count : Natural);
 
    overriding
    function General_Registers (T : X86_64_Translator) return Positive;
