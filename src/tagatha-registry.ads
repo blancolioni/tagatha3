@@ -49,8 +49,11 @@ package Tagatha.Registry is
       Input_Words       : Natural;
       Output_Words      : Natural);
 
-   procedure Record_Call (Register   : in out Tagatha_Registry;
-                          Subroutine : in     Tagatha.Labels.Tagatha_Label);
+   procedure Record_Call
+     (Register       : in out Tagatha_Registry;
+      Subroutine     : in     Tagatha.Labels.Tagatha_Label;
+      Argument_Count : Natural;
+      Result_Count   : Natural);
 
    procedure Record_Loop (Register   : in out Tagatha_Registry;
                           Limit      : in     Local_Offset;

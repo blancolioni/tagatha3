@@ -6,13 +6,19 @@ package body Tagatha.Commands is
    -- Call --
    ----------
 
-   function Call (Target : Tagatha.Labels.Tagatha_Label)
+   function Call (Target         : Tagatha.Labels.Tagatha_Label;
+                  Argument_Words : Natural;
+                  Result_Words   : Natural)
                   return Tagatha_Command
    is
    begin
-      return new Tagatha_Command_Record'(T_Call, Default_Address_Size,
-                                         Tagatha.Labels.No_Label, 0, 0, False,
-                                         Target, False);
+      return new Tagatha_Command_Record'
+        (T_Call, Default_Address_Size,
+         Tagatha.Labels.No_Label, 0, 0, False,
+         Subroutine => Target,
+         Indirect   => False,
+         Call_Argument_Words => Argument_Words,
+         Call_Result_Words   => Result_Words);
    end Call;
 
    ---------------
@@ -106,17 +112,23 @@ package body Tagatha.Commands is
    -- Indirect_Call --
    -------------------
 
-   function Indirect_Call return Tagatha_Command is
+   function Indirect_Call
+     (Argument_Words : Natural;
+      Result_Words   : Natural)
+      return Tagatha_Command
+   is
    begin
       return new Tagatha_Command_Record'
-        (Instruction       => T_Call,
-         Size              => Default_Address_Size,
-         Label             => Tagatha.Labels.No_Label,
-         Line              => 0,
-         Column            => 0,
-         Negate            => False,
-         Subroutine        => Tagatha.Labels.No_Label,
-         Indirect          => True);
+        (Instruction         => T_Call,
+         Size                => Default_Address_Size,
+         Label               => Tagatha.Labels.No_Label,
+         Line                => 0,
+         Column              => 0,
+         Negate              => False,
+         Subroutine          => Tagatha.Labels.No_Label,
+         Indirect            => True,
+         Call_Argument_Words => Argument_Words,
+         Call_Result_Words   => Result_Words);
    end Indirect_Call;
 
    ----------

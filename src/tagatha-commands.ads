@@ -40,11 +40,16 @@ package Tagatha.Commands is
                      Size : Tagatha_Size      := Default_Integer_Size)
                      return Tagatha_Command;
 
-   function Call (Target : Tagatha.Labels.Tagatha_Label)
+   function Call (Target         : Tagatha.Labels.Tagatha_Label;
+                  Argument_Words : Natural;
+                  Result_Words   : Natural)
                   return Tagatha_Command
      with Pre => Tagatha.Labels.Has_Label (Target);
 
-   function Indirect_Call return Tagatha_Command;
+   function Indirect_Call
+     (Argument_Words : Natural;
+      Result_Words   : Natural)
+      return Tagatha_Command;
 
    function Loop_Around (Label        : Tagatha.Labels.Tagatha_Label;
                          Loop_Count   : Local_Offset;
@@ -106,25 +111,27 @@ private
          Negate : Boolean;
          case Instruction is
             when T_Stack =>
-               Stack_Op          : Stack_Operation;
-               Operand           : Tagatha.Operands.Tagatha_Operand;
+               Stack_Op            : Stack_Operation;
+               Operand             : Tagatha.Operands.Tagatha_Operand;
             when T_Operate =>
-               Operator          : Tagatha_Operator;
+               Operator            : Tagatha_Operator;
             when T_Call =>
-               Subroutine        : Tagatha.Labels.Tagatha_Label;
-               Indirect          : Boolean;
+               Subroutine          : Tagatha.Labels.Tagatha_Label;
+               Indirect            : Boolean;
+               Call_Argument_Words : Natural;
+               Call_Result_Words   : Natural;
             when T_Loop =>
-               Limit             : Local_Offset;
-               Counter           : Local_Offset;
-               End_Label         : Tagatha.Labels.Tagatha_Label;
+               Limit               : Local_Offset;
+               Counter             : Local_Offset;
+               End_Label           : Tagatha.Labels.Tagatha_Label;
             when T_Jump =>
-               Condition         : Tagatha_Condition;
-               Destination       : Tagatha.Labels.Tagatha_Label;
+               Condition           : Tagatha_Condition;
+               Destination         : Tagatha.Labels.Tagatha_Label;
             when T_Native =>
-               Native_Name       : Ada.Strings.Unbounded.Unbounded_String;
-               Changed_Registers : Ada.Strings.Unbounded.Unbounded_String;
-               Input_Words       : Natural;
-               Output_Words      : Natural;
+               Native_Name         : Ada.Strings.Unbounded.Unbounded_String;
+               Changed_Registers   : Ada.Strings.Unbounded.Unbounded_String;
+               Input_Words         : Natural;
+               Output_Words        : Natural;
          end case;
       end record;
 

@@ -67,8 +67,11 @@ package body Tagatha.Transfers is
    -- Call --
    ----------
 
-   function Call (Destination : Tagatha.Labels.Tagatha_Label)
-                  return Transfer
+   function Call
+     (Destination    : Tagatha.Labels.Tagatha_Label;
+      Argument_Count : Natural;
+      Result_Count   : Natural)
+      return Transfer
    is
    begin
       return (Trans             => T_Control,
@@ -80,6 +83,8 @@ package body Tagatha.Transfers is
               Call              => True,
               Native            => Ada.Strings.Unbounded.Null_Unbounded_String,
               Changed_Registers => Ada.Strings.Unbounded.Null_Unbounded_String,
+              Argument_Count    => Argument_Count,
+              Result_Count      => Result_Count,
               Line              => 1,
               Column            => 1,
               Src_1             => No_Operand,
@@ -124,8 +129,9 @@ package body Tagatha.Transfers is
    -- Control_Transfer --
    ----------------------
 
-   function Control_Transfer (Condition   : Tagatha_Condition;
-                              Destination : Tagatha.Labels.Tagatha_Label)
+   function Control_Transfer
+     (Condition   : Tagatha_Condition;
+      Destination : Tagatha.Labels.Tagatha_Label)
                               return Transfer
    is
    begin
@@ -138,6 +144,8 @@ package body Tagatha.Transfers is
               Call              => False,
               Native            => Ada.Strings.Unbounded.Null_Unbounded_String,
               Changed_Registers => Ada.Strings.Unbounded.Null_Unbounded_String,
+              Argument_Count    => 0,
+              Result_Count      => 0,
               Line              => 1,
               Column            => 1,
               Src_1             => No_Operand,
@@ -683,6 +691,8 @@ package body Tagatha.Transfers is
               Call              => False,
               Native            => To_Unbounded_String (Name),
               Changed_Registers => To_Unbounded_String (Changed_Registers),
+              Argument_Count    => 0,
+              Result_Count      => 0,
               Line              => 1,
               Column            => 1,
               Src_1             => No_Operand,
@@ -725,6 +735,8 @@ package body Tagatha.Transfers is
               Changed_Registers => Ada.Strings.Unbounded.Null_Unbounded_String,
               Line              => 1,
               Column            => 1,
+              Argument_Count    => 0,
+              Result_Count      => 0,
               Src_1             => Src_1,
               Src_2             => Src_2,
               Dst               => To,
@@ -963,7 +975,8 @@ package body Tagatha.Transfers is
             end if;
          when T_Control =>
             return Label_Image
-              & "jump " & Tagatha_Condition'Image (Item.Condition)
+              & (if Item.Call then "call"
+                 else "jump " & Tagatha_Condition'Image (Item.Condition))
               & " "
               & (if Tagatha.Labels.Has_Label (Item.Destination)
                  then Tagatha.Labels.Show (Item.Destination, 'L')
@@ -1078,6 +1091,8 @@ package body Tagatha.Transfers is
               Destination       => Tagatha.Labels.No_Label,
               Native            => Ada.Strings.Unbounded.Null_Unbounded_String,
               Changed_Registers => Ada.Strings.Unbounded.Null_Unbounded_String,
+              Argument_Count    => 0,
+              Result_Count      => 0,
               Line              => 1,
               Column            => 1,
               Self              => Same_Operand (From, To),
@@ -1173,6 +1188,8 @@ package body Tagatha.Transfers is
               Destination       => Tagatha.Labels.No_Label,
               Native            => Ada.Strings.Unbounded.Null_Unbounded_String,
               Changed_Registers => Ada.Strings.Unbounded.Null_Unbounded_String,
+              Argument_Count    => 0,
+              Result_Count      => 0,
               Line              => 1,
               Column            => 1,
               Self              => False,
