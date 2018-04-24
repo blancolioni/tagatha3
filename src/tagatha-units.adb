@@ -152,14 +152,16 @@ package body Tagatha.Units is
    -- Call --
    ----------
 
-   procedure Call (Unit   : in out Tagatha_Unit;
-                   Target : in     String)
+   procedure Call (Unit           : in out Tagatha_Unit;
+                   Target         : in     String;
+                   Argument_Words : Natural;
+                   Result_Words   : Natural)
    is
       Label : Tagatha.Labels.Tagatha_Label;
    begin
       Tagatha.Labels.Reference_Label (Unit.Labels, Label,
                                       Target, Import => True);
-      Append (Unit, Commands.Call (Label));
+      Append (Unit, Commands.Call (Label, Argument_Words, Result_Words));
    end Call;
 
    --------------------
@@ -481,10 +483,12 @@ package body Tagatha.Units is
    -------------------
 
    procedure Indirect_Call
-     (Unit   : in out Tagatha_Unit)
+     (Unit   : in out Tagatha_Unit;
+      Argument_Words : Natural;
+      Result_Words   : Natural)
    is
    begin
-      Append (Unit, Commands.Indirect_Call);
+      Append (Unit, Commands.Indirect_Call (Argument_Words, Result_Words));
    end Indirect_Call;
 
    ----------

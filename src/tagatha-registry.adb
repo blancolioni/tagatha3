@@ -289,8 +289,11 @@ package body Tagatha.Registry is
    -- Record_Call --
    -----------------
 
-   procedure Record_Call (Register   : in out Tagatha_Registry;
-                          Subroutine : in     Tagatha.Labels.Tagatha_Label)
+   procedure Record_Call
+     (Register   : in out Tagatha_Registry;
+      Subroutine : in     Tagatha.Labels.Tagatha_Label;
+      Argument_Count : Natural;
+      Result_Count   : Natural)
    is
    begin
       for Operand of Register.Stack loop
@@ -312,7 +315,7 @@ package body Tagatha.Registry is
       Register.Stack.Clear;
 
       Register.Append
-        (Tagatha.Transfers.Call (Subroutine));
+        (Tagatha.Transfers.Call (Subroutine, Argument_Count, Result_Count));
 
    end Record_Call;
 

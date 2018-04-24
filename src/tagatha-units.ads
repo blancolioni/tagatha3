@@ -164,10 +164,15 @@ package Tagatha.Units is
                       Op     : Tagatha_Operator;
                       Size   : Tagatha_Size       := Default_Integer_Size);
 
-   procedure Call (Unit   : in out Tagatha_Unit;
-                   Target : in     String);
+   procedure Call (Unit           : in out Tagatha_Unit;
+                   Target         : in     String;
+                   Argument_Words : Natural;
+                   Result_Words   : Natural);
 
-   procedure Indirect_Call (Unit   : in out Tagatha_Unit);
+   procedure Indirect_Call
+     (Unit   : in out Tagatha_Unit;
+      Argument_Words : Natural;
+      Result_Words   : Natural);
    --  like call, but target address is on top of the stack
 
    procedure Jump (Unit      : in out Tagatha_Unit;

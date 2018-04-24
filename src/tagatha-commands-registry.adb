@@ -35,7 +35,10 @@ package body Tagatha.Commands.Registry is
          when T_Operate =>
             Register.Record_Operation (Command.Operator);
          when T_Call =>
-            Register.Record_Call (Command.Subroutine);
+            Register.Record_Call
+              (Command.Subroutine,
+               Command.Call_Argument_Words,
+               Command.Call_Result_Words);
          when T_Loop =>
             Register.Record_Loop (Command.Limit,
                                   Command.Counter, Command.End_Label);

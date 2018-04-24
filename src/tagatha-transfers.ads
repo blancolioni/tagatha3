@@ -105,8 +105,11 @@ package Tagatha.Transfers is
                              Changed_Registers : String)
                              return Transfer;
 
-   function Call (Destination : Tagatha.Labels.Tagatha_Label)
-                  return Transfer;
+   function Call
+     (Destination    : Tagatha.Labels.Tagatha_Label;
+      Argument_Count : Natural;
+      Result_Count   : Natural)
+      return Transfer;
 
    function Reserve_Stack (Frame_Size : Natural) return Transfer;
    function Restore_Stack (Frame_Size : Natural) return Transfer;
@@ -128,6 +131,8 @@ package Tagatha.Transfers is
    function Get_Condition (T : Transfer) return Tagatha_Condition;
    function Get_Destination (T : Transfer)
                             return Tagatha.Labels.Tagatha_Label;
+   function Get_Argument_Count (T : Transfer) return Natural;
+   function Get_Result_Count (T : Transfer) return Natural;
 
    function Same_Operand (Left, Right : Transfer_Operand) return Boolean;
 
@@ -319,6 +324,8 @@ private
          Self              : Boolean;
          Native            : Ada.Strings.Unbounded.Unbounded_String;
          Changed_Registers : Ada.Strings.Unbounded.Unbounded_String;
+         Argument_Count    : Natural := 0;
+         Result_Count      : Natural := 0;
          Line              : Natural := 0;
          Column            : Natural := 0;
          Src_1             : Transfer_Operand;
@@ -330,5 +337,11 @@ private
 
    function Is_Dereferenced (Item : Transfer_Operand) return Boolean
    is (Item.Modifiers.Dereferenced);
+
+   function Get_Argument_Count (T : Transfer) return Natural
+   is (T.Argument_Count);
+
+   function Get_Result_Count (T : Transfer) return Natural
+   is (T.Result_Count);
 
 end Tagatha.Transfers;

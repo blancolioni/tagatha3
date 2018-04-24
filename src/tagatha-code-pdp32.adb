@@ -9,9 +9,31 @@ with Tagatha.Temporaries;
 
 package body Tagatha.Code.Pdp32 is
 
+   Scratch_Register_Count : constant := 6;
+
    function To_String (Cond    : Tagatha_Condition;
                        Negated : Boolean)
                       return String;
+
+   function Register_Image (Index : Natural) return String;
+
+   function Scratch_Register_Image
+     (Translator : Pdp32_Translator'Class;
+      Index      : Positive)
+      return String
+   is (Register_Image (Translator.Ret_Count
+                       + Translator.Arg_Count
+                       + Translator.Local_Count
+                       + Index - 1));
+
+   function Stack_Register_Image
+     (Translator : Pdp32_Translator'Class)
+      return String
+   is (Register_Image (Translator.Ret_Count
+                       + Translator.Arg_Count
+                       + Translator.Local_Count
+                       + Scratch_Register_Count
+                       + Translator.Stack_Count.all));
 
    procedure Move (Translator : Pdp32_Translator'Class;
                    Asm        : in out Assembly'Class;
@@ -67,6 +89,24 @@ package body Tagatha.Code.Pdp32 is
       Op       : in     One_Argument_Operator;
       Dest     : in     Tagatha.Transfers.Transfer_Operand);
 
+   procedure Pop_Register
+     (Translator : Pdp32_Translator'Class);
+
+   procedure Push_Register
+     (Translator : Pdp32_Translator'Class);
+
+   procedure Change_Register_Stack
+     (Translator : Pdp32_Translator'Class;
+      Change     : Integer);
+
+   function Pop_Register
+     (Translator : Pdp32_Translator'Class)
+      return String;
+
+   function Push_Register
+     (Translator : Pdp32_Translator'Class)
+      return String;
+
    -----------------
    -- Begin_Frame --
    -----------------
@@ -86,6 +126,21 @@ package body Tagatha.Code.Pdp32 is
       T.Stack_Count.all := 0;
    end Begin_Frame;
 
+   ---------------------------
+   -- Change_Register_Stack --
+   ---------------------------
+
+   procedure Change_Register_Stack
+     (Translator : Pdp32_Translator'Class;
+      Change     : Integer)
+   is
+      S : Integer renames Translator.Stack_Count.all;
+   begin
+      Ada.Text_IO.Put_Line
+        ("r-stack :=" & Integer'Image (S + Change));
+      S := S + Change;
+   end Change_Register_Stack;
+
    ------------
    -- Encode --
    ------------
@@ -99,6 +154,9 @@ package body Tagatha.Code.Pdp32 is
       use type Tagatha.Labels.Tagatha_Label;
       Label : Tagatha.Labels.Tagatha_Label := Get_Label (Item);
    begin
+
+      Ada.Text_IO.Put_Line
+        ("encoding: " & Tagatha.Transfers.Show (Item));
 
       while Label /= Tagatha.Labels.No_Label loop
          if Tagatha.Labels.Exported (Label) then
@@ -125,35 +183,27 @@ package body Tagatha.Code.Pdp32 is
             Dest : constant Tagatha_Label := Get_Destination (Item);
          begin
             if Dest = No_Label then
-               Translator.Stack_Count.all :=
-                 Translator.Stack_Count.all - 1;
                declare
-                  Dest : String := Natural'Image (Translator.Stack_Count.all);
+                  Dest : constant String := Translator.Pop_Register;
                begin
-                  Dest (Dest'First) := 'r';
-                  Asm.Put_Line ("    call 0," & Dest);
+                  Asm.Put_Line
+                    ("    call"
+                     & Natural'Image (Get_Argument_Count (Item))
+                     & ","
+                     & Dest);
                end;
             else
                Asm.Put_Line
-                 ("    jsr " & Tagatha.Labels.Show (Dest, 'L'));
+                 ("    call"
+                  & Natural'Image (Get_Argument_Count (Item))
+                  & ","
+                  & Tagatha.Labels.Show (Dest, 'L'));
             end if;
+            Translator.Change_Register_Stack
+              (Get_Result_Count (Item) - Get_Argument_Count (Item));
          end;
       elsif Is_Frame_Reservation (Item) then
-         declare
-            Reservation : constant String :=
-              Integer'Image (Get_Reservation (Item) * 4);
-            Operation   : String := "add";
-         begin
-            if Get_Reservation (Item) /= 0 then
-               if Get_Reservation (Item) > 0 then
-                  Operation := "sub";
-               end if;
-               Asm.Put_Line ("    " & Operation & " #" &
-                               Reservation (2 .. Reservation'Last) &
-                               ", sp");
-            end if;
-         end;
-
+         Translator.Change_Register_Stack (Get_Reservation (Item));
       elsif Is_Native (Item) then
          Asm.Put_Line ("    " & Get_Native_Text (Item));
       elsif Is_Simple (Item) then
@@ -250,7 +300,7 @@ package body Tagatha.Code.Pdp32 is
    function General_Registers (T : Pdp32_Translator) return Positive is
       pragma Unreferenced (T);
    begin
-      return 6;
+      return Scratch_Register_Count;
    end General_Registers;
 
    ------------------
@@ -445,8 +495,7 @@ package body Tagatha.Code.Pdp32 is
 
       if Is_Null_Operand (Dest) then
          if Source = Stack_Operand then
-            Translator.Stack_Count.all :=
-              Translator.Stack_Count.all - 1;
+            Translator.Pop_Register;
          end if;
       elsif Is_Condition_Operand (Dest) then
          Translator.Instruction (Asm, "tst", Transfer_Size,
@@ -589,7 +638,7 @@ package body Tagatha.Code.Pdp32 is
             else
                Translator.Instruction
                  (Asm, "mov", Get_Size (Dest),
-                  Translator.To_Dereferenced_String (Source),
+                  "@" & Src,
                   Translator.To_Dst (Dest));
             end if;
          end;
@@ -658,6 +707,72 @@ package body Tagatha.Code.Pdp32 is
                       Src_1, Src_2, Dst);
       end if;
    end Operate;
+
+   ------------------
+   -- Pop_Register --
+   ------------------
+
+   procedure Pop_Register
+     (Translator : Pdp32_Translator'Class)
+   is
+      S : Integer renames Translator.Stack_Count.all;
+   begin
+      Ada.Text_IO.Put_Line
+        ("pop" & S'Img);
+      S := S - 1;
+   end Pop_Register;
+
+   ------------------
+   -- Pop_Register --
+   ------------------
+
+   function Pop_Register
+     (Translator : Pdp32_Translator'Class)
+      return String
+   is
+   begin
+      return Img : constant String := Translator.Stack_Register_Image do
+         Translator.Pop_Register;
+      end return;
+   end Pop_Register;
+
+   -------------------
+   -- Push_Register --
+   -------------------
+
+   procedure Push_Register
+     (Translator : Pdp32_Translator'Class)
+   is
+      S : Integer renames Translator.Stack_Count.all;
+   begin
+      S := S + 1;
+      Ada.Text_IO.Put_Line
+        ("push" & S'Img);
+   end Push_Register;
+
+   -------------------
+   -- Push_Register --
+   -------------------
+
+   function Push_Register
+     (Translator : Pdp32_Translator'Class)
+      return String
+   is
+   begin
+      Translator.Push_Register;
+      return Translator.Stack_Register_Image;
+   end Push_Register;
+
+   --------------------
+   -- Register_Image --
+   --------------------
+
+   function Register_Image (Index : Natural) return String is
+      Result : String := Natural'Image (Index);
+   begin
+      Result (Result'First) := 'r';
+      return Result;
+   end Register_Image;
 
    ------------------
    -- Set_Location --
@@ -738,25 +853,6 @@ package body Tagatha.Code.Pdp32 is
       function Postinc return String
       is (if Has_Postincrement (Item) then "+" else "");
 
-      function R (Index : Natural) return String;
-      function Local_R (Index : Natural) return String
-      is (R (Translator.Ret_Count
-             + Translator.Arg_Count
-             + Translator.Local_Count
-             + Translator.Stack_Count.all
-             + Index));
-
-      -------
-      -- R --
-      -------
-
-      function R (Index : Natural) return String is
-         Result : String := Natural'Image (Index);
-      begin
-         Result (Result'First) := 'r';
-         return Result;
-      end R;
-
    begin
       if Is_Constant (Item) then
          return "#" & To_String (Get_Value (Item), Item);
@@ -770,17 +866,16 @@ package body Tagatha.Code.Pdp32 is
                        + Translator.Ret_Count
                        + Translator.Arg_Count);
          begin
-            return Deref_Paren (R (Index));
+            return Deref_Paren (Register_Image (Index));
          end;
       elsif Is_Result (Item) or else Is_Return (Item) then
-         return Deref_Paren (R (0));
+         return Deref_Paren (Register_Image (0));
       elsif Is_Stack (Item) then
          if Source then
-            Translator.Stack_Count.all := Translator.Stack_Count.all - 1;
-            return Deref_Ampersand (Local_R (Translator.Stack_Count.all));
+            return Deref_Ampersand
+              (Translator.Pop_Register);
          else
-            Translator.Stack_Count.all := Translator.Stack_Count.all + 1;
-            return Deref_Ampersand (Local_R (Translator.Stack_Count.all - 1));
+            return Deref_Ampersand (Translator.Push_Register);
          end if;
       elsif Is_External (Item) then
          if Is_Immediate (Item) then
@@ -790,9 +885,9 @@ package body Tagatha.Code.Pdp32 is
          end if;
       elsif Is_Temporary (Item) then
          return Deref_Paren
-           (Local_R
+           (Translator.Scratch_Register_Image
               (Tagatha.Temporaries.Get_Register
-                   (Get_Temporary (Item)) - 1));
+                   (Get_Temporary (Item))));
       elsif Is_Iterator_New (Item) then
          return "agg";
       elsif Is_Iterator_Copy (Item) then
