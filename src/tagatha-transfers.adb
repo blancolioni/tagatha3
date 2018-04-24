@@ -21,7 +21,8 @@ package body Tagatha.Transfers is
 
    procedure Assign_Registers
      (Item : in out Transfer;
-      Rs   : in out Register_Allocation_Array)
+      Rs   : in out Register_Allocation_Array;
+      Last :    out Natural)
    is
 
       procedure Assign (Op : in out Transfer_Operand);
@@ -45,6 +46,7 @@ package body Tagatha.Transfers is
                      R := (Temporaries.First_Reference (Op.Temp),
                            Temporaries.Last_Reference (Op.Temp));
                      Assigned := True;
+                     Last := Natural'Max (Last, I);
                      exit;
                   end if;
                end;
@@ -58,6 +60,7 @@ package body Tagatha.Transfers is
       end Assign;
 
    begin
+      Last := 0;
       Assign (Item.Src_1);
       Assign (Item.Src_2);
       Assign (Item.Dst);
@@ -584,15 +587,6 @@ package body Tagatha.Transfers is
    end Is_Result;
 
    ---------------
-   -- Is_Return --
-   ---------------
-
-   function Is_Return   (Item : Transfer_Operand) return Boolean is
-   begin
-      return Item.Op = T_Return;
-   end Is_Return;
-
-   ---------------
    -- Is_Simple --
    ---------------
 
@@ -849,15 +843,6 @@ package body Tagatha.Transfers is
       return (T_Result, No_Modification);
    end Result_Operand;
 
-   --------------------
-   -- Return_Operand --
-   --------------------
-
-   function Return_Operand return Transfer_Operand is
-   begin
-      return (T_Return, No_Modification);
-   end Return_Operand;
-
    ------------------
    -- Same_Operand --
    ------------------
@@ -887,8 +872,6 @@ package body Tagatha.Transfers is
             when T_Argument =>
                return Left.Arg_Offset = Right.Arg_Offset;
             when T_Result =>
-               return True;
-            when T_Return =>
                return True;
             when T_Immediate =>
                return Left.Value = Right.Value;
@@ -1039,8 +1022,6 @@ package body Tagatha.Transfers is
               Integer'Image (-1 * Integer (Item.Arg_Offset));
          when T_Result =>
             return "result";
-         when T_Return =>
-            return "return";
          when T_Iterator =>
             if Item.New_Iterator then
                return "new iterator";
@@ -1220,8 +1201,6 @@ package body Tagatha.Transfers is
          Transfer := Local_Operand (Get_Local_Offset (Op));
       elsif Is_Result (Op) then
          Transfer := Result_Operand;
-      elsif Is_Return (Op) then
-         Transfer := Return_Operand;
       elsif Is_Temporary (Op) then
          Transfer := Temporary_Operand (Get_Temporary (Op));
       elsif Is_External (Op) then

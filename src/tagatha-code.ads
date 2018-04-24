@@ -38,11 +38,12 @@ package Tagatha.Code is
                      Asm  : in out Assembly'Class)
       is abstract;
 
-   procedure Begin_Frame (T           : in out Translator;
-                          Asm          : in out Assembly'Class;
-                          Return_Count : in Natural;
-                          Arg_Count    : in     Natural;
-                          Local_Count  : in     Natural)
+   procedure Begin_Frame (T               : in out Translator;
+                          Asm             : in out Assembly'Class;
+                          Return_Count    : in Natural;
+                          Arg_Count       : in     Natural;
+                          Local_Count     : in     Natural;
+                          Temporary_Count : in Natural)
    is null;
 
    procedure End_Frame (T           : in out Translator;

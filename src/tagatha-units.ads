@@ -310,18 +310,15 @@ private
    type Tagatha_Subprogram_Record is
       record
          Name               : Ada.Strings.Unbounded.Unbounded_String;
-         Current_Segment    : Tagatha_Segment        := Executable;
-         Next_Address       : Segment_Length_Array   := (others => 1);
          Argument_Words     : Natural;
          Frame_Words        : Natural;
          Result_Words       : Natural;
+         Temporary_Words    : Natural;
          Last_Label         : Tagatha.Labels.Tagatha_Label;
          Last_Line          : Natural := 0;
          Last_Column        : Natural := 0;
          Global             : Boolean := True;
          Executable_Segment : Tagatha.Commands.Command_Vectors.Vector;
-         Read_Only_Segment  : Data_Vector.Vector;
-         Read_Write_Segment : Data_Vector.Vector;
          Directives         : List_Of_Directives.List;
          Transfers          : Tagatha.Transfers.Transfer_Vectors.Vector;
       end record;
@@ -353,6 +350,8 @@ private
          Subprograms        : List_Of_Subprograms.List;
          Current_Sub        : Tagatha_Subprogram;
          Properties         : Property_Maps.Map;
+         Read_Only_Segment  : Data_Vector.Vector;
+         Read_Write_Segment : Data_Vector.Vector;
       end record;
 
    function Get_Property
@@ -366,5 +365,14 @@ private
 
    function Unit_Name (Unit : Tagatha_Unit'Class) return String
    is (Ada.Strings.Unbounded.To_String (Unit.Name));
+
+   function Next_Address (Unit : Tagatha_Unit'Class) return Natural
+   is (case Unit.Current_Segment is
+         when Executable =>
+            Unit.Current_Sub.Executable_Segment.Last_Index + 1,
+          when Read_Only =>
+             Unit.Read_Only_Segment.Last_Index + 1,
+          when Read_Write =>
+             Unit.Read_Write_Segment.Last_Index + 1);
 
 end Tagatha.Units;

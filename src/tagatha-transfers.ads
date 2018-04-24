@@ -40,7 +40,6 @@ package Tagatha.Transfers is
                           return Transfer_Operand;
 
    function Result_Operand return Transfer_Operand;
-   function Return_Operand return Transfer_Operand;
    function Iterator_New_Operand return Transfer_Operand;
    function Iterator_Copy_Operand return Transfer_Operand;
 
@@ -144,7 +143,6 @@ package Tagatha.Transfers is
    function Is_Argument (Item : Transfer_Operand) return Boolean;
    function Is_Local    (Item : Transfer_Operand) return Boolean;
    function Is_Result   (Item : Transfer_Operand) return Boolean;
-   function Is_Return   (Item : Transfer_Operand) return Boolean;
    function Is_Stack    (Item : Transfer_Operand) return Boolean;
    function Is_External (Item : Transfer_Operand) return Boolean;
    function Is_Immediate (Item : Transfer_Operand) return Boolean;
@@ -222,7 +220,8 @@ package Tagatha.Transfers is
 
    procedure Assign_Registers
      (Item : in out Transfer;
-      Rs   : in out Register_Allocation_Array);
+      Rs   : in out Register_Allocation_Array;
+      Last :    out Natural);
 
    procedure Set_Location
      (Item   : in out Transfer;
@@ -233,7 +232,7 @@ private
 
    type Transfer_Operand_Type is
      (T_No_Operand, T_Stack, T_Temporary,
-      T_Local, T_Argument, T_Result, T_Return,
+      T_Local, T_Argument, T_Result,
       T_Immediate, T_External,
       T_Iterator,
       T_Condition, T_Text);
@@ -273,7 +272,7 @@ private
                Loc_Offset : Local_Offset;
             when T_Argument =>
                Arg_Offset : Argument_Offset;
-            when T_Result | T_Return =>
+            when T_Result =>
                null;
             when T_Immediate =>
                Value      : Tagatha.Constants.Tagatha_Constant;
