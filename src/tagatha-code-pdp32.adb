@@ -136,13 +136,14 @@ package body Tagatha.Code.Pdp32 is
       Local_Count     : Natural;
       Temporary_Count : Natural)
    is
-      pragma Unreferenced (Asm);
    begin
       T.Ret_Count := Return_Count;
       T.Local_Count := Local_Count;
       T.Arg_Count := Arg_Count;
-      T.Temp_Count := Temporary_Count + 1;
+      T.Temp_Count := Temporary_Count + 2;
       T.Stack_Count.all := 0;
+      Asm.Put_Line ("    stj "
+                    & T.Scratch_Register_Image (T.Temp_Count - 1));
    end Begin_Frame;
 
    ---------------------------
@@ -273,6 +274,23 @@ package body Tagatha.Code.Pdp32 is
             Ada.Exceptions.Exception_Message (E));
 
    end Encode;
+
+   ---------------
+   -- End_Frame --
+   ---------------
+
+   overriding procedure End_Frame
+     (T           : in out Pdp32_Translator;
+      Asm         : in out Assembly'Class;
+      Arg_Count   : in     Natural;
+      Local_Count : in     Natural)
+   is
+      pragma Unreferenced (Arg_Count, Local_Count);
+   begin
+      Asm.Put_Line
+        ("    ldj "
+         & T.Scratch_Register_Image (T.Temp_Count - 1));
+   end End_Frame;
 
    -------------------
    -- File_Preamble --
