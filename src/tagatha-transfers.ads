@@ -221,7 +221,7 @@ package Tagatha.Transfers is
    procedure Assign_Registers
      (Item : in out Transfer;
       Rs   : in out Register_Allocation_Array;
-      Last :    out Natural);
+      Last : in out Natural);
 
    procedure Set_Location
      (Item   : in out Transfer;

@@ -52,6 +52,7 @@ package body Tagatha.Units is
       end loop;
 
       for Sub of Unit.Subprograms loop
+         Sub.Temporary_Words := 0;
          for Offset in 1 .. Sub.Transfers.Last_Index loop
             Tagatha.Transfers.Assign_Registers
               (Sub.Transfers (Offset), Allocation, Sub.Temporary_Words);

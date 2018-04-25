@@ -22,7 +22,7 @@ package body Tagatha.Transfers is
    procedure Assign_Registers
      (Item : in out Transfer;
       Rs   : in out Register_Allocation_Array;
-      Last :    out Natural)
+      Last : in out Natural)
    is
 
       procedure Assign (Op : in out Transfer_Operand);
@@ -60,7 +60,6 @@ package body Tagatha.Transfers is
       end Assign;
 
    begin
-      Last := 0;
       Assign (Item.Src_1);
       Assign (Item.Src_2);
       Assign (Item.Dst);
