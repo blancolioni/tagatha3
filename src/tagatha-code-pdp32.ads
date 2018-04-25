@@ -35,8 +35,7 @@ package Tagatha.Code.Pdp32 is
      (T           : in out Pdp32_Translator;
       Asm         : in out Assembly'Class;
       Arg_Count   : in     Natural;
-      Local_Count : in     Natural)
-   is null;
+      Local_Count : in     Natural);
 
    overriding procedure Encode
      (Translator : in out Pdp32_Translator;
