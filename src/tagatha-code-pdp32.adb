@@ -138,10 +138,13 @@ package body Tagatha.Code.Pdp32 is
    is
    begin
       T.Ret_Count := Return_Count;
-      T.Local_Count := Local_Count;
       T.Arg_Count := Arg_Count;
-      T.Temp_Count := Temporary_Count + 2;
+      T.Local_Count := Local_Count;
+      T.Temp_Count := Temporary_Count + 3;
       T.Stack_Count.all := 0;
+--        Ada.Text_IO.Put_Line
+--          ("begin frame:" & T.Ret_Count'Img & T.Arg_Count'Img
+--           & T.Local_Count'Img & T.Temp_Count'Img);
       Asm.Put_Line ("    stj "
                     & T.Scratch_Register_Image (T.Temp_Count - 1));
    end Begin_Frame;
@@ -204,7 +207,7 @@ package body Tagatha.Code.Pdp32 is
                          + Translator.Arg_Count
                          + Translator.Local_Count + Translator.Temp_Count
                          + Translator.Stack_Count.all
-                         - Get_Argument_Count (Item);
+                         - Get_Argument_Count (Item) - 1;
          begin
             Asm.Put_Line
               ("    call" & Natural'Image (Preserve)
@@ -213,7 +216,10 @@ package body Tagatha.Code.Pdp32 is
                  then Translator.Pop_Register
                  else Tagatha.Labels.Show (Dest, 'L')));
             Translator.Change_Register_Stack
-              (Get_Result_Count (Item) - Get_Argument_Count (Item));
+              (-Get_Argument_Count (Item) + 1);
+--              Asm.Put_Line
+--                ("    mov " & Register_Image (Preserve)
+--                 & "," & Translator.Push_Register);
          end;
       elsif Is_Frame_Reservation (Item) then
          null;
@@ -319,11 +325,12 @@ package body Tagatha.Code.Pdp32 is
          for I in 1 .. T.Ret_Count loop
             Asm.Put_Line
               ("    mov " & T.Result_Register_Image (I) & ","
-               & Register_Image (I - 1));
+               & Register_Image (I));
          end loop;
       end if;
 
-      Asm.Put_Line ("    return" & T.Ret_Count'Img);
+      Asm.Put_Line
+        ("    return" & Positive'Image (T.Ret_Count + 1));
       T.Ret_Count := 0;
       T.Arg_Count := 0;
       T.Local_Count := 0;
@@ -936,11 +943,11 @@ package body Tagatha.Code.Pdp32 is
                    (Get_Temporary (Item))));
       elsif Is_Iterator_New (Item) then
          return Translator.Scratch_Register_Image
-           (Translator.Temp_Count);
+           (Translator.Temp_Count - 2);
       elsif Is_Iterator_Copy (Item) then
          return "("
            & Translator.Scratch_Register_Image
-           (Translator.Temp_Count)
+           (Translator.Temp_Count - 2)
            & ")+";
       elsif Is_Text (Item) then
          declare
