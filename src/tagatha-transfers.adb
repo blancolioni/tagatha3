@@ -1,4 +1,5 @@
 with Ada.Text_IO;
+with Ada.Strings.Fixed;
 
 package body Tagatha.Transfers is
 
@@ -80,8 +81,8 @@ package body Tagatha.Transfers is
               Call              => True,
               Native            => Ada.Strings.Unbounded.Null_Unbounded_String,
               Changed_Registers => Ada.Strings.Unbounded.Null_Unbounded_String,
-              Line              => 1,
-              Column            => 1,
+              Line              => 0,
+              Column            => 0,
               Src_1             => No_Operand,
               Src_2             => No_Operand,
               Dst               => No_Operand,
@@ -138,8 +139,8 @@ package body Tagatha.Transfers is
               Call              => False,
               Native            => Ada.Strings.Unbounded.Null_Unbounded_String,
               Changed_Registers => Ada.Strings.Unbounded.Null_Unbounded_String,
-              Line              => 1,
-              Column            => 1,
+              Line              => 0,
+              Column            => 0,
               Src_1             => No_Operand,
               Src_2             => No_Operand,
               Dst               => No_Operand,
@@ -683,8 +684,8 @@ package body Tagatha.Transfers is
               Call              => False,
               Native            => To_Unbounded_String (Name),
               Changed_Registers => To_Unbounded_String (Changed_Registers),
-              Line              => 1,
-              Column            => 1,
+              Line              => 0,
+              Column            => 0,
               Src_1             => No_Operand,
               Src_2             => No_Operand,
               Dst               => No_Operand,
@@ -723,8 +724,8 @@ package body Tagatha.Transfers is
               Call              => False,
               Native            => Ada.Strings.Unbounded.Null_Unbounded_String,
               Changed_Registers => Ada.Strings.Unbounded.Null_Unbounded_String,
-              Line              => 1,
-              Column            => 1,
+              Line              => 0,
+              Column            => 0,
               Src_1             => Src_1,
               Src_2             => Src_2,
               Dst               => To,
@@ -948,9 +949,15 @@ package body Tagatha.Transfers is
    ----------
 
    function Show (Item : Transfer) return String is
+      use Ada.Strings, Ada.Strings.Fixed;
       Label_Image : constant String :=
                       Tagatha.Labels.Show_All
-                        (Item.Label, 'L');
+                        (Item.Label, 'L')
+                      & "["
+                      & Trim (Item.Line'Img, Left)
+                      & ","
+                      & Trim (Item.Column'Img, Left)
+                      & "]";
    begin
       case Item.Trans is
          when T_Change_Stack =>
@@ -1078,8 +1085,8 @@ package body Tagatha.Transfers is
               Destination       => Tagatha.Labels.No_Label,
               Native            => Ada.Strings.Unbounded.Null_Unbounded_String,
               Changed_Registers => Ada.Strings.Unbounded.Null_Unbounded_String,
-              Line              => 1,
-              Column            => 1,
+              Line              => 0,
+              Column            => 0,
               Self              => Same_Operand (From, To),
               Call              => False,
               Src_1             => From,
@@ -1173,8 +1180,8 @@ package body Tagatha.Transfers is
               Destination       => Tagatha.Labels.No_Label,
               Native            => Ada.Strings.Unbounded.Null_Unbounded_String,
               Changed_Registers => Ada.Strings.Unbounded.Null_Unbounded_String,
-              Line              => 1,
-              Column            => 1,
+              Line              => 0,
+              Column            => 0,
               Self              => False,
               Call              => False,
               Src_1             => Src_1,

@@ -29,9 +29,10 @@ package Tagatha.Units is
    function Unit_Name (Unit : Tagatha_Unit'Class) return String;
    function Unit_Label_Name (Unit : Tagatha_Unit'Class) return String;
 
-   procedure Source_Position
-     (Unit         : in out Tagatha_Unit;
-      Line, Column : Positive);
+   procedure Source_Location
+     (Unit   : in out Tagatha_Unit;
+      Line   : Positive;
+      Column : Positive);
 
    procedure Begin_Routine
      (Unit           : in out Tagatha_Unit;
@@ -315,8 +316,6 @@ private
          Frame_Words        : Natural;
          Result_Words       : Natural;
          Last_Label         : Tagatha.Labels.Tagatha_Label;
-         Last_Line          : Natural := 0;
-         Last_Column        : Natural := 0;
          Global             : Boolean := True;
          Executable_Segment : Tagatha.Commands.Command_Vectors.Vector;
          Read_Only_Segment  : Data_Vector.Vector;
@@ -352,6 +351,8 @@ private
          Subprograms        : List_Of_Subprograms.List;
          Current_Sub        : Tagatha_Subprogram;
          Properties         : Property_Maps.Map;
+         Current_Line       : Positive := 1;
+         Current_Column     : Positive := 1;
       end record;
 
    function Get_Property
