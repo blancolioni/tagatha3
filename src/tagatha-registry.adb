@@ -45,10 +45,12 @@ package body Tagatha.Registry is
          Transfers.Set_Label (LT, Register.Current_Label);
          Register.Current_Label := Tagatha.Labels.No_Label;
       end if;
+
       if Register.Last_Line > 0 then
          Transfers.Set_Location
            (LT, Register.Last_Line, Register.Last_Column);
       end if;
+
       Register.Push_Index := Register.Push_Index + 1;
       Register.Transfers.Append ((LT, Register.Push_Index));
       if Trace_Registry then
@@ -131,7 +133,10 @@ package body Tagatha.Registry is
       is
          This_Index : Positive := Start;
          First      : Transfer := Arr (Arr'First);
+         Line       : Positive := Register.Last_Line;
+         Column     : Positive := Register.Last_Column;
       begin
+
          if Tagatha.Labels.Has_Label (Label) then
             Tagatha.Labels.Link_To (Label, Register.Current_Label);
          else
@@ -156,9 +161,16 @@ package body Tagatha.Registry is
 
          for I in Arr'Range loop
             declare
-               T : constant Transfer :=
+               T : Transfer :=
                      (if I = Arr'First then First else Arr (I));
             begin
+               if Transfers.Has_Location (T) then
+                  Line := Transfers.Get_Line (T);
+                  Column := Transfers.Get_Column (T);
+               else
+                  Transfers.Set_Location (T, Line, Column);
+               end if;
+
                if Trace_Registry then
                   Ada.Text_IO.Put_Line
                     ("insert: transfer" & This_Index'Img

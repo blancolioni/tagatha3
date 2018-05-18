@@ -1,3 +1,4 @@
+with Ada.Strings.Fixed;
 --  with Ada.Strings.Fixed;
 
 package body Tagatha.Commands is
@@ -276,6 +277,7 @@ package body Tagatha.Commands is
    ----------
 
    function Show (Command : Tagatha_Command) return String is
+      use Ada.Strings.Fixed;
       use Ada.Strings.Unbounded;
       Label : Labels.Tagatha_Label := Command.Label;
       Label_Text : Unbounded_String;
@@ -320,7 +322,10 @@ package body Tagatha.Commands is
          Label_Text := Label_Text & Labels.Show (Label, 'L') & ":";
          Label := Tagatha.Labels.Next_Linked_Label (Label);
       end loop;
-      return To_String (Label_Text) & Command_Text;
+      return To_String (Label_Text)
+        & "[" & Trim (Command.Line'Img, Ada.Strings.Left)
+        & "," & Trim (Command.Column'Img, Ada.Strings.Left) & "]"
+        & Command_Text;
    end Show;
 
    -------------------

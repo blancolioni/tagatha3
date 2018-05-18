@@ -83,12 +83,9 @@ package body Tagatha.Units is
             To_Unit.Last_Label (Executable) := Tagatha.Labels.No_Label;
          end;
       end if;
-      if To_Unit.Current_Sub.Last_Line > 0 then
-         Commands.Set_Source_Reference
-           (Command, To_Unit.Current_Sub.Last_Line,
-            To_Unit.Current_Sub.Last_Column);
-      end if;
 
+      Commands.Set_Source_Reference
+        (Command, To_Unit.Current_Line, To_Unit.Current_Column);
       To_Unit.Current_Sub.Executable_Segment.Append (Command);
 
       if Trace_Commands then
@@ -959,20 +956,24 @@ package body Tagatha.Units is
       end if;
    end Set_Property;
 
-   ---------------------
-   -- Source_Position --
-   ---------------------
+   -----------------
+   -- Source_Line --
+   -----------------
 
-   procedure Source_Position
-     (Unit         : in out Tagatha_Unit;
-      Line, Column : Positive)
+   procedure Source_Location
+     (Unit   : in out Tagatha_Unit;
+      Line   : Positive;
+      Column : Positive)
    is
    begin
-      if Unit.Current_Sub /= null then
-         Unit.Current_Sub.Last_Line := Line;
-         Unit.Current_Sub.Last_Column := Column;
-      end if;
-   end Source_Position;
+      pragma Assert (Line >= Unit.Current_Line);
+      Unit.Current_Line := Line;
+      Unit.Current_Column := Column;
+   end Source_Location;
+
+   ----------------
+   -- Start_Copy --
+   ----------------
 
    procedure Start_Copy
      (Unit      : in out Tagatha_Unit)
@@ -1033,8 +1034,6 @@ package body Tagatha.Units is
                     & "/" & Unit.File_System_Name
                     & Target.Extension;
       File   : File_Assembly_Type;
-      Current_Line : Natural := 0;
-      Current_Column : Natural := 0;
    begin
       Open (File, File_Path);
       Target.File_Preamble (File_Assembly_Type'Class (File),
@@ -1046,22 +1045,6 @@ package body Tagatha.Units is
       end loop;
 
       for Sub of Unit.Subprograms loop
-
-         if Sub.Transfers.Last_Index > 0
-           and then Transfers.Has_Location (Sub.Transfers (1))
-         then
-            declare
-               Line : constant Positive :=
-                        Transfers.Get_Line (Sub.Transfers (1));
-               Column : constant Positive :=
-                          Transfers.Get_Column (Sub.Transfers (1));
-            begin
-               Target.Set_Location
-                 (File_Assembly_Type'Class (File), Line, Column);
-               Current_Line := Line;
-               Current_Column := Column;
-            end;
-         end if;
 
          declare
             use List_Of_Directives;
@@ -1090,17 +1073,9 @@ package body Tagatha.Units is
                   declare
                      Line   : constant Positive :=
                                 Transfers.Get_Line (Sub.Transfers (I));
-                     Column : constant Positive :=
-                                Transfers.Get_Column (Sub.Transfers (I));
                   begin
-                     if Line /= Current_Line
-                       or else Column /= Current_Column
-                     then
-                        Target.Set_Location
-                          (File_Assembly_Type'Class (File), Line, Column);
-                        Current_Line := Line;
-                        Current_Column := Column;
-                     end if;
+                     Target.Set_Location
+                       (File_Assembly_Type'Class (File), Line, 1);
                   end;
                end if;
 

@@ -40,7 +40,7 @@ package body Tagatha.Fragments is
             end if;
 
             if Rec.Line /= 0 then
-               Unit.Source_Position (Rec.Line, Rec.Column);
+               Unit.Source_Location (Rec.Line, Rec.Column);
             end if;
 
             case Rec.Fragment_Type is
