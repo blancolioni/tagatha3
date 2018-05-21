@@ -45,6 +45,14 @@ package Tagatha.Units is
    procedure End_Routine
      (Unit : in out Tagatha_Unit);
 
+   procedure Begin_Code
+     (Unit           : in out Tagatha_Unit;
+      Name           : in     String;
+      Global         : in     Boolean);
+
+   procedure End_Code
+     (Unit : in out Tagatha_Unit);
+
    procedure Optimise (Unit : in out Tagatha_Unit);
 
    procedure Write (Unit           : Tagatha_Unit;
@@ -317,6 +325,7 @@ private
          Result_Words       : Natural;
          Last_Label         : Tagatha.Labels.Tagatha_Label;
          Global             : Boolean := True;
+         Has_Frame          : Boolean := True;
          Executable_Segment : Tagatha.Commands.Command_Vectors.Vector;
          Read_Only_Segment  : Data_Vector.Vector;
          Read_Write_Segment : Data_Vector.Vector;
