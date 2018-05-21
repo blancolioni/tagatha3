@@ -121,6 +121,20 @@ package body Tagatha.Units is
       Ascii_String (Unit, Value & Character'Val (0));
    end Asciz_String;
 
+   ----------------
+   -- Begin_Code --
+   ----------------
+
+   procedure Begin_Code
+     (Unit           : in out Tagatha_Unit;
+      Name           : in     String;
+      Global         : in     Boolean)
+   is
+   begin
+      Unit.Begin_Routine (Name, 0, 0, 0, Global);
+      Unit.Current_Sub.Has_Frame := False;
+   end Begin_Code;
+
    -------------------
    -- Begin_Routine --
    -------------------
@@ -377,6 +391,17 @@ package body Tagatha.Units is
    begin
       Append (Unit, Commands.Duplicate);
    end Duplicate;
+
+   -----------------
+   -- End_Routine --
+   -----------------
+
+   procedure End_Code
+     (Unit : in out Tagatha_Unit)
+   is
+   begin
+      Unit.End_Routine;
+   end End_Code;
 
    --------------
    -- End_Copy --
@@ -1063,9 +1088,11 @@ package body Tagatha.Units is
             Target.Start (File_Assembly_Type'Class (File),
                           Subprogram_Name (Sub), True);
 
-            Target.Begin_Frame (File_Assembly_Type'Class (File),
-                                Sub.Argument_Words,
-                                Sub.Frame_Words);
+            if Sub.Has_Frame then
+               Target.Begin_Frame (File_Assembly_Type'Class (File),
+                                   Sub.Argument_Words,
+                                   Sub.Frame_Words);
+            end if;
 
             for I in 1 .. Sub.Transfers.Last_Index loop
 
@@ -1107,9 +1134,12 @@ package body Tagatha.Units is
                Next (Directive);
             end loop;
 
-            Target.End_Frame (File_Assembly_Type'Class (File),
-                              Sub.Argument_Words,
-                              Sub.Frame_Words);
+            if Sub.Has_Frame then
+               Target.End_Frame (File_Assembly_Type'Class (File),
+                                 Sub.Argument_Words,
+                                 Sub.Frame_Words);
+            end if;
+
             Target.Finish (File_Assembly_Type'Class (File));
          end;
       end loop;

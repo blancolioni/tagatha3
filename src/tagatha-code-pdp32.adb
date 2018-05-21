@@ -11,6 +11,9 @@ package body Tagatha.Code.Pdp32 is
 
    Result_Register : constant String := "r0";
 
+   Last_Line : Natural := 0;
+   Last_Col  : Natural := 0;
+
    function To_String (Cond    : Tagatha_Condition;
                        Negated : Boolean)
                       return String;
@@ -75,6 +78,22 @@ package body Tagatha.Code.Pdp32 is
      (Asm      : in out Assembly'Class;
       Op       : in     One_Argument_Operator;
       Dest     : in     Tagatha.Transfers.Transfer_Operand);
+
+   -----------------
+   -- Begin_Frame --
+   -----------------
+
+   overriding procedure Begin_Frame
+     (T           : in out Pdp32_Translator;
+      Asm         : in out Assembly'Class;
+      Arg_Count   : in     Natural;
+      Local_Count : in     Natural)
+   is
+      pragma Unreferenced (T, Arg_Count, Local_Count);
+   begin
+      Asm.Put_Line ("    mov fp, -(sp)");
+      Asm.Put_Line ("    mov sp, fp");
+   end Begin_Frame;
 
    ------------
    -- Encode --
@@ -188,6 +207,18 @@ package body Tagatha.Code.Pdp32 is
 
    end Encode;
 
+   overriding procedure End_Frame
+     (T           : in out Pdp32_Translator;
+      Asm         : in out Assembly'Class;
+      Arg_Count   : in     Natural;
+      Local_Count : in     Natural)
+   is
+      pragma Unreferenced (T, Arg_Count, Local_Count);
+   begin
+      Asm.Put_Line ("    mov fp, sp");
+      Asm.Put_Line ("    mov (sp)+, fp");
+   end End_Frame;
+
    -------------------
    -- File_Preamble --
    -------------------
@@ -200,6 +231,8 @@ package body Tagatha.Code.Pdp32 is
       pragma Unreferenced (T);
    begin
       Asm.Put_Line (".source_file """ & Source_File_Name & """");
+      Last_Line := 0;
+      Last_Col := 0;
    end File_Preamble;
 
    ------------
@@ -212,8 +245,6 @@ package body Tagatha.Code.Pdp32 is
    is
       pragma Unreferenced (T);
    begin
-      Asm.Put_Line ("    mov fp, sp");
-      Asm.Put_Line ("    mov (sp)+, fp");
       Asm.Put_Line ("    rts");
    end Finish;
 
@@ -622,8 +653,12 @@ package body Tagatha.Code.Pdp32 is
    is
       pragma Unreferenced (T);
    begin
-      Asm.Put_Line (".source_position" & Positive'Image (Line)
-                    & Positive'Image (Column));
+      if Line /= Last_Line or else Column /= Last_Col then
+         Asm.Put_Line (".source_position" & Positive'Image (Line)
+                       & Positive'Image (Column));
+         Last_Line := Line;
+         Last_Col := Column;
+      end if;
    end Set_Location;
 
    -----------
@@ -642,8 +677,6 @@ package body Tagatha.Code.Pdp32 is
          Asm.Put_Line (".export " & Name);
       end if;
       Asm.Put_Line (Name & ":");
-      Asm.Put_Line ("    mov fp, -(sp)");
-      Asm.Put_Line ("    mov sp, fp");
    end Start;
 
    ----------------------------

@@ -13,15 +13,27 @@ package Tagatha.Code.Pdp32 is
       Line   : Positive;
       Column : Positive);
 
-   overriding
-   procedure Start (T      : in out Pdp32_Translator;
-                    Asm    : in out Assembly'Class;
-                    Name   : in     String;
-                    Global : in     Boolean);
+   overriding procedure Start
+     (T         : in out Pdp32_Translator;
+      Asm       : in out Assembly'Class;
+      Name      : in     String;
+      Global    : in     Boolean);
 
    overriding
    procedure Finish (T   : in out Pdp32_Translator;
                      Asm : in out Assembly'Class);
+
+   overriding procedure Begin_Frame
+     (T           : in out Pdp32_Translator;
+      Asm         : in out Assembly'Class;
+      Arg_Count   : in     Natural;
+      Local_Count : in     Natural);
+
+   overriding procedure End_Frame
+     (T           : in out Pdp32_Translator;
+      Asm         : in out Assembly'Class;
+      Arg_Count   : in     Natural;
+      Local_Count : in     Natural);
 
    overriding
    procedure Encode (T    : in out Pdp32_Translator;
