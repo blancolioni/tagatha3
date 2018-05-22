@@ -703,12 +703,39 @@ package body Tagatha.Registry is
                         (Register.Stack.Last_Index - 1);
       T : constant Tagatha.Expressions.Expression := Top.Expression;
    begin
+      if Trace_Registry then
+         Ada.Text_IO.Put_Line
+           ("swap: old stack ["
+            & Expressions.Image
+              (Register.Stack.Element
+                   (Register.Stack.Last_Index).Expression)
+            & "] ["
+            & Expressions.Image
+              (Register.Stack.Element
+                   (Register.Stack.Last_Index - 1).Expression)
+            & "]");
+      end if;
+
       Top.Expression := Penultimate.Expression;
       Penultimate.Expression := T;
       Register.Stack.Replace_Element
-        (Register.Stack.Last_Index - 1, Top);
+        (Register.Stack.Last_Index, Top);
       Register.Stack.Replace_Element
-        (Register.Stack.Last_Index, Penultimate);
+        (Register.Stack.Last_Index - 1, Penultimate);
+
+      if Trace_Registry then
+         Ada.Text_IO.Put_Line
+           ("swap: new stack ["
+            & Expressions.Image
+              (Register.Stack.Element
+                   (Register.Stack.Last_Index).Expression)
+            & "] ["
+            & Expressions.Image
+              (Register.Stack.Element
+                   (Register.Stack.Last_Index - 1).Expression)
+            & "]");
+      end if;
+
    end Record_Swap;
 
    -----------
