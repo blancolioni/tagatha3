@@ -123,8 +123,13 @@ package body Tagatha.Code.Pdp32 is
             Cond : constant Tagatha_Condition := Get_Condition (Item);
             Dest : constant Tagatha_Label     := Get_Destination (Item);
          begin
-            Asm.Put_Line ("    b" & To_String (Cond, T.Reverse_Test) &
-                            " " & Show (Dest, 'L'));
+            if not Is_Local (Dest) then
+               pragma Assert (Cond = C_Always and then not T.Reverse_Test);
+               Asm.Put_Line ("    jmp " & Show (Dest, '!'));
+            else
+               Asm.Put_Line ("    b" & To_String (Cond, T.Reverse_Test) &
+                               " " & Show (Dest, 'L'));
+            end if;
             T.Reverse_Test := False;
          end;
       elsif Is_Call (Item) then
