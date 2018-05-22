@@ -59,6 +59,7 @@ package Tagatha.Labels is
       return String;
 
    function Has_Label (Label : Tagatha_Label) return Boolean;
+   function Is_Local (Label : Tagatha_Label) return Boolean;
 
    No_Label : constant Tagatha_Label;
 
@@ -83,6 +84,9 @@ private
      (Item         : Tagatha_Label)
       return Boolean
    is (Item.Exported);
+
+   function Is_Local (Label : Tagatha_Label) return Boolean
+   is (Label.Index > 0);
 
    No_Label : constant Tagatha_Label := null;
 
