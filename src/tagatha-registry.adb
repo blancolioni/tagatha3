@@ -369,6 +369,25 @@ package body Tagatha.Registry is
          Record_Pop (Register, Default_Address_Size,
                      Tagatha.Transfers.Condition_Operand);
       end if;
+
+      for Operand of Register.Stack loop
+         declare
+            Index     : constant Positive := Operand.Transfer_Index;
+            Label     : constant Tagatha.Labels.Tagatha_Label :=
+                          Operand.Label;
+            Transfers : Tagatha.Transfers.Array_Of_Transfers :=
+                          Tagatha.Expressions.Get_Transfers
+                            (Register.Temps, Operand.Expression,
+                             Tagatha.Transfers.Stack_Operand);
+         begin
+            Tagatha.Transfers.Set_Label
+              (Transfers (Transfers'First), Label);
+            Register.Insert (Index, Transfers);
+         end;
+      end loop;
+
+      Register.Stack.Clear;
+
       Register.Append
         (Tagatha.Transfers.Control_Transfer (Condition, Destination));
 
