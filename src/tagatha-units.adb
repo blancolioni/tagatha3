@@ -1174,6 +1174,36 @@ package body Tagatha.Units is
          end loop;
       end loop;
 
+      Target.Segment (File_Assembly_Type'Class (File), Read_Write);
+
+      for Sub of Unit.Subprograms loop
+
+         for Datum of Sub.Read_Write_Segment loop
+
+            if Datum.Label /= Tagatha.Labels.No_Label then
+               Target.Label (File_Assembly_Type'Class (File),
+                             Datum.Label);
+            end if;
+
+            case Datum.Data_Type is
+               when Integer_Data =>
+                  Target.Data (File_Assembly_Type'Class (File),
+                               Tagatha.Constants.Integer_Constant
+                                 (Datum.Integer_Value));
+               when Floating_Point_Data =>
+                  Target.Data (File_Assembly_Type'Class (File),
+                               Tagatha.Constants.Floating_Point_Constant
+                                 (Datum.Floating_Point_Value));
+               when Label_Data =>
+                  Target.Data (File_Assembly_Type'Class (File),
+                               Tagatha.Constants.Label_Constant
+                                 (Datum.Label_Value));
+               when String_Data =>
+                  null;
+            end case;
+         end loop;
+      end loop;
+
       Target.File_Postamble (File_Assembly_Type'Class (File));
       Close (File);
    end Write;
