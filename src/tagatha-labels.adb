@@ -200,7 +200,8 @@ package body Tagatha.Labels is
             Label := new Tagatha_Label_Record'
               (Name         => To_Unbounded_String (Name),
                Index        =>
-                 (if Import then 0 else In_List.Labels.Last_Index + 1),
+                 (if Import or else Name /= "" then 0
+                  else In_List.Labels.Last_Index + 1),
                Linked_To    => null,
                Segment      => Executable,
                Location     => 0,
