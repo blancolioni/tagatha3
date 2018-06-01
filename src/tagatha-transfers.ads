@@ -2,7 +2,6 @@ private with Ada.Strings.Unbounded;
 
 with Tagatha.Constants;
 with Tagatha.Labels;
-with Tagatha.Operands;
 with Tagatha.Temporaries;
 
 package Tagatha.Transfers is
@@ -47,21 +46,16 @@ package Tagatha.Transfers is
    function External_Operand
      (Name      : String;
       Immediate : Boolean;
-      Predec    : Boolean;
-      Postinc   : Boolean)
+      Predec    : Boolean := False;
+      Postinc   : Boolean := False)
       return Transfer_Operand;
 
    function Text_Operand
      (Text      : String)
       return Transfer_Operand;
 
-   function To_Transfer
-     (Op    : Tagatha.Operands.Tagatha_Operand)
-      return Transfer_Operand;
-
-   function To_Transfer
-     (Op   : Tagatha.Operands.Tagatha_Operand;
-      Size  : Tagatha_Size)
+   function Shelf_Operand
+     (Shelf_Name : String)
       return Transfer_Operand;
 
    function Label_Operand (Label         : Tagatha.Labels.Tagatha_Label)
@@ -105,7 +99,8 @@ package Tagatha.Transfers is
                              Changed_Registers : String)
                              return Transfer;
 
-   function Call (Destination : Tagatha.Labels.Tagatha_Label)
+   function Call (Destination : Tagatha.Labels.Tagatha_Label;
+      Argument_Count : Natural)
                   return Transfer;
 
    function Reserve_Stack (Frame_Size : Natural) return Transfer;
@@ -128,6 +123,7 @@ package Tagatha.Transfers is
    function Get_Condition (T : Transfer) return Tagatha_Condition;
    function Get_Destination (T : Transfer)
                             return Tagatha.Labels.Tagatha_Label;
+   function Get_Argument_Count (T : Transfer) return Natural;
 
    function Same_Operand (Left, Right : Transfer_Operand) return Boolean;
 
@@ -146,6 +142,9 @@ package Tagatha.Transfers is
    function Is_Dereferenced (Item : Transfer_Operand) return Boolean;
    function Has_Predecrement (Item : Transfer_Operand) return Boolean;
    function Has_Postincrement (Item : Transfer_Operand) return Boolean;
+
+   function Is_Shelf     (Item : Transfer_Operand) return Boolean;
+   function Get_Shelf_Name (Item : Transfer_Operand) return String;
 
    function Is_Text     (Item : Transfer_Operand) return Boolean;
    function Get_Text    (Item : Transfer_Operand) return String;
@@ -217,7 +216,8 @@ package Tagatha.Transfers is
 
    procedure Assign_Registers
      (Item : in out Transfer;
-      Rs   : in out Register_Allocation_Array);
+      Rs   : in out Register_Allocation_Array;
+      Last : in out Natural);
 
    procedure Set_Location
      (Item   : in out Transfer;
@@ -231,7 +231,7 @@ private
       T_Local, T_Argument, T_Result, T_Return,
       T_Immediate, T_External,
       T_Iterator,
-      T_Condition, T_Text);
+      T_Condition, T_Text, T_Shelf);
 
    type Bit_Slice is
       record
@@ -281,12 +281,26 @@ private
                External_Predec : Boolean;
                External_Postinc : Boolean;
             when T_Text =>
-               Text          : Ada.Strings.Unbounded.Unbounded_String;
+               Text             : Ada.Strings.Unbounded.Unbounded_String;
+            when T_Shelf =>
+               Shelf_Name : Ada.Strings.Unbounded.Unbounded_String;
          end case;
       end record;
 
    No_Operand : constant Transfer_Operand :=
                   (T_No_Operand, No_Modification);
+
+   function Shelf_Operand
+     (Shelf_Name : String)
+      return Transfer_Operand
+   is (T_Shelf, No_Modification,
+       Ada.Strings.Unbounded.To_Unbounded_String (Shelf_Name));
+
+   function Is_Shelf     (Item : Transfer_Operand) return Boolean
+   is (Item.Op = T_Shelf);
+
+   function Get_Shelf_Name (Item : Transfer_Operand) return String
+   is (Ada.Strings.Unbounded.To_String (Item.Shelf_Name));
 
    function Has_Predecrement (Item : Transfer_Operand) return Boolean
    is (Item.Op = T_External and then Item.External_Predec);
@@ -315,6 +329,7 @@ private
          Label             : Tagatha.Labels.Tagatha_Label;
          Condition         : Tagatha_Condition;
          Destination       : Tagatha.Labels.Tagatha_Label;
+         Argument_Count    : Natural;
          Call              : Boolean;
          Self              : Boolean;
          Native            : Ada.Strings.Unbounded.Unbounded_String;
@@ -330,5 +345,8 @@ private
 
    function Is_Dereferenced (Item : Transfer_Operand) return Boolean
    is (Item.Modifiers.Dereferenced);
+
+   function Get_Argument_Count (T : Transfer) return Natural
+   is (T.Argument_Count);
 
 end Tagatha.Transfers;

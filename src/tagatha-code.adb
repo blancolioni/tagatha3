@@ -1,6 +1,7 @@
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 
+with Tagatha.Code.Aqua32;
 with Tagatha.Code.Pdp11;
 with Tagatha.Code.Pdp32;
 with Tagatha.Code.I686;
@@ -52,6 +53,8 @@ package body Tagatha.Code is
          return Tagatha.Code.M6502.Get_Translator;
       elsif Name = "pdp32" then
          return Tagatha.Code.Pdp32.Get_Translator;
+      elsif Name = "aqua32" then
+         return Tagatha.Code.Aqua32.Get_Translator;
       else
          raise Constraint_Error with
            "unknown target: " & Name;

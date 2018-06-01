@@ -208,6 +208,9 @@ package body Tagatha.Code.I686 is
             return "not";
          when Op_Test =>
             return "cmp";
+         when Op_Logical_Shift =>
+            raise Constraint_Error with
+              "we didn't implement logical shifts yet";
          when Op_Dereference =>
             raise Constraint_Error with
               "should not be getting a mnemonic for dereference";
