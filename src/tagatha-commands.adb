@@ -7,13 +7,14 @@ package body Tagatha.Commands is
    -- Call --
    ----------
 
-   function Call (Target : Tagatha.Labels.Tagatha_Label)
+   function Call (Target         : Tagatha.Labels.Tagatha_Label;
+                  Argument_Count : Natural)
                   return Tagatha_Command
    is
    begin
       return new Tagatha_Command_Record'(T_Call, Default_Address_Size,
                                          Tagatha.Labels.No_Label, 0, 0, False,
-                                         Target, False);
+                                         Target, False, Argument_Count);
    end Call;
 
    ---------------
@@ -28,9 +29,9 @@ package body Tagatha.Commands is
    begin
       case Direction is
          when From =>
-            return Push (Tagatha.Operands.Iterator_Copy_Operand, Size);
+            return Push (Tagatha.Transfers.Iterator_Copy_Operand, Size);
          when To =>
-            return Pop (Tagatha.Operands.Iterator_Copy_Operand, Size);
+            return Pop (Tagatha.Transfers.Iterator_Copy_Operand, Size);
       end case;
    end Copy_Item;
 
@@ -45,7 +46,7 @@ package body Tagatha.Commands is
       return new Tagatha_Command_Record'(T_Stack, Size,
                                          Tagatha.Labels.No_Label,
                                          0, 0, False,
-                                         S_Drop, Operands.Null_Operand);
+                                         S_Drop, Transfers.No_Operand);
    end Drop;
 
    --------------------------
@@ -86,7 +87,7 @@ package body Tagatha.Commands is
    -----------------------
 
    function Get_Stack_Operand (Command : Tagatha_Command)
-                               return Tagatha.Operands.Tagatha_Operand
+                               return Tagatha.Transfers.Transfer_Operand
    is
    begin
       return Command.Operand;
@@ -107,7 +108,10 @@ package body Tagatha.Commands is
    -- Indirect_Call --
    -------------------
 
-   function Indirect_Call return Tagatha_Command is
+   function Indirect_Call
+     (Argument_Count : Natural)
+      return Tagatha_Command
+   is
    begin
       return new Tagatha_Command_Record'
         (Instruction       => T_Call,
@@ -117,7 +121,8 @@ package body Tagatha.Commands is
          Column            => 0,
          Negate            => False,
          Subroutine        => Tagatha.Labels.No_Label,
-         Indirect          => True);
+         Indirect          => True,
+         Arguments         => Argument_Count);
    end Indirect_Call;
 
    ----------
@@ -204,7 +209,7 @@ package body Tagatha.Commands is
    -- Pop --
    ---------
 
-   function Pop (Operand    : Tagatha.Operands.Tagatha_Operand;
+   function Pop (Operand    : Tagatha.Transfers.Transfer_Operand;
                  Size       : Tagatha_Size     := Default_Integer_Size)
                  return Tagatha_Command
    is
@@ -219,7 +224,7 @@ package body Tagatha.Commands is
    -- Push --
    ----------
 
-   function Push (Operand    : Tagatha.Operands.Tagatha_Operand;
+   function Push (Operand    : Tagatha.Transfers.Transfer_Operand;
                   Size       : Tagatha_Size     := Default_Integer_Size)
                   return Tagatha_Command
    is
@@ -236,7 +241,7 @@ package body Tagatha.Commands is
 
    function Restore return Tagatha_Command is
    begin
-      return Push (Tagatha.Operands.Shelf_Operand ("_"));
+      return Push (Tagatha.Transfers.Shelf_Operand ("_"));
    end Restore;
 
    ----------
@@ -245,7 +250,7 @@ package body Tagatha.Commands is
 
    function Save return Tagatha_Command is
    begin
-      return Pop (Tagatha.Operands.Shelf_Operand ("_"));
+      return Pop (Tagatha.Transfers.Shelf_Operand ("_"));
    end Save;
 
    ---------------
@@ -287,10 +292,10 @@ package body Tagatha.Commands is
                           (case Command.Stack_Op is
                               when S_Push =>
                                  "push " &
-                                 Tagatha.Operands.Show (Command.Operand),
+                                 Tagatha.Transfers.Show (Command.Operand),
                               when S_Pop  =>
                                  "pop  " &
-                                 Tagatha.Operands.Show (Command.Operand),
+                                 Tagatha.Transfers.Show (Command.Operand),
                               when S_Drop =>
                                  "drop",
                               when S_Duplicate =>
@@ -335,8 +340,8 @@ package body Tagatha.Commands is
    function Stack_Command
      (Op      : Stack_Operation;
       Size    : Tagatha_Size := Default_Size;
-      Operand : Tagatha.Operands.Tagatha_Operand :=
-        Tagatha.Operands.Null_Operand)
+      Operand : Tagatha.Transfers.Transfer_Operand :=
+        Tagatha.Transfers.No_Operand)
       return Tagatha_Command
    is
    begin
@@ -352,7 +357,7 @@ package body Tagatha.Commands is
 
    function Start_Iteration return Tagatha_Command is
    begin
-      return Pop (Tagatha.Operands.Iterator_New_Operand);
+      return Pop (Tagatha.Transfers.Iterator_New_Operand);
    end Start_Iteration;
 
 end Tagatha.Commands;

@@ -5,7 +5,6 @@ private with Tagatha.Expressions;
 private with Tagatha.Temporaries;
 
 with Tagatha.Labels;
-with Tagatha.Operands;
 with Tagatha.Transfers;
 with Tagatha.Transfers.Transfer_Vectors;
 
@@ -17,16 +16,19 @@ package Tagatha.Registry is
                     Unit_Label  : in     Tagatha.Labels.Tagatha_Label;
                     Size        : in     Natural);
 
-   procedure Record_Push (Register : in out Tagatha_Registry;
-                          Size     : in     Tagatha_Size;
-                          Operand  : in     Tagatha.Operands.Tagatha_Operand);
+   procedure Record_Push
+     (Register : in out Tagatha_Registry;
+      Size     : in     Tagatha_Size;
+      Operand  : in     Tagatha.Transfers.Transfer_Operand);
 
-   procedure Record_Pop (Register : in out Tagatha_Registry;
-                         Size     : in     Tagatha_Size;
-                         Operand  : in     Tagatha.Operands.Tagatha_Operand);
+   procedure Record_Pop
+     (Register : in out Tagatha_Registry;
+      Size     : in     Tagatha_Size;
+      Operand  : in     Tagatha.Transfers.Transfer_Operand);
 
-   procedure Record_Drop (Register : in out Tagatha_Registry;
-                          Size     : in     Tagatha_Size);
+   procedure Record_Drop
+     (Register : in out Tagatha_Registry;
+      Size     : in     Tagatha_Size);
 
    procedure Record_Duplicate
      (Register : in out Tagatha_Registry;
@@ -49,8 +51,10 @@ package Tagatha.Registry is
       Input_Words       : Natural;
       Output_Words      : Natural);
 
-   procedure Record_Call (Register   : in out Tagatha_Registry;
-                          Subroutine : in     Tagatha.Labels.Tagatha_Label);
+   procedure Record_Call
+     (Register   : in out Tagatha_Registry;
+      Subroutine : in     Tagatha.Labels.Tagatha_Label;
+      Argument_Count : Natural);
 
    procedure Record_Loop (Register   : in out Tagatha_Registry;
                           Limit      : in     Local_Offset;

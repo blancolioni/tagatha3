@@ -1,3 +1,5 @@
+with Tagatha.Constants;
+
 package body Tagatha.Fragments is
 
    ------------
@@ -209,12 +211,14 @@ package body Tagatha.Fragments is
    is
       Result : Tagatha_Fragment;
    begin
-      Result.Records.Append ((Fragment_Type => Operand_Fragment,
-                              Line          => 0,
-                              Column        => 0,
-                              Reference     =>
-                                Tagatha.Operands.Constant_Operand (Value),
-                              Size          => Size));
+      Result.Records.Append
+        ((Fragment_Type => Operand_Fragment,
+          Line          => 0,
+          Column        => 0,
+          Reference     =>
+            Tagatha.Transfers.Constant_Operand
+              (Tagatha.Constants.Integer_Constant (Value)),
+          Size          => Size));
       return Result;
    end Integer_Constant;
 
@@ -289,7 +293,7 @@ package body Tagatha.Fragments is
                               Line          => 0,
                               Column        => 0,
                               Reference     =>
-                                Tagatha.Operands.Argument_Operand (Offset),
+                                Tagatha.Transfers.Argument_Operand (Offset),
                               Size          => Size));
       return Result;
    end Reference_Argument;
@@ -310,7 +314,7 @@ package body Tagatha.Fragments is
                               Line          => 0,
                               Column        => 0,
                               Reference     =>
-                                Tagatha.Operands.External_Operand
+                                Tagatha.Transfers.External_Operand
                                   (Name, Immediate),
                               Size          => Size));
       return Result;
@@ -331,7 +335,7 @@ package body Tagatha.Fragments is
                               Line          => 0,
                               Column        => 0,
                               Reference     =>
-                                Tagatha.Operands.Local_Operand (Offset),
+                                Tagatha.Transfers.Local_Operand (Offset),
                               Size          => Size));
       return Result;
    end Reference_Local;
@@ -350,7 +354,7 @@ package body Tagatha.Fragments is
                               Line          => 0,
                               Column        => 0,
                               Reference     =>
-                                Tagatha.Operands.Result_Operand,
+                                Tagatha.Transfers.Result_Operand,
                               Size          => Size));
       return Result;
    end Reference_Result;
@@ -383,7 +387,7 @@ package body Tagatha.Fragments is
             when Command_Fragment =>
                return Tagatha.Commands.Show (R.Command);
             when Operand_Fragment =>
-               return Tagatha.Operands.Show (R.Reference);
+               return Tagatha.Transfers.Show (R.Reference);
             when Condition_Fragment =>
                return Tagatha_Condition'Image (R.Condition);
             when Branch_Fragment =>

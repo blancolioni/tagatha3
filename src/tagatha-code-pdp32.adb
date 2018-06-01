@@ -86,10 +86,13 @@ package body Tagatha.Code.Pdp32 is
    overriding procedure Begin_Frame
      (T           : in out Pdp32_Translator;
       Asm         : in out Assembly'Class;
-      Arg_Count   : in     Natural;
-      Local_Count : in     Natural)
+      Return_Count    : Natural;
+      Arg_Count       : Natural;
+      Local_Count     : Natural;
+      Temporary_Count : Natural)
    is
-      pragma Unreferenced (T, Arg_Count, Local_Count);
+      pragma Unreferenced (T, Arg_Count, Local_Count,
+                           Return_Count, Temporary_Count);
    begin
       Asm.Put_Line ("    mov fp, -(sp)");
       Asm.Put_Line ("    mov sp, fp");
@@ -297,6 +300,8 @@ package body Tagatha.Code.Pdp32 is
             return "bic";
          when Op_Bit_Set =>
             return "bis";
+         when Op_Logical_Shift =>
+            return "lsh";
          when Op_Equal =>
             return "seq";
          when Op_Not_Equal =>
@@ -386,9 +391,21 @@ package body Tagatha.Code.Pdp32 is
                           Dest     : in     String)
    is
    begin
-      Asm.Put_Line
-        ("    " & Mnemonic & To_Suffix (Size)
-         & " " & Source_1 & ", " & Source_2 & ", " & Dest);
+      if Mnemonic = "lsh" or else Mnemonic = "ash"
+        or else Mnemonic = "bit"
+        or else Mnemonic = "bic" or else Mnemonic = "bis"
+      then
+         Asm.Put_Line
+           ("    mov" & To_Suffix (Size)
+            & " " & Source_1 & ", " & Dest);
+         Asm.Put_Line
+           ("    " & Mnemonic & To_Suffix (Size)
+            & " " &  Source_2 & ", " & Dest);
+      else
+         Asm.Put_Line
+           ("    " & Mnemonic & To_Suffix (Size)
+            & " " & Source_1 & ", " & Source_2 & ", " & Dest);
+      end if;
    end Instruction;
 
    -----------------
