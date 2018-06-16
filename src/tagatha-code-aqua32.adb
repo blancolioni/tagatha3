@@ -9,7 +9,7 @@ with Tagatha.Temporaries;
 
 package body Tagatha.Code.Aqua32 is
 
-   Base_Register : constant String := "$255";
+   Base_Register : constant String := "$254";
 
    Last_Line : Natural := 0;
    Last_Col  : Natural := 0;
@@ -17,32 +17,6 @@ package body Tagatha.Code.Aqua32 is
    function To_String (Cond    : Tagatha_Condition;
                        Negated : Boolean)
                       return String;
-
-   function Register_Image (Index : Natural) return String;
-
-   function Argument_Register_Image
-     (Translator : Aqua32_Translator'Class;
-      Index      : Positive)
-      return String
-   is (Register_Image (Translator.Arg_Count - Index));
-
-   function Result_Register_Image
-     (Translator : Aqua32_Translator'Class;
-      Index      : Positive)
-      return String
-   is (Register_Image (Translator.Arg_Count + Index - 1));
-
-   function Jump_Register_Image
-     (Translator : Aqua32_Translator'Class)
-      return String
-   is (Register_Image (Translator.Arg_Count + Translator.Ret_Count));
-
-   function Local_Register_Image
-     (Translator : Aqua32_Translator'Class;
-      Index      : Positive)
-      return String
-   is (Register_Image (Translator.Arg_Count + Translator.Ret_Count + 1
-                       + Index - 1));
 
    function Zero_Operand return Tagatha.Transfers.Transfer_Operand
    is (Tagatha.Transfers.Constant_Operand
@@ -54,27 +28,7 @@ package body Tagatha.Code.Aqua32 is
    is (Tagatha.Transfers.External_Operand
        (Register, False, False, False));
 
-   function Scratch_Register_Image
-     (Translator : Aqua32_Translator'Class;
-      Index      : Positive)
-      return String
-   is (Register_Image (Translator.Ret_Count
-                       + Translator.Arg_Count
-                       + 1
-                       + Translator.Local_Count
-                       + Index));
-
-   function Stack_Register_Image
-     (Translator : Aqua32_Translator'Class)
-      return String
-   is (Register_Image (Translator.Ret_Count
-                       + Translator.Arg_Count
-                       + Translator.Local_Count
-                       + 1
-                       + Translator.Temp_Count
-                       + Translator.Stack_Count.all - 1));
-
-   procedure Move (Translator : Aqua32_Translator'Class;
+   procedure Move (Translator : in out Aqua32_Translator'Class;
                    Asm        : in out Assembly'Class;
                    Source     : in     Tagatha.Transfers.Transfer_Operand;
                    Dest       : in     Tagatha.Transfers.Transfer_Operand);
@@ -90,14 +44,14 @@ package body Tagatha.Code.Aqua32 is
    function Get_Reversed (Op : Tagatha_Operator) return Boolean;
 
    procedure Operate
-     (Translator : Aqua32_Translator'Class;
+     (Translator : in out Aqua32_Translator'Class;
       Asm        : in out Assembly'Class;
       Op       : in     Tagatha_Operator;
       Source   : in     Tagatha.Transfers.Transfer_Operand;
       Dest     : in     Tagatha.Transfers.Transfer_Operand);
 
    procedure Operate
-     (Translator : Aqua32_Translator'Class;
+     (Translator : in out Aqua32_Translator'Class;
       Asm        : in out Assembly'Class;
       Op       : in     Tagatha_Operator;
       Source_1 : in     Tagatha.Transfers.Transfer_Operand;
@@ -105,27 +59,27 @@ package body Tagatha.Code.Aqua32 is
       Dest     : in     Tagatha.Transfers.Transfer_Operand);
 
    procedure Operate
-     (Translator : Aqua32_Translator'Class;
+     (Translator : in out Aqua32_Translator'Class;
       Asm        : in out Assembly'Class;
       Op       : in     One_Argument_Operator;
       Dest     : in     Tagatha.Transfers.Transfer_Operand);
 
    procedure Pop_Register
-     (Translator : Aqua32_Translator'Class);
+     (Translator : in out Aqua32_Translator'Class);
 
    procedure Push_Register
-     (Translator : Aqua32_Translator'Class);
+     (Translator : in out Aqua32_Translator'Class);
 
    procedure Change_Register_Stack
-     (Translator : Aqua32_Translator'Class;
+     (Translator : in out Aqua32_Translator'Class;
       Change     : Integer);
 
    function Pop_Register
-     (Translator : Aqua32_Translator'Class)
+     (Translator : in out Aqua32_Translator'Class)
       return String;
 
    function Push_Register
-     (Translator : Aqua32_Translator'Class)
+     (Translator : in out Aqua32_Translator'Class)
       return String;
 
    function With_Size
@@ -143,6 +97,94 @@ package body Tagatha.Code.Aqua32 is
            when Size_64              =>
               raise Constraint_Error with "64 bit not supported yet"));
 
+   -------------------
+   -- After_Operand --
+   -------------------
+
+   procedure After_Operand
+     (Translator : in out Aqua32_Translator'Class;
+      Asm        : in out Assembly'Class;
+      Operand    : in     Tagatha.Transfers.Transfer_Operand)
+   is
+      use Tagatha.Transfers;
+   begin
+      if Is_Constant (Operand) then
+         null;
+      elsif Is_Argument (Operand) then
+         null;
+      elsif Is_Local (Operand) then
+         null;
+      elsif Is_Result (Operand) or else Is_Return (Operand) then
+         null;
+      elsif Is_Stack (Operand) then
+         null;
+      elsif Is_External (Operand) then
+         null;
+      elsif Is_Temporary (Operand) then
+         null;
+      elsif Is_Iterator_New (Operand) then
+         null;
+      elsif Is_Iterator_Copy (Operand) then
+         Asm.Put_Line
+           ("    ADDU "
+            & Translator.Scratch_Register (0)
+            & ","
+            & Translator.Zero_Register
+            & ", #4");
+      elsif Is_Text (Operand) then
+         null;
+      else
+         raise Constraint_Error with
+           "unknown operand type in " & Show (Operand);
+      end if;
+   end After_Operand;
+
+   --------------------
+   -- Before_Operand --
+   --------------------
+
+   procedure Before_Operand
+     (Translator : in out Aqua32_Translator'Class;
+      Asm        : in out Assembly'Class;
+      Operand    : in     Tagatha.Transfers.Transfer_Operand)
+   is
+      use Tagatha.Transfers;
+   begin
+      if Is_Constant (Operand) then
+         null;
+      elsif Is_Argument (Operand) then
+         null;
+      elsif Is_Local (Operand) then
+         null;
+      elsif Is_Result (Operand) or else Is_Return (Operand) then
+         null;
+      elsif Is_Stack (Operand) then
+         null;
+      elsif Is_External (Operand) then
+         if Is_Immediate (Operand) then
+            Asm.Put_Line
+              ("    SETH " & Translator.Scratch_Register (0)
+               & ", "
+               & "#<" & External_Name (Operand));
+            Asm.Put_Line
+              ("    SETL " & Translator.Scratch_Register (0)
+               & ", "
+               & "#>" & External_Name (Operand));
+         end if;
+      elsif Is_Temporary (Operand) then
+         null;
+      elsif Is_Iterator_New (Operand) then
+         null;
+      elsif Is_Iterator_Copy (Operand) then
+         null;
+      elsif Is_Text (Operand) then
+         null;
+      else
+         raise Constraint_Error with
+           "unknown operand type in " & Show (Operand);
+      end if;
+   end Before_Operand;
+
    -----------------
    -- Begin_Frame --
    -----------------
@@ -155,17 +197,55 @@ package body Tagatha.Code.Aqua32 is
       Local_Count     : Natural;
       Temporary_Count : Natural)
    is
+      Start : Natural := 0;
+
+      procedure Alloc
+        (Category : Register_Category;
+         Count    : Natural);
+
+      -----------
+      -- Alloc --
+      -----------
+
+      procedure Alloc
+        (Category : Register_Category;
+         Count    : Natural)
+      is
+      begin
+         T.Registers (Category) := (Start, Count);
+         Start := Start + Count;
+      end Alloc;
+
    begin
-      T.Ret_Count := Return_Count;
-      T.Arg_Count := Arg_Count;
-      T.Local_Count := Local_Count;
-      T.Temp_Count := Temporary_Count + 3;
-      T.Stack_Count.all := 0;
---        Ada.Text_IO.Put_Line
---          ("begin frame:" & T.Ret_Count'Img & T.Arg_Count'Img
---           & T.Local_Count'Img & T.Temp_Count'Img);
-      Asm.Put_Line ("    PUT rJ, "
-                    & T.Jump_Register_Image);
+      T.Has_Frame := True;
+      Alloc (Argument, Arg_Count);
+      Alloc (Result, Return_Count);
+      Alloc (Local, Local_Count);
+      Alloc (Temporary, Temporary_Count);
+      Alloc (Scratch, 2);
+      Alloc (Utility, 2);
+      Alloc (Stack, 0);
+      Asm.Put_Line ("    -- arg" & Arg_Count'Img
+                    & " loc" & Local_Count'Img
+                    & " ret" & Return_Count'Img
+                    & " temp" & Temporary_Count'Img);
+      for Cat in Register_Category loop
+         if T.Registers (Cat).Count = 0 then
+            Asm.Put_Line
+              ("    -- " & Cat'Img & " empty");
+         else
+            Asm.Put_Line
+              ("    -- " & Cat'Img & " first "
+               & T.Register_Image
+                 (T.Registers (Cat).First)
+               & "; last "
+               & T.Register_Image
+                 (T.Registers (Cat).First
+                  + T.Registers (Cat).Count - 1));
+         end if;
+      end loop;
+
+      Asm.Put_Line ("    PUT rJ, " & T.Jump_Register);
    end Begin_Frame;
 
    ---------------------------
@@ -173,10 +253,10 @@ package body Tagatha.Code.Aqua32 is
    ---------------------------
 
    procedure Change_Register_Stack
-     (Translator : Aqua32_Translator'Class;
+     (Translator : in out Aqua32_Translator'Class;
       Change     : Integer)
    is
-      S : Integer renames Translator.Stack_Count.all;
+      S : Integer renames Translator.Registers (Stack).Count;
    begin
       S := S + Change;
    end Change_Register_Stack;
@@ -224,29 +304,30 @@ package body Tagatha.Code.Aqua32 is
          declare
             use Tagatha.Labels;
             Dest : constant Tagatha_Label := Get_Destination (Item);
-            Preserve : constant Natural :=
-                         Translator.Ret_Count
-                         + Translator.Arg_Count
-                         + Translator.Local_Count + Translator.Temp_Count
-                         + Translator.Stack_Count.all
-                         - Get_Argument_Count (Item) - 1;
          begin
+            Translator.Preserve :=
+              Translator.Registers (Stack).First
+              + Translator.Registers (Stack).Count
+              - Get_Argument_Count (Item);
+
             if Dest = No_Label then
                Asm.Put_Line
-                 ("    PUSHGO" & Natural'Image (Preserve)
+                 ("    PUSHGO "
+                  & Translator.Register_Image (Translator.Preserve)
                   & ","
                   & Base_Register
                   & ","
                   & Translator.Pop_Register);
             else
                Asm.Put_Line
-                 ("    PUSHJ" & Natural'Image (Preserve)
+                 ("    PUSHJ "
+                  & Translator.Register_Image (Translator.Preserve)
                   & ","
                   & Tagatha.Labels.Show (Dest, 'L'));
             end if;
 
             Translator.Change_Register_Stack
-              (-Get_Argument_Count (Item) + 1);
+              (-Get_Argument_Count (Item));
 --              Asm.Put_Line
 --                ("    mov " & Register_Image (Preserve)
 --                 & "," & Translator.Push_Register);
@@ -313,9 +394,9 @@ package body Tagatha.Code.Aqua32 is
    is
       pragma Unreferenced (Arg_Count, Local_Count);
    begin
+      T.Has_Frame := False;
       Asm.Put_Line
-        ("    GET rJ, "
-         & T.Jump_Register_Image);
+        ("    GET rJ, " & T.Jump_Register);
    end End_Frame;
 
    -------------------
@@ -340,21 +421,22 @@ package body Tagatha.Code.Aqua32 is
    procedure Finish (T   : in out Aqua32_Translator;
                      Asm : in out Assembly'Class)
    is
+      Result_Count : constant Natural := T.Registers (Result).Count;
    begin
-      if T.Ret_Count > 0 and then T.Arg_Count > 0 then
-         for I in 1 .. T.Ret_Count loop
+      if Result_Count > 0
+        and then T.Result_Register (1) /= 0
+      then
+         for I in 1 .. Result_Count loop
             Asm.Put_Line
-              ("    ADD " & T.Result_Register_Image (I) & ","
-               & Register_Image (I) & ", 0");
+              ("    SET " & T.Register_Image (I - 1)
+               & ", "
+               & T.Result_Register (I));
          end loop;
       end if;
 
       Asm.Put_Line
-        ("    POP" & Positive'Image (T.Ret_Count + 1));
-      T.Ret_Count := 0;
-      T.Arg_Count := 0;
-      T.Local_Count := 0;
-      T.Stack_Count.all := 0;
+        ("    POP" & Positive'Image (Result_Count));
+      T.Registers := (others => (others => 0));
 
    end Finish;
 
@@ -453,7 +535,6 @@ package body Tagatha.Code.Aqua32 is
    function Get_Translator return Translator'Class is
       Result : Aqua32_Translator;
    begin
-      Result.Stack_Count := new Natural'(0);
       return Translator'Class (Result);
    end Get_Translator;
 
@@ -462,7 +543,7 @@ package body Tagatha.Code.Aqua32 is
    -----------------
 
    procedure Instruction
-     (Translator : Aqua32_Translator'Class;
+     (Translator : in out Aqua32_Translator'Class;
       Asm        : in out Assembly'Class;
       Mnemonic   : in     String;
       Dest       : in     Tagatha.Transfers.Transfer_Operand;
@@ -470,6 +551,9 @@ package body Tagatha.Code.Aqua32 is
       Source_2   : in     Tagatha.Transfers.Transfer_Operand)
    is
    begin
+      Translator.Before_Operand (Asm, Dest);
+      Translator.Before_Operand (Asm, Source_1);
+      Translator.Before_Operand (Asm, Source_2);
       Asm.Put_Line
         ("    " & Mnemonic
          & " "
@@ -478,6 +562,9 @@ package body Tagatha.Code.Aqua32 is
          & Translator.To_Src (Source_1)
          & ","
          & Translator.To_Src (Source_2));
+      Translator.After_Operand (Asm, Dest);
+      Translator.After_Operand (Asm, Source_1);
+      Translator.After_Operand (Asm, Source_2);
    end Instruction;
 
    -----------
@@ -510,7 +597,7 @@ package body Tagatha.Code.Aqua32 is
    -- Move --
    ----------
 
-   procedure Move (Translator : Aqua32_Translator'Class;
+   procedure Move (Translator : in out Aqua32_Translator'Class;
                    Asm        : in out Assembly'Class;
                    Source     : in     Tagatha.Transfers.Transfer_Operand;
                    Dest       : in     Tagatha.Transfers.Transfer_Operand)
@@ -518,9 +605,13 @@ package body Tagatha.Code.Aqua32 is
       use Tagatha.Transfers;
       Transfer_Size : Tagatha_Size := Size_32;
    begin
+
       if Has_Size (Dest) then
          Transfer_Size := Get_Size (Dest);
       end if;
+
+      Translator.Before_Operand (Asm, Dest);
+      Translator.Before_Operand (Asm, Source);
 
       if Is_Null_Operand (Dest) then
          if Source = Stack_Operand then
@@ -539,7 +630,7 @@ package body Tagatha.Code.Aqua32 is
            ("    "
             & With_Size ("LD", Transfer_Size)
             & " "
-            & Translator.Scratch_Register_Image (1)
+            & Translator.Scratch_Register (0)
             & ", "
             & Base_Register
             & ", "
@@ -548,13 +639,17 @@ package body Tagatha.Code.Aqua32 is
            ("    LDW "
             & Translator.To_Dst (Dest)
             & ", "
-            & Translator.Scratch_Register_Image (1)
+            & Translator.Scratch_Register (0)
             & ", "
             & "0");
-      elsif Is_Constant (Source) or else Is_Immediate (Source) then
+      elsif Is_Constant (Source) then
+         Asm.Put_Line
+           ("    SETL " & Translator.To_Dst (Dest)
+            & "," & Translator.To_Src (Source));
+      elsif Is_Immediate (Source) then
          Asm.Put_Line
            ("    SET " & Translator.To_Dst (Dest)
-            & "," & Translator.To_Src (Source));
+            & "," & Translator.Scratch_Register (0));
       else
          declare
             Src : constant String := Translator.To_Src (Source);
@@ -572,15 +667,17 @@ package body Tagatha.Code.Aqua32 is
                null;  --  do not generate "mov rX, rX"
             else
                Asm.Put_Line
-                 ("    ADD "
+                 ("    SET "
                   & Dst
                   & ","
-                  & Src
-                  & ","
-                  & "0");
+                  & Src);
             end if;
          end;
       end if;
+
+      Translator.After_Operand (Asm, Dest);
+      Translator.After_Operand (Asm, Source);
+
    end Move;
 
    -------------
@@ -588,7 +685,7 @@ package body Tagatha.Code.Aqua32 is
    -------------
 
    procedure Operate
-     (Translator : Aqua32_Translator'Class;
+     (Translator : in out Aqua32_Translator'Class;
       Asm        : in out Assembly'Class;
       Op       : in     One_Argument_Operator;
       Dest     : in     Tagatha.Transfers.Transfer_Operand)
@@ -612,7 +709,7 @@ package body Tagatha.Code.Aqua32 is
               (Asm      => Asm,
                Mnemonic => "CMP",
                Dest     =>
-                  Register_Operand (Translator.Scratch_Register_Image (1)),
+                  Register_Operand (Translator.Scratch_Register (0)),
                Source_1 => Dest,
                Source_2 => Zero_Operand);
          when Op_Dereference =>
@@ -631,7 +728,7 @@ package body Tagatha.Code.Aqua32 is
    -------------
 
    procedure Operate
-     (Translator : Aqua32_Translator'Class;
+     (Translator : in out Aqua32_Translator'Class;
       Asm        : in out Assembly'Class;
       Op         : in     Tagatha_Operator;
       Source   : in     Tagatha.Transfers.Transfer_Operand;
@@ -697,7 +794,7 @@ package body Tagatha.Code.Aqua32 is
    -------------
 
    procedure Operate
-     (Translator : Aqua32_Translator'Class;
+     (Translator : in out Aqua32_Translator'Class;
       Asm        : in out Assembly'Class;
       Op         : in     Tagatha_Operator;
       Source_1 : in     Tagatha.Transfers.Transfer_Operand;
@@ -729,11 +826,10 @@ package body Tagatha.Code.Aqua32 is
    ------------------
 
    procedure Pop_Register
-     (Translator : Aqua32_Translator'Class)
+     (Translator : in out Aqua32_Translator'Class)
    is
-      S : Integer renames Translator.Stack_Count.all;
    begin
-      S := S - 1;
+      Translator.Change_Register_Stack (-1);
    end Pop_Register;
 
    ------------------
@@ -741,11 +837,11 @@ package body Tagatha.Code.Aqua32 is
    ------------------
 
    function Pop_Register
-     (Translator : Aqua32_Translator'Class)
+     (Translator : in out Aqua32_Translator'Class)
       return String
    is
    begin
-      return Img : constant String := Translator.Stack_Register_Image do
+      return Img : constant String := Translator.Stack_Register do
          Translator.Pop_Register;
       end return;
    end Pop_Register;
@@ -755,11 +851,10 @@ package body Tagatha.Code.Aqua32 is
    -------------------
 
    procedure Push_Register
-     (Translator : Aqua32_Translator'Class)
+     (Translator : in out Aqua32_Translator'Class)
    is
-      S : Integer renames Translator.Stack_Count.all;
    begin
-      S := S + 1;
+      Translator.Change_Register_Stack (1);
    end Push_Register;
 
    -------------------
@@ -767,20 +862,25 @@ package body Tagatha.Code.Aqua32 is
    -------------------
 
    function Push_Register
-     (Translator : Aqua32_Translator'Class)
+     (Translator : in out Aqua32_Translator'Class)
       return String
    is
    begin
       Translator.Push_Register;
-      return Translator.Stack_Register_Image;
+      return Translator.Stack_Register;
    end Push_Register;
 
    --------------------
    -- Register_Image --
    --------------------
 
-   function Register_Image (Index : Natural) return String is
-      Result : String := Natural'Image (Index);
+   function Register_Image
+     (Translator : Aqua32_Translator'Class;
+      Register   : Natural)
+      return String
+   is
+      pragma Unreferenced (Translator);
+      Result : String := Natural'Image (Register);
    begin
       Result (Result'First) := '$';
       return Result;
@@ -829,65 +929,45 @@ package body Tagatha.Code.Aqua32 is
    ---------------
 
    function To_String
-     (Translator : Aqua32_Translator'Class;
+     (Translator : in out Aqua32_Translator'Class;
       Item       : Tagatha.Transfers.Transfer_Operand;
       Source     : Boolean)
       return String
    is
       use Tagatha.Transfers;
-      Deref : constant Boolean := Is_Dereferenced (Item);
-
-      function Deref_Ampersand (S : String) return String
-      is (if Deref then "@" & S else S);
-
-      function Deref_Paren (S : String) return String
-      is (if Deref then "(" & S & ")" else S);
-
-      function Predec return String
-      is (if Has_Predecrement (Item) then "-" else "");
-
-      function Postinc return String
-      is (if Has_Postincrement (Item) then "+" else "");
-
    begin
       if Is_Constant (Item) then
          return "#" & To_String (Get_Value (Item), Item);
       elsif Is_Argument (Item) then
-         return Deref_Paren
-           (Translator.Argument_Register_Image
-              (Positive (Get_Arg_Offset (Item))));
+         return Translator.Argument_Register
+           (Get_Arg_Offset (Item));
       elsif Is_Local (Item) then
-         return Deref_Paren
-           (Translator.Local_Register_Image
-              (Positive (Get_Local_Offset (Item))));
+         return Translator.Local_Register
+           (Get_Local_Offset (Item));
       elsif Is_Result (Item) then
-         return Deref_Paren (Translator.Result_Register_Image (1));
+         return Translator.Result_Register (1);
+      elsif Is_Return (Item) then
+         return Translator.Register_Image (Translator.Preserve);
       elsif Is_Stack (Item) then
          if Source then
-            return Deref_Ampersand
-              (Translator.Pop_Register);
+            return Translator.Pop_Register;
          else
-            return Deref_Ampersand (Translator.Push_Register);
+            return Translator.Push_Register;
          end if;
       elsif Is_External (Item) then
          if Is_Immediate (Item) then
             return "#" & External_Name (Item);
          else
-            return Predec & Deref_Paren (External_Name (Item)) & Postinc;
+            return External_Name (Item);
          end if;
       elsif Is_Temporary (Item) then
-         return Deref_Paren
-           (Translator.Scratch_Register_Image
-              (Tagatha.Temporaries.Get_Register
-                   (Get_Temporary (Item))));
+         return Translator.Temporary_Register
+           (Tagatha.Temporaries.Get_Register
+              (Get_Temporary (Item)));
       elsif Is_Iterator_New (Item) then
-         return Translator.Scratch_Register_Image
-           (Translator.Temp_Count - 2);
+         return Translator.Scratch_Register (1);
       elsif Is_Iterator_Copy (Item) then
-         return "("
-           & Translator.Scratch_Register_Image
-           (Translator.Temp_Count - 2)
-           & ")+";
+         return Translator.Scratch_Register (1);
       elsif Is_Text (Item) then
          declare
             function Escape (S : String) return String;
