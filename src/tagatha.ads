@@ -23,6 +23,7 @@ package Tagatha is
       Op_Greater, Op_Less,
       Op_Greater_Equal, Op_Less_Equal,
       Op_Bit_Test, Op_Bit_Clear, Op_Bit_Set, Op_Bit_Slice,
+      Op_Logical_Shift,
       Op_Compare, Op_Change_Size,
       Op_Negate, Op_Not, Op_Complement, Op_Test,
       Op_Dereference);

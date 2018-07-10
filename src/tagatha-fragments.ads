@@ -2,7 +2,7 @@ private with Ada.Containers.Vectors;
 
 with Tagatha.Commands;
 
-private with Tagatha.Operands;
+private with Tagatha.Transfers;
 
 with Tagatha.Units;
 
@@ -93,7 +93,7 @@ private
             when Command_Fragment =>
                Command       : Tagatha.Commands.Tagatha_Command;
             when Operand_Fragment =>
-               Reference        : Tagatha.Operands.Tagatha_Operand;
+               Reference        : Tagatha.Transfers.Transfer_Operand;
                Size             : Tagatha_Size;
             when Condition_Fragment =>
                Condition        : Tagatha_Condition;

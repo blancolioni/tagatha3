@@ -1,17 +1,17 @@
 private with Ada.Strings.Unbounded;
 
 with Tagatha.Labels;
-with Tagatha.Operands;
+with Tagatha.Transfers;
 
 package Tagatha.Commands is
 
    type Tagatha_Command is private;
 
-   function Push (Operand    : Tagatha.Operands.Tagatha_Operand;
+   function Push (Operand    : Tagatha.Transfers.Transfer_Operand;
                   Size       : Tagatha_Size := Default_Integer_Size)
                   return Tagatha_Command;
 
-   function Pop  (Operand    : Tagatha.Operands.Tagatha_Operand;
+   function Pop  (Operand    : Tagatha.Transfers.Transfer_Operand;
                   Size       : Tagatha_Size     := Default_Integer_Size)
                   return Tagatha_Command;
 
@@ -40,11 +40,14 @@ package Tagatha.Commands is
                      Size : Tagatha_Size      := Default_Integer_Size)
                      return Tagatha_Command;
 
-   function Call (Target : Tagatha.Labels.Tagatha_Label)
+   function Call (Target         : Tagatha.Labels.Tagatha_Label;
+                  Argument_Count : Natural)
                   return Tagatha_Command
      with Pre => Tagatha.Labels.Has_Label (Target);
 
-   function Indirect_Call return Tagatha_Command;
+   function Indirect_Call
+     (Argument_Count : Natural)
+     return Tagatha_Command;
 
    function Loop_Around (Label        : Tagatha.Labels.Tagatha_Label;
                          Loop_Count   : Local_Offset;
@@ -107,12 +110,13 @@ private
          case Instruction is
             when T_Stack =>
                Stack_Op          : Stack_Operation;
-               Operand           : Tagatha.Operands.Tagatha_Operand;
+               Operand           : Tagatha.Transfers.Transfer_Operand;
             when T_Operate =>
                Operator          : Tagatha_Operator;
             when T_Call =>
                Subroutine        : Tagatha.Labels.Tagatha_Label;
                Indirect          : Boolean;
+               Arguments         : Natural;
             when T_Loop =>
                Limit             : Local_Offset;
                Counter           : Local_Offset;
@@ -133,8 +137,8 @@ private
    function Stack_Command
      (Op      : Stack_Operation;
       Size    : Tagatha_Size := Default_Size;
-      Operand : Tagatha.Operands.Tagatha_Operand :=
-        Tagatha.Operands.Null_Operand)
+      Operand : Tagatha.Transfers.Transfer_Operand :=
+        Tagatha.Transfers.No_Operand)
       return Tagatha_Command;
 
    function Get_Command_Operator (Command : Tagatha_Command)
@@ -144,7 +148,7 @@ private
                                 return Tagatha_Condition;
 
    function Get_Stack_Operand (Command : Tagatha_Command)
-                               return Tagatha.Operands.Tagatha_Operand;
+                               return Tagatha.Transfers.Transfer_Operand;
 
    function Get_Stack_Operation (Command : Tagatha_Command)
                                  return Stack_Operation;
