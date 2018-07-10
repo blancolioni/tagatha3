@@ -637,7 +637,6 @@ package body Tagatha.Code.Aqua32 is
       Source   : in     Tagatha.Transfers.Transfer_Operand;
       Dest     : in     Tagatha.Transfers.Transfer_Operand)
    is
-      use Tagatha.Constants;
       use Tagatha.Transfers;
    begin
 

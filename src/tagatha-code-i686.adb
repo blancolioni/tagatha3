@@ -341,7 +341,6 @@ package body Tagatha.Code.I686 is
       Op       : in     One_Argument_Operator;
       Dest     : in     Tagatha.Transfers.Transfer_Operand)
    is
-      use Tagatha.Transfers;
    begin
       case Op is
          when Op_Negate =>
@@ -390,8 +389,6 @@ package body Tagatha.Code.I686 is
       Source_2 : in     String;
       Dest     : in     String)
    is
-      use Tagatha.Constants;
-      use Tagatha.Transfers;
    begin
       case Op is
          when Op_Div | Op_Mod =>
