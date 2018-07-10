@@ -412,7 +412,6 @@ package body Tagatha.Code.X86_64 is
       Op       : in     One_Argument_Operator;
       Dest     : in     Tagatha.Transfers.Transfer_Operand)
    is
-      use Tagatha.Transfers;
    begin
       case Op is
          when Op_Negate =>
@@ -464,8 +463,6 @@ package body Tagatha.Code.X86_64 is
       Dest     : in     String)
    is
       pragma Unreferenced (T);
-      use Tagatha.Constants;
-      use Tagatha.Transfers;
    begin
       case Op is
          when Op_Div | Op_Mod =>

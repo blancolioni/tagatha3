@@ -28,7 +28,6 @@ package body Tagatha.Labels is
                            Location  : in     Positive;
                            Export    : in     Boolean := False)
    is
-      use type Ada.Containers.Count_Type;
       Exists    : Boolean;
    begin
       Find_Label (In_List, Name, Index, Label, Exists);

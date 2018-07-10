@@ -863,7 +863,6 @@ package body Tagatha.Transfers is
    function Same_Operand (Left, Right : Transfer_Operand) return Boolean is
       use type Ada.Strings.Unbounded.Unbounded_String;
       use type Tagatha.Constants.Tagatha_Constant;
-      use type Tagatha.Labels.Tagatha_Label;
       use type Tagatha.Temporaries.Temporary;
    begin
       if Left.Op /= Right.Op then
