@@ -6,7 +6,6 @@ with Tagatha.Code;
 with Tagatha.Commands.Registry;
 with Tagatha.Constants;
 with Tagatha.File_Assembly;
-with Tagatha.Transfers;
 with Tagatha.Transfers.Optimiser;
 
 with Tagatha.Registry;
@@ -59,9 +58,10 @@ package body Tagatha.Units is
       end loop;
 
       for Sub of Unit.Subprograms loop
+         Sub.Temporary_Words := 0;
          for Offset in 1 .. Sub.Transfers.Last_Index loop
             Tagatha.Transfers.Assign_Registers
-              (Sub.Transfers (Offset), Allocation);
+              (Sub.Transfers (Offset), Allocation, Sub.Temporary_Words);
          end loop;
       end loop;
    end Allocate_Registers;
@@ -163,14 +163,16 @@ package body Tagatha.Units is
    -- Call --
    ----------
 
-   procedure Call (Unit   : in out Tagatha_Unit;
-                   Target : in     String)
+   procedure Call
+     (Unit           : in out Tagatha_Unit;
+      Target         : in     String;
+      Argument_Count : Natural)
    is
       Label : Tagatha.Labels.Tagatha_Label;
    begin
       Tagatha.Labels.Reference_Label (Unit.Labels, Label,
                                       Target, Import => True);
-      Append (Unit, Commands.Call (Label));
+      Append (Unit, Commands.Call (Label, Argument_Count));
    end Call;
 
    --------------------
@@ -503,10 +505,11 @@ package body Tagatha.Units is
    -------------------
 
    procedure Indirect_Call
-     (Unit   : in out Tagatha_Unit)
+     (Unit           : in out Tagatha_Unit;
+      Argument_Count : Natural)
    is
    begin
-      Append (Unit, Commands.Indirect_Call);
+      Append (Unit, Commands.Indirect_Call (Argument_Count));
    end Indirect_Call;
 
    ----------
@@ -694,7 +697,7 @@ package body Tagatha.Units is
    is
    begin
       Append (Unit,
-              Commands.Pop (Operands.Argument_Operand (Offset), Size));
+              Commands.Pop (Transfers.Argument_Operand (Offset), Size));
    end Pop_Argument;
 
    ---------------
@@ -712,7 +715,7 @@ package body Tagatha.Units is
       Tagatha.Labels.Reference_Label (Unit.Labels, Label,
                                       Label_Name, Import => External);
       Append (Unit,
-              Commands.Pop (Operands.Label_Operand (Label), Size));
+              Commands.Pop (Transfers.Label_Operand (Label), Size));
    end Pop_Label;
 
    ---------------
@@ -726,16 +729,17 @@ package body Tagatha.Units is
    is
    begin
       Append (Unit,
-              Commands.Pop (Operands.Local_Operand (Offset), Size));
+              Commands.Pop (Transfers.Local_Operand (Offset), Size));
    end Pop_Local;
 
    -----------------
    -- Pop_Operand --
    -----------------
 
-   procedure Pop_Operand (Unit      : in out Tagatha_Unit;
-                          Op        : in     Tagatha.Operands.Tagatha_Operand;
-                          Size      : in     Tagatha_Size)
+   procedure Pop_Operand
+     (Unit      : in out Tagatha_Unit;
+      Op        : in     Tagatha.Transfers.Transfer_Operand;
+      Size      : in     Tagatha_Size)
    is
    begin
       Append (Unit, Commands.Pop (Op, Size));
@@ -751,7 +755,7 @@ package body Tagatha.Units is
    is
    begin
       Append (Unit,
-              Commands.Pop (Operands.Result_Operand, Size));
+              Commands.Pop (Transfers.Result_Operand, Size));
    end Pop_Result;
 
    ----------
@@ -764,7 +768,10 @@ package body Tagatha.Units is
    is
    begin
       Append (Unit,
-              Commands.Push (Operands.Constant_Operand (Value), Size));
+              Commands.Push
+                (Transfers.Constant_Operand
+                   (Tagatha.Constants.Integer_Constant (Value)),
+                 Size));
    end Push;
 
    ----------
@@ -776,8 +783,10 @@ package body Tagatha.Units is
    is
    begin
       Append (Unit,
-        Commands.Push (Operands.Constant_Operand (Value),
-          Default_Size));
+              Commands.Push
+                (Transfers.Constant_Operand
+                   (Tagatha.Constants.Floating_Point_Constant (Value)),
+                 Default_Size));
    end Push;
 
    -------------------
@@ -791,7 +800,7 @@ package body Tagatha.Units is
    is
    begin
       Append (Unit,
-              Commands.Push (Operands.Argument_Operand (Offset), Size));
+              Commands.Push (Transfers.Argument_Operand (Offset), Size));
    end Push_Argument;
 
    ---------------------------
@@ -804,7 +813,7 @@ package body Tagatha.Units is
    --  is
    --  begin
    --     Append (Unit,
-   --             Commands.Push (Operands.Argument_Operand (Offset), Size));
+   --             Commands.Push (Transfers.Argument_Operand (Offset), Size));
    --  end Push_Argument_Address;
 
    ----------------
@@ -822,7 +831,7 @@ package body Tagatha.Units is
       Tagatha.Labels.Reference_Label (Unit.Labels, Label,
                                       Label_Name, Import => External);
       Append (Unit,
-              Commands.Push (Operands.Label_Operand (Label), Size));
+              Commands.Push (Transfers.Label_Operand (Label), Size));
    end Push_Label;
 
    ------------------------
@@ -852,16 +861,17 @@ package body Tagatha.Units is
    is
    begin
       Append (Unit,
-              Commands.Push (Operands.Local_Operand (Offset), Size));
+              Commands.Push (Transfers.Local_Operand (Offset), Size));
    end Push_Local;
 
    ------------------
    -- Push_Operand --
    ------------------
 
-   procedure Push_Operand (Unit      : in out Tagatha_Unit;
-                           Op        : in     Operands.Tagatha_Operand;
-                           Size      : in     Tagatha_Size)
+   procedure Push_Operand
+     (Unit      : in out Tagatha_Unit;
+      Op        : in     Tagatha.Transfers.Transfer_Operand;
+      Size      : in     Tagatha_Size)
    is
    begin
       Append (Unit, Commands.Push (Op, Size));
@@ -877,7 +887,7 @@ package body Tagatha.Units is
    is
    begin
       Append (Unit,
-              Commands.Push (Operands.Result_Operand, Size));
+              Commands.Push (Transfers.Result_Operand, Size));
    end Push_Result;
 
    -----------------
@@ -890,7 +900,7 @@ package body Tagatha.Units is
    is
    begin
       Append (Unit,
-              Commands.Push (Operands.Return_Operand, Size));
+              Commands.Push (Transfers.Return_Operand, Size));
    end Push_Return;
 
    ---------------
@@ -1090,8 +1100,10 @@ package body Tagatha.Units is
 
             if Sub.Has_Frame then
                Target.Begin_Frame (File_Assembly_Type'Class (File),
-                                   Sub.Argument_Words,
-                                   Sub.Frame_Words);
+                                   Return_Count    => Sub.Result_Words,
+                                   Arg_Count       => Sub.Argument_Words,
+                                   Local_Count     => Sub.Frame_Words,
+                                   Temporary_Count => Sub.Temporary_Words);
             end if;
 
             for I in 1 .. Sub.Transfers.Last_Index loop

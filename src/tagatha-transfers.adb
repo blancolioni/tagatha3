@@ -22,7 +22,8 @@ package body Tagatha.Transfers is
 
    procedure Assign_Registers
      (Item : in out Transfer;
-      Rs   : in out Register_Allocation_Array)
+      Rs   : in out Register_Allocation_Array;
+      Last : in out Natural)
    is
 
       procedure Assign (Op : in out Transfer_Operand);
@@ -46,6 +47,7 @@ package body Tagatha.Transfers is
                      R := (Temporaries.First_Reference (Op.Temp),
                            Temporaries.Last_Reference (Op.Temp));
                      Assigned := True;
+                     Last := Natural'Max (Last, I);
                      exit;
                   end if;
                end;
@@ -68,8 +70,10 @@ package body Tagatha.Transfers is
    -- Call --
    ----------
 
-   function Call (Destination : Tagatha.Labels.Tagatha_Label)
-                  return Transfer
+   function Call
+     (Destination : Tagatha.Labels.Tagatha_Label;
+      Argument_Count : Natural)
+      return Transfer
    is
    begin
       return (Trans             => T_Control,
@@ -77,6 +81,7 @@ package body Tagatha.Transfers is
               Label             => Tagatha.Labels.No_Label,
               Condition         => C_Always,
               Destination       => Destination,
+              Argument_Count    => Argument_Count,
               Self              => False,
               Call              => True,
               Native            => Ada.Strings.Unbounded.Null_Unbounded_String,
@@ -125,9 +130,10 @@ package body Tagatha.Transfers is
    -- Control_Transfer --
    ----------------------
 
-   function Control_Transfer (Condition   : Tagatha_Condition;
-                              Destination : Tagatha.Labels.Tagatha_Label)
-                              return Transfer
+   function Control_Transfer
+     (Condition   : Tagatha_Condition;
+      Destination : Tagatha.Labels.Tagatha_Label)
+      return Transfer
    is
    begin
       return (Trans             => T_Control,
@@ -135,6 +141,7 @@ package body Tagatha.Transfers is
               Label             => Tagatha.Labels.No_Label,
               Condition         => Condition,
               Destination       => Destination,
+              Argument_Count    => 0,
               Self              => False,
               Call              => False,
               Native            => Ada.Strings.Unbounded.Null_Unbounded_String,
@@ -164,8 +171,8 @@ package body Tagatha.Transfers is
    function External_Operand
      (Name      : String;
       Immediate : Boolean;
-      Predec    : Boolean;
-      Postinc   : Boolean)
+      Predec    : Boolean := False;
+      Postinc   : Boolean := False)
       return Transfer_Operand
    is
    begin
@@ -680,6 +687,7 @@ package body Tagatha.Transfers is
               Label             => Tagatha.Labels.No_Label,
               Condition         => C_Always,
               Destination       => Tagatha.Labels.No_Label,
+              Argument_Count    => 0,
               Self              => False,
               Call              => False,
               Native            => To_Unbounded_String (Name),
@@ -721,6 +729,7 @@ package body Tagatha.Transfers is
               Condition         => C_Always,
               Destination       => Tagatha.Labels.No_Label,
               Self              => Same_Operand (Src_1, To),
+              Argument_Count    => 0,
               Call              => False,
               Native            => Ada.Strings.Unbounded.Null_Unbounded_String,
               Changed_Registers => Ada.Strings.Unbounded.Null_Unbounded_String,
@@ -888,6 +897,8 @@ package body Tagatha.Transfers is
                  and then Left.External_Imm = Right.External_Imm;
             when T_Text =>
                return Left.Text = Right.Text;
+            when T_Shelf =>
+               return Left.Shelf_Name = Right.Shelf_Name;
          end case;
       end if;
    end Same_Operand;
@@ -1055,6 +1066,10 @@ package body Tagatha.Transfers is
             return """"
               & Ada.Strings.Unbounded.To_String (Item.Text)
               & """";
+         when T_Shelf =>
+            return "shelf["
+              & Ada.Strings.Unbounded.To_String (Item.Text)
+              & "]";
       end case;
 
    end Show;
@@ -1088,6 +1103,7 @@ package body Tagatha.Transfers is
               Line              => 0,
               Column            => 0,
               Self              => Same_Operand (From, To),
+              Argument_Count    => 0,
               Call              => False,
               Src_1             => From,
               Src_2             => No_Operand,
@@ -1182,6 +1198,7 @@ package body Tagatha.Transfers is
               Changed_Registers => Ada.Strings.Unbounded.Null_Unbounded_String,
               Line              => 0,
               Column            => 0,
+              Argument_Count    => 0,
               Self              => False,
               Call              => False,
               Src_1             => Src_1,
@@ -1190,65 +1207,5 @@ package body Tagatha.Transfers is
               To_Address        => False,
               Op                => Op);
    end To_Temporary;
-
-   -----------------
-   -- To_Transfer --
-   -----------------
-
-   function To_Transfer
-     (Op    : Tagatha.Operands.Tagatha_Operand)
-      return Transfer_Operand
-   is
-      use Tagatha.Operands;
-      Transfer : Transfer_Operand;
-   begin
-      if Is_Constant (Op) then
-         Transfer := Constant_Operand (Get_Value (Op));
-      elsif Is_Argument (Op) then
-         Transfer := Argument_Operand (Get_Arg_Offset (Op));
-      elsif Is_Local (Op) then
-         Transfer := Local_Operand (Get_Local_Offset (Op));
-      elsif Is_Result (Op) then
-         Transfer := Result_Operand;
-      elsif Is_Return (Op) then
-         Transfer := Return_Operand;
-      elsif Is_Temporary (Op) then
-         Transfer := Temporary_Operand (Get_Temporary (Op));
-      elsif Is_External (Op) then
-         Transfer :=
-           External_Operand
-             (Get_Name (Op), Is_Immediate (Op),
-              Has_Predecrement (Op), Has_Postincrement (Op));
-      elsif Is_Iterator_New (Op) then
-         Transfer := Iterator_New_Operand;
-      elsif Is_Iterator_Copy (Op) then
-         Transfer := Iterator_Copy_Operand;
-      elsif Is_Unknown (Op) then
-         Transfer := No_Operand;
-      elsif Is_Text (Op) then
-         Transfer := Text_Operand (Get_Text (Op));
-      else
-         raise Constraint_Error with
-           "unknown operand type: " & Show (Op);
-      end if;
-
-      Transfer.Modifiers.Dereferenced := Is_Dereferenced (Op);
-      return Transfer;
-   end To_Transfer;
-
-   -----------------
-   -- To_Transfer --
-   -----------------
-
-   function To_Transfer (Op   : Tagatha.Operands.Tagatha_Operand;
-                         Size : Tagatha_Size)
-                        return Transfer_Operand
-   is
-      Result : Transfer_Operand;
-   begin
-      Result := To_Transfer (Op);
-      Set_Size (Result, Size);
-      return Result;
-   end To_Transfer;
 
 end Tagatha.Transfers;

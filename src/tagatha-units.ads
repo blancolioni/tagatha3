@@ -10,7 +10,7 @@ private with Tagatha.Transfers.Transfer_Vectors;
 private with Tagatha.Labels;
 
 with Tagatha.Commands;
-with Tagatha.Operands;
+with Tagatha.Transfers;
 
 package Tagatha.Units is
 
@@ -177,10 +177,14 @@ package Tagatha.Units is
                       Op     : Tagatha_Operator;
                       Size   : Tagatha_Size       := Default_Integer_Size);
 
-   procedure Call (Unit   : in out Tagatha_Unit;
-                   Target : in     String);
+   procedure Call
+     (Unit           : in out Tagatha_Unit;
+      Target         : in     String;
+      Argument_Count : Natural);
 
-   procedure Indirect_Call (Unit   : in out Tagatha_Unit);
+   procedure Indirect_Call
+     (Unit           : in out Tagatha_Unit;
+      Argument_Count : Natural);
    --  like call, but target address is on top of the stack
 
    procedure Jump (Unit      : in out Tagatha_Unit;
@@ -201,13 +205,15 @@ package Tagatha.Units is
    procedure Drop (Unit      : in out Tagatha_Unit;
                    Size      : in     Tagatha_Size := Default_Size);
 
-   procedure Pop_Operand (Unit      : in out Tagatha_Unit;
-                          Op        : in     Operands.Tagatha_Operand;
-                          Size      : in     Tagatha_Size);
+   procedure Pop_Operand
+     (Unit      : in out Tagatha_Unit;
+      Op        : in     Tagatha.Transfers.Transfer_Operand;
+      Size      : in     Tagatha_Size);
 
-   procedure Push_Operand (Unit      : in out Tagatha_Unit;
-                           Op        : in     Operands.Tagatha_Operand;
-                           Size      : in     Tagatha_Size);
+   procedure Push_Operand
+     (Unit      : in out Tagatha_Unit;
+      Op        : in     Tagatha.Transfers.Transfer_Operand;
+      Size      : in     Tagatha_Size);
 
    procedure Duplicate (Unit : in out Tagatha_Unit);
 
@@ -323,6 +329,7 @@ private
          Argument_Words     : Natural;
          Frame_Words        : Natural;
          Result_Words       : Natural;
+         Temporary_Words    : Natural;
          Last_Label         : Tagatha.Labels.Tagatha_Label;
          Global             : Boolean := True;
          Has_Frame          : Boolean := True;

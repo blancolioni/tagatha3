@@ -79,10 +79,13 @@ package body Tagatha.Code.X86_64 is
 
    overriding
    procedure Begin_Frame (T           : in out X86_64_Translator;
-                          Asm  : in out Assembly'Class;
-                          Arg_Count   : in     Natural;
-                          Local_Count : in     Natural)
+                          Asm         : in out Assembly'Class;
+                          Return_Count    : Natural;
+                          Arg_Count       : Natural;
+                          Local_Count     : Natural;
+                          Temporary_Count : Natural)
    is
+      pragma Unreferenced (Return_Count, Temporary_Count);
       Arg_Reg : constant array (1 .. 6) of String (1 .. 3) :=
         ("edi", "esi", "edx", "ecx", "r8d", "r9d");
    begin
@@ -268,6 +271,9 @@ package body Tagatha.Code.X86_64 is
             return "not";
          when Op_Test =>
             return "cmp";
+         when Op_Logical_Shift =>
+            raise Constraint_Error with
+              "we didn't implement logical shifts yet";
          when Op_Dereference =>
             raise Constraint_Error with
               "should not be getting a mnemonic for dereference";

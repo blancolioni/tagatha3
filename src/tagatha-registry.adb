@@ -4,10 +4,6 @@ package body Tagatha.Registry is
 
    Trace_Registry : constant Boolean := False;
 
-   procedure Record_Pop (Register : in out Tagatha_Registry;
-                         Size     : in     Tagatha_Size;
-                         Operand  : in     Transfers.Transfer_Operand);
-
    function Pop
      (Register : in out Tagatha_Registry)
       return Expression_Record;
@@ -301,8 +297,10 @@ package body Tagatha.Registry is
    -- Record_Call --
    -----------------
 
-   procedure Record_Call (Register   : in out Tagatha_Registry;
-                          Subroutine : in     Tagatha.Labels.Tagatha_Label)
+   procedure Record_Call
+     (Register       : in out Tagatha_Registry;
+      Subroutine     : in     Tagatha.Labels.Tagatha_Label;
+      Argument_Count : Natural)
    is
    begin
       for Operand of Register.Stack loop
@@ -324,7 +322,7 @@ package body Tagatha.Registry is
       Register.Stack.Clear;
 
       Register.Append
-        (Tagatha.Transfers.Call (Subroutine));
+        (Tagatha.Transfers.Call (Subroutine, Argument_Count));
 
    end Record_Call;
 
@@ -347,8 +345,8 @@ package body Tagatha.Registry is
      (Register : in out Tagatha_Registry;
       Size     : in     Tagatha_Size)
    is
-      T : constant Tagatha.Operands.Tagatha_Operand :=
-            Tagatha.Operands.Temporary_Operand
+      T : constant Tagatha.Transfers.Transfer_Operand :=
+            Tagatha.Transfers.Temporary_Operand
               (Tagatha.Temporaries.Next_Temporary (Register.Temps));
    begin
       Record_Pop (Register, Size, T);
@@ -548,15 +546,22 @@ package body Tagatha.Registry is
    -- Record_Pop --
    ----------------
 
-   procedure Record_Pop (Register : in out Tagatha_Registry;
-                         Size     : in     Tagatha_Size;
-                         Operand  : in     Tagatha.Operands.Tagatha_Operand)
+   procedure Record_Pop
+     (Register : in out Tagatha_Registry;
+      Size     : in     Tagatha_Size;
+      Operand  : in     Transfers.Transfer_Operand)
    is
-      Transfer : Tagatha.Transfers.Transfer_Operand;
+      Transfer : Transfers.Transfer_Operand := Operand;
    begin
-      if Tagatha.Operands.Is_Shelf (Operand) then
+      if Trace_Registry then
+         Ada.Text_IO.Put_Line ("Record_Pop: "
+                               & Transfers.Show (Operand));
+      end if;
+
+      if Tagatha.Transfers.Is_Shelf (Operand) then
          declare
-            Name : constant String := Tagatha.Operands.Get_Name (Operand);
+            Name : constant String :=
+                     Tagatha.Transfers.Get_Shelf_Name (Operand);
             T    : constant Tagatha.Temporaries.Temporary :=
                      Tagatha.Temporaries.Next_Temporary (Register.Temps);
          begin
@@ -572,31 +577,13 @@ package body Tagatha.Registry is
             Transfer :=
               Tagatha.Transfers.Temporary_Operand (T);
          end;
-      else
-         Transfer := Transfers.To_Transfer (Operand, Size);
-      end if;
-      Record_Pop (Register, Size, Transfer);
-   end Record_Pop;
-
-   ----------------
-   -- Record_Pop --
-   ----------------
-
-   procedure Record_Pop (Register : in out Tagatha_Registry;
-                         Size     : in     Tagatha_Size;
-                         Operand  : in     Transfers.Transfer_Operand)
-   is
-   begin
-      if Trace_Registry then
-         Ada.Text_IO.Put_Line ("Record_Pop: "
-                               & Transfers.Show (Operand));
       end if;
 
       if Register.Stack.Is_Empty then
          Register.Append
            (Tagatha.Transfers.Simple_Transfer
               (From => Tagatha.Transfers.Stack_Operand,
-               To   => Operand));
+               To   => Transfer));
       else
          declare
             Element   : constant Expression_Record :=
@@ -605,13 +592,13 @@ package body Tagatha.Registry is
             Transfers : Tagatha.Transfers.Array_Of_Transfers :=
                           Tagatha.Expressions.Get_Transfers
                             (Register.Temps, Element.Expression,
-                             Operand);
+                             Transfer);
          begin
             if Labels.Has_Label (Element.Label) then
                if Trace_Registry then
                   Ada.Text_IO.Put_Line
                     ("Record_Pop: "
-                     & Tagatha.Transfers.Show (Operand)
+                     & Tagatha.Transfers.Show (Transfer)
                      & Labels.Show_All (Element.Label, 'L')
                      & " -> "
                      & Tagatha.Transfers.Show (Transfers (Transfers'First)));
@@ -636,21 +623,23 @@ package body Tagatha.Registry is
 
    procedure Record_Push (Register : in out Tagatha_Registry;
                           Size     : in     Tagatha_Size;
-                          Operand  : in     Tagatha.Operands.Tagatha_Operand)
+                          Operand  : in     Tagatha.Transfers.Transfer_Operand)
    is
+      pragma Unreferenced (Size);
       use Tagatha.Expressions;
-      Transfer : Tagatha.Transfers.Transfer_Operand;
+      Transfer : Tagatha.Transfers.Transfer_Operand := Operand;
    begin
       Register.Push_Index := Register.Push_Index + 1;
       if Trace_Registry then
          Ada.Text_IO.Put_Line
            ("record push at" & Integer'Image (Register.Push_Index) & ": "
             & Tagatha.Labels.Show_All (Register.Current_Label, 'L')
-            & Tagatha.Operands.Show (Operand));
+            & Tagatha.Transfers.Show (Operand));
       end if;
-      if Tagatha.Operands.Is_Shelf (Operand) then
+      if Tagatha.Transfers.Is_Shelf (Operand) then
          declare
-            Name : constant String := Tagatha.Operands.Get_Name (Operand);
+            Name : constant String :=
+                     Tagatha.Transfers.Get_Shelf_Name (Operand);
          begin
             if Name = "_" then
                Transfer :=
@@ -661,8 +650,6 @@ package body Tagatha.Registry is
                    (Register.Named_Shelves.Element (Name));
             end if;
          end;
-      else
-         Transfer := Transfers.To_Transfer (Operand, Size);
       end if;
 
       Register.Push

@@ -26,8 +26,10 @@ package Tagatha.Code.Pdp32 is
    overriding procedure Begin_Frame
      (T           : in out Pdp32_Translator;
       Asm         : in out Assembly'Class;
-      Arg_Count   : in     Natural;
-      Local_Count : in     Natural);
+      Return_Count    : Natural;
+      Arg_Count       : Natural;
+      Local_Count     : Natural;
+      Temporary_Count : Natural);
 
    overriding procedure End_Frame
      (T           : in out Pdp32_Translator;
