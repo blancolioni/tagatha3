@@ -147,7 +147,6 @@ package body Tagatha.Units is
       Result_Words   : in     Natural;
       Global         : in     Boolean)
    is
-      use Ada.Strings.Unbounded;
    begin
       Unit.Current_Sub := new Tagatha_Subprogram_Record;
       Unit.Subprograms.Append (Unit.Current_Sub);
