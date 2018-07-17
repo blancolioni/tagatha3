@@ -700,48 +700,74 @@ package body Tagatha.Registry is
      (Register : in out Tagatha_Registry;
       Size     : in     Tagatha_Size)
    is
-      pragma Unreferenced (Size);
-      Top : Expression_Record :=
-              Register.Stack.Element
-                (Register.Stack.Last_Index);
-      Penultimate : Expression_Record :=
-                      Register.Stack.Element
-                        (Register.Stack.Last_Index - 1);
-      T : constant Tagatha.Expressions.Expression := Top.Expression;
    begin
-      if Trace_Registry then
-         Ada.Text_IO.Put_Line
-           ("swap: old stack ["
-            & Expressions.Image
-              (Register.Stack.Element
-                   (Register.Stack.Last_Index).Expression)
-            & "] ["
-            & Expressions.Image
-              (Register.Stack.Element
-                   (Register.Stack.Last_Index - 1).Expression)
-            & "]");
+      if Register.Stack.Last_Index < 2 then
+         declare
+            T_1 : constant Tagatha.Temporaries.Temporary :=
+                    Tagatha.Temporaries.Next_Temporary
+                      (Register.Temps);
+            T_2   : constant Tagatha.Temporaries.Temporary :=
+                      Tagatha.Temporaries.Next_Temporary
+                        (Register.Temps);
+            Src_1 : constant Tagatha.Transfers.Transfer_Operand :=
+                      Tagatha.Transfers.Temporary_Operand (T_1);
+            Src_2 : constant Tagatha.Transfers.Transfer_Operand :=
+                      Tagatha.Transfers.Temporary_Operand (T_2);
+         begin
+            Record_Pop (Register, Size, Src_1);
+            Record_Pop (Register, Size, Src_2);
+            Record_Push (Register, Size, Src_1);
+            Record_Push (Register, Size, Src_2);
+            if Trace_Registry then
+               Ada.Text_IO.Put_Line
+                 ("swap: stack size < 2");
+            end if;
+         end;
+      else
+         declare
+            Top         : Expression_Record :=
+                            Register.Stack.Element
+                              (Register.Stack.Last_Index);
+            Penultimate : Expression_Record :=
+                            Register.Stack.Element
+                              (Register.Stack.Last_Index - 1);
+            T           : constant Tagatha.Expressions.Expression :=
+                            Top.Expression;
+         begin
+            if Trace_Registry then
+               Ada.Text_IO.Put_Line
+                 ("swap: old stack ["
+                  & Expressions.Image
+                    (Register.Stack.Element
+                         (Register.Stack.Last_Index).Expression)
+                  & "] ["
+                  & Expressions.Image
+                    (Register.Stack.Element
+                         (Register.Stack.Last_Index - 1).Expression)
+                  & "]");
+            end if;
+
+            Top.Expression := Penultimate.Expression;
+            Penultimate.Expression := T;
+            Register.Stack.Replace_Element
+              (Register.Stack.Last_Index, Top);
+            Register.Stack.Replace_Element
+              (Register.Stack.Last_Index - 1, Penultimate);
+
+            if Trace_Registry then
+               Ada.Text_IO.Put_Line
+                 ("swap: new stack ["
+                  & Expressions.Image
+                    (Register.Stack.Element
+                         (Register.Stack.Last_Index).Expression)
+                  & "] ["
+                  & Expressions.Image
+                    (Register.Stack.Element
+                         (Register.Stack.Last_Index - 1).Expression)
+                  & "]");
+            end if;
+         end;
       end if;
-
-      Top.Expression := Penultimate.Expression;
-      Penultimate.Expression := T;
-      Register.Stack.Replace_Element
-        (Register.Stack.Last_Index, Top);
-      Register.Stack.Replace_Element
-        (Register.Stack.Last_Index - 1, Penultimate);
-
-      if Trace_Registry then
-         Ada.Text_IO.Put_Line
-           ("swap: new stack ["
-            & Expressions.Image
-              (Register.Stack.Element
-                   (Register.Stack.Last_Index).Expression)
-            & "] ["
-            & Expressions.Image
-              (Register.Stack.Element
-                   (Register.Stack.Last_Index - 1).Expression)
-            & "]");
-      end if;
-
    end Record_Swap;
 
    -----------
