@@ -34,6 +34,21 @@ package body Tagatha.Units is
                                 For_Segment : in     Tagatha_Segment;
                                 By          : in     Positive         := 1);
 
+   --------------------
+   -- Allocate_Local --
+   --------------------
+
+   function Allocate_Local
+     (Unit : in out Tagatha_Unit)
+      return Local_Offset
+   is
+      Sub : constant Tagatha_Subprogram := Unit.Current_Sub;
+   begin
+      Sub.Temporary_Words := Sub.Temporary_Words + 1;
+      return Local_Offset
+        (Sub.Frame_Words + Sub.Temporary_Words);
+   end Allocate_Local;
+
    ------------------------
    -- Allocate_Registers --
    ------------------------
@@ -155,6 +170,7 @@ package body Tagatha.Units is
       Unit.Current_Sub.Argument_Words := Argument_Words;
       Unit.Current_Sub.Frame_Words := Frame_Words;
       Unit.Current_Sub.Result_Words := Result_Words;
+      Unit.Current_Sub.Temporary_Words := 0;
       Unit.Current_Sub.Global := Global;
    end Begin_Routine;
 
@@ -337,6 +353,18 @@ package body Tagatha.Units is
          Data (Unit, Value (I));
       end loop;
    end Data;
+
+   ----------------------
+   -- Deallocate_Local --
+   ----------------------
+
+   procedure Deallocate_Local
+     (Unit : in out Tagatha_Unit)
+   is
+   begin
+      Unit.Current_Sub.Temporary_Words :=
+        Unit.Current_Sub.Temporary_Words - 1;
+   end Deallocate_Local;
 
    -----------------
    -- Dereference --

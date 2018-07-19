@@ -45,6 +45,13 @@ package Tagatha.Units is
    procedure End_Routine
      (Unit : in out Tagatha_Unit);
 
+   function Allocate_Local
+     (Unit : in out Tagatha_Unit)
+      return Local_Offset;
+
+   procedure Deallocate_Local
+     (Unit : in out Tagatha_Unit);
+
    procedure Begin_Code
      (Unit           : in out Tagatha_Unit;
       Name           : in     String;
