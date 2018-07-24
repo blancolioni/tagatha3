@@ -49,6 +49,10 @@ package Tagatha.Units is
      (Unit : in out Tagatha_Unit)
       return Local_Offset;
 
+   procedure Allocate_Local
+     (Unit : in out Tagatha_Unit'Class);
+   --  Same as function Allocate_Local, except we don't care about the offset
+
    procedure Deallocate_Local
      (Unit : in out Tagatha_Unit);
 

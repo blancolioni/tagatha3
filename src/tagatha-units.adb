@@ -38,6 +38,18 @@ package body Tagatha.Units is
    -- Allocate_Local --
    --------------------
 
+   procedure Allocate_Local
+     (Unit : in out Tagatha_Unit'Class)
+   is
+      Offset : constant Local_Offset := Unit.Allocate_Local;
+   begin
+      pragma Unreferenced (Offset);
+   end Allocate_Local;
+
+   --------------------
+   -- Allocate_Local --
+   --------------------
+
    function Allocate_Local
      (Unit : in out Tagatha_Unit)
       return Local_Offset
