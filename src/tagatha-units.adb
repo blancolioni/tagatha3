@@ -846,14 +846,17 @@ package body Tagatha.Units is
    -- Push_Argument_Address --
    ---------------------------
 
-   --  procedure Push_Argument_Address
-   --    (Unit       : in out Tagatha_Unit;
-   --     Offset     : in     Argument_Offset)
-   --  is
-   --  begin
-   --     Append (Unit,
-   --             Commands.Push (Transfers.Argument_Operand (Offset), Size));
-   --  end Push_Argument_Address;
+   procedure Push_Argument_Address
+     (Unit       : in out Tagatha_Unit;
+      Offset     : in     Argument_Offset)
+   is
+   begin
+      Append (Unit,
+              Commands.Push
+                (Transfers.Argument_Operand
+                   (Offset, Indirect => True),
+                 Default_Address_Size));
+   end Push_Argument_Address;
 
    ----------------
    -- Push_Label --
@@ -902,6 +905,22 @@ package body Tagatha.Units is
       Append (Unit,
               Commands.Push (Transfers.Local_Operand (Offset), Size));
    end Push_Local;
+
+   ------------------------
+   -- Push_Local_Address --
+   ------------------------
+
+   procedure Push_Local_Address
+     (Unit       : in out Tagatha_Unit;
+      Offset     : in     Local_Offset)
+   is
+   begin
+      Append (Unit,
+              Commands.Push
+                (Transfers.Local_Operand
+                   (Offset, Indirect => True),
+                 Default_Address_Size));
+   end Push_Local_Address;
 
    ------------------
    -- Push_Operand --

@@ -9,7 +9,8 @@ with Tagatha.Temporaries;
 
 package body Tagatha.Code.Pdp32 is
 
-   Result_Register : constant String := "r0";
+   Result_Register  : constant String := "r0";
+   Address_Register : constant String := "r28";
 
    Last_Line : Natural := 0;
    Last_Col  : Natural := 0;
@@ -21,6 +22,11 @@ package body Tagatha.Code.Pdp32 is
    procedure Move (Asm       : in out Assembly'Class;
                    Source    : in     Tagatha.Transfers.Transfer_Operand;
                    Dest      : in     Tagatha.Transfers.Transfer_Operand);
+
+   procedure Move_Address
+     (Asm       : in out Assembly'Class;
+      Source    : in     Tagatha.Transfers.Transfer_Operand;
+      Dest      : in     String);
 
    procedure Instruction (Asm      : in out Assembly'Class;
                           Mnemonic : in     String;
@@ -482,12 +488,54 @@ package body Tagatha.Code.Pdp32 is
                       "r0");
          Instruction (Asm, "mov", Transfer_Size,
                       "r0", To_Dst (Dest));
+      elsif Is_Dereferenced (Source) and then Is_Stack (Source) then
+         Instruction (Asm, "mov", Default_Address_Size,
+                      "(sp)+", Address_Register);
+         Instruction (Asm, "mov", Transfer_Size,
+                      "(" & Address_Register & ")", To_Dst (Dest));
+      elsif Is_Indirect (Source) then
+         Move_Address (Asm, Source, Address_Register);
+         Instruction (Asm, "mov", Transfer_Size, Address_Register,
+                      To_Dst (Dest));
       else
          Instruction (Asm, "mov", Transfer_Size,
                       To_Src (Source),
                       To_Dst (Dest));
       end if;
    end Move;
+
+   ------------------
+   -- Move_Address --
+   ------------------
+
+   procedure Move_Address
+     (Asm       : in out Assembly'Class;
+      Source    : in     Tagatha.Transfers.Transfer_Operand;
+      Dest      : in     String)
+   is
+      use Tagatha.Transfers;
+   begin
+      if Is_Argument (Source) then
+         declare
+            Offset : constant Tagatha_Integer :=
+                       Tagatha_Integer (Get_Arg_Offset (Source)) * 4 + 4;
+         begin
+            Instruction (Asm, "add", Default_Address_Size,
+                         "#" & Image (Offset), "fp", Dest);
+         end;
+      elsif Is_Local (Source) then
+         declare
+            Offset : constant Tagatha_Integer :=
+                       Tagatha_Integer (Get_Local_Offset (Source)) * 4;
+         begin
+            Instruction (Asm, "sub", Default_Address_Size,
+                         "#" & Image (Offset), "fp", Dest);
+         end;
+      else
+         raise Constraint_Error with
+           "bad operand for move address: " & Show (Source);
+      end if;
+   end Move_Address;
 
    -------------
    -- Operate --
@@ -511,9 +559,17 @@ package body Tagatha.Code.Pdp32 is
          when Op_Test =>
             Instruction (Asm, "tst", Size, To_Dst (Dest));
          when Op_Dereference =>
-            Instruction (Asm, "mov", Size,
-                         To_Dereferenced_String (Dest),
-                         To_Dst (Dest));
+            if Is_Stack (Dest) then
+               Instruction (Asm, "mov", Get_Size (Dest),
+                            To_Src (Dest), Address_Register);
+               Instruction (Asm, "mov", Get_Size (Dest),
+                            "(" & Address_Register & ")",
+                            To_Dst (Dest));
+            else
+               Instruction (Asm, "mov", Size,
+                            To_Dereferenced_String (Dest),
+                            To_Dst (Dest));
+            end if;
       end case;
 
    end Operate;
@@ -591,11 +647,14 @@ package body Tagatha.Code.Pdp32 is
          declare
             Src : constant String := To_Src (Source);
          begin
-            if Src (Src'First) = '#' then
+            if Src (Src'First) = '#'
+              or else Is_Stack (Source)
+            then
                Instruction (Asm, "mov", Get_Size (Dest),
-                            Src, "r0");
+                            Src, Address_Register);
                Instruction (Asm, "mov", Get_Size (Dest),
-                            "(r0)", To_Dst (Dest));
+                            "(" & Address_Register & ")",
+                            To_Dst (Dest));
             else
                Instruction (Asm, "mov", Get_Size (Dest),
                             To_Dereferenced_String (Source),
@@ -776,7 +835,11 @@ package body Tagatha.Code.Pdp32 is
          return Deref_Paren (Result_Register);
       elsif Is_Stack (Item) then
          if Source then
-            return Deref_Ampersand ("(sp)+");
+            if Deref then
+               return Deref_Ampersand ("(sp)+");
+            else
+               return Deref_Ampersand ("(sp)+");
+            end if;
          else
             return Deref_Ampersand ("-(sp)");
          end if;
