@@ -32,11 +32,15 @@ package Tagatha.Transfers is
    function Constant_Operand (Value : Tagatha.Constants.Tagatha_Constant)
                              return Transfer_Operand;
 
-   function Argument_Operand (Arg_Index     : Argument_Offset)
-                              return Transfer_Operand;
+   function Argument_Operand
+     (Arg_Index     : Argument_Offset;
+      Indirect      : Boolean := False)
+      return Transfer_Operand;
 
-   function Local_Operand (Frame_Index   : Local_Offset)
-                          return Transfer_Operand;
+   function Local_Operand
+     (Frame_Index   : Local_Offset;
+      Indirect      : Boolean := False)
+      return Transfer_Operand;
 
    function Result_Operand return Transfer_Operand;
    function Return_Operand return Transfer_Operand;
@@ -140,6 +144,7 @@ package Tagatha.Transfers is
    function Is_External (Item : Transfer_Operand) return Boolean;
    function Is_Immediate (Item : Transfer_Operand) return Boolean;
    function Is_Dereferenced (Item : Transfer_Operand) return Boolean;
+   function Is_Indirect (Item : Transfer_Operand) return Boolean;
    function Has_Predecrement (Item : Transfer_Operand) return Boolean;
    function Has_Postincrement (Item : Transfer_Operand) return Boolean;
 
@@ -244,13 +249,15 @@ private
          Have_Slice   : Boolean;
          Have_Size    : Boolean;
          Dereferenced : Boolean;
+         Indirect     : Boolean;
          Slice        : Bit_Slice;
          Size         : Tagatha_Size;
       end record;
 
-   No_Modification : constant Source_Modification := (False, False, False,
-                                                      (0, 0),
-                                                      Default_Integer_Size);
+   No_Modification : constant Source_Modification :=
+                       (False, False, False, False,
+                        (0, 0),
+                        Default_Integer_Size);
 
    type Transfer_Operand (Op : Transfer_Operand_Type := T_No_Operand) is
       record
@@ -344,7 +351,12 @@ private
       end record;
 
    function Is_Dereferenced (Item : Transfer_Operand) return Boolean
-   is (Item.Modifiers.Dereferenced);
+   is (Item.Modifiers.Dereferenced
+       and then not Item.Modifiers.Indirect);
+
+   function Is_Indirect (Item : Transfer_Operand) return Boolean
+   is (Item.Modifiers.Indirect
+       and then not Item.Modifiers.Dereferenced);
 
    function Get_Argument_Count (T : Transfer) return Natural
    is (T.Argument_Count);

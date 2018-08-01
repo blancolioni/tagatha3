@@ -9,11 +9,15 @@ package body Tagatha.Transfers is
    -- Argument_Operand --
    ----------------------
 
-   function Argument_Operand (Arg_Index     : Argument_Offset)
-                              return Transfer_Operand
+   function Argument_Operand
+     (Arg_Index     : Argument_Offset;
+      Indirect      : Boolean := False)
+      return Transfer_Operand
    is
    begin
-      return (T_Argument, No_Modification, Arg_Index);
+      return (T_Argument,
+              (No_Modification with delta Indirect => Indirect),
+              Arg_Index);
    end Argument_Operand;
 
    ----------------------
@@ -664,11 +668,15 @@ package body Tagatha.Transfers is
    -- Local_Operand --
    -------------------
 
-   function Local_Operand (Frame_Index   : Local_Offset)
-                           return Transfer_Operand
+   function Local_Operand
+     (Frame_Index   : Local_Offset;
+      Indirect      : Boolean := False)
+      return Transfer_Operand
    is
    begin
-      return (T_Local, No_Modification, Frame_Index);
+      return (T_Local,
+              (No_Modification with delta Indirect => Indirect),
+              Frame_Index);
    end Local_Operand;
 
    ---------------------
@@ -1028,8 +1036,18 @@ package body Tagatha.Transfers is
    ----------
 
    function Show (Item : Transfer_Operand) return String is
-   begin
-      case Item.Op is
+      Indirect : constant String :=
+                   (if Item.Modifiers.Indirect then "&" else "");
+
+      function Image return String;
+
+      -----------
+      -- Image --
+      -----------
+
+      function Image return String is
+      begin
+         case Item.Op is
          when T_No_Operand =>
             return "<>";
          when T_Stack =>
@@ -1055,7 +1073,7 @@ package body Tagatha.Transfers is
             end if;
          when T_Local =>
             return "frm" &
-            Integer'Image (-1 * Integer (Item.Loc_Offset));
+              Integer'Image (-1 * Integer (Item.Loc_Offset));
          when T_Immediate =>
             return Tagatha.Constants.Show (Item.Value);
          when T_External =>
@@ -1067,10 +1085,13 @@ package body Tagatha.Transfers is
               & """";
          when T_Shelf =>
             return "shelf["
-              & Ada.Strings.Unbounded.To_String (Item.Text)
+              & Ada.Strings.Unbounded.To_String (Item.Shelf_Name)
               & "]";
-      end case;
+         end case;
+      end Image;
 
+   begin
+      return Indirect & Image;
    end Show;
 
    -------------------

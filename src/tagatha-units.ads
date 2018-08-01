@@ -150,11 +150,11 @@ package Tagatha.Units is
    --  procedure Push_Label_Address (Unit       : in out Tagatha_Unit;
    --                                Label_Name : String);
 
-   --  procedure Push_Local_Address (Unit    : in out Tagatha_Unit;
-   --                                Offset  : in     Local_Offset);
+   procedure Push_Local_Address (Unit    : in out Tagatha_Unit;
+                                 Offset  : in     Local_Offset);
 
-   --  procedure Push_Argument_Address (Unit    : in out Tagatha_Unit;
-   --                                   Offset  : in     Argument_Offset);
+   procedure Push_Argument_Address (Unit    : in out Tagatha_Unit;
+                                    Offset  : in     Argument_Offset);
 
    procedure Pop_Label
      (Unit       : in out Tagatha_Unit;
