@@ -1,5 +1,4 @@
 with Ada.Text_IO;
-with Ada.Unchecked_Conversion;
 
 with Tagatha.Constants;
 with Tagatha.Labels;
@@ -578,60 +577,77 @@ package body Tagatha.Code.Pdp11 is
       return String
    is
       use Tagatha.Transfers;
-   begin
-      if Is_Constant (Item) then
-         return To_String (Get_Value (Item), Item);
-      elsif Is_Argument (Item) or else Is_Local (Item) then
-         declare
-            Addr : Tagatha_Integer;
-         begin
-            if Is_Argument (Item) then
-               Addr := Tagatha_Integer (Get_Arg_Offset (Item) * 2 + 2);
-            else
-               Addr := Tagatha_Integer (Get_Local_Offset (Item) * 2);
-            end if;
-            if Has_Slice (Item) then
-               if Slice_Fits (Item, Size_8) then
-                  return Image (Addr + Get_Slice_Octet_Offset (Item)) & "(r5)";
+
+      function Eval return String;
+
+      ----------
+      -- Eval --
+      ----------
+
+      function Eval return String is
+         Dereferenced : constant Boolean := Is_Dereferenced (Item);
+      begin
+         if Is_Constant (Item) then
+            return (if Dereferenced then "@" else "")
+              & "#"
+              & To_String (Get_Value (Item), Item);
+         elsif Is_Argument (Item) or else Is_Local (Item) then
+            declare
+               Addr : Tagatha_Integer;
+            begin
+               if Is_Argument (Item) then
+                  Addr := Tagatha_Integer (Get_Arg_Offset (Item) * 2 + 2);
+               else
+                  Addr := Tagatha_Integer (Get_Local_Offset (Item) * 2);
+               end if;
+               if Has_Slice (Item) then
+                  if Slice_Fits (Item, Size_8) then
+                     return Image
+                       (Addr + Get_Slice_Octet_Offset (Item)) & "(r5)";
+                  elsif Is_Argument (Item) then
+                     return Image (Addr) & "(r5)";
+                  else
+                     return "-" & Image (Addr) & "(r5)";
+                  end if;
                elsif Is_Argument (Item) then
                   return Image (Addr) & "(r5)";
                else
                   return "-" & Image (Addr) & "(r5)";
                end if;
-            elsif Is_Argument (Item) then
-               return Image (Addr) & "(r5)";
+            end;
+         elsif Is_Result (Item) then
+            return Result_Register;
+         elsif Is_Stack (Item) then
+            if Source then
+               return "(sp)+";
             else
-               return "-" & Image (Addr) & "(r5)";
+               return "-(sp)";
             end if;
-         end;
-      elsif Is_Result (Item) then
-         return Result_Register;
-      elsif Is_Stack (Item) then
-         if Source then
-            return "(sp)+";
+         elsif Is_External (Item) then
+            return (if Dereferenced then "@" else "")
+              & (if Is_Immediate (Item) then "#" else "")
+              & External_Name (Item);
+         elsif Is_Temporary (Item) then
+            declare
+               R : String :=
+                     Positive'Image
+                       (Tagatha.Temporaries.Get_Register
+                          (Get_Temporary (Item)));
+            begin
+               R (1) := 'r';
+               return R;
+            end;
          else
-            return "-(sp)";
+            raise Constraint_Error with
+              "unknown operand type in " & Show (Item);
          end if;
-      elsif Is_External (Item) then
-         if Is_Immediate (Item) then
-            return "#" & External_Name (Item);
-         else
-            return External_Name (Item);
-         end if;
-      elsif Is_Temporary (Item) then
-         declare
-            R : String :=
-                  Positive'Image
-                    (Tagatha.Temporaries.Get_Register
-                       (Get_Temporary (Item)));
-         begin
-            R (1) := 'r';
-            return R;
-         end;
-      else
-         raise Constraint_Error with
-           "unknown operand type in " & Show (Item);
-      end if;
+      end Eval;
+
+   begin
+      return Result : constant String := Eval do
+         Ada.Text_IO.Put_Line
+           (Tagatha.Transfers.Show (Item) & " -> " & Result);
+      end return;
    end To_String;
 
    ---------------

@@ -725,6 +725,24 @@ package body Tagatha.Units is
 
    end Optimise;
 
+   -----------------
+   -- Pop_Address --
+   -----------------
+
+   procedure Pop_Address
+     (Unit       : in out Tagatha_Unit;
+      Address    : String;
+      Size       : Tagatha_Size := Default_Integer_Size;
+      External   : Boolean      := False)
+   is
+   begin
+      Append (Unit,
+              Commands.Pop
+                (Transfers.Dereference
+                   (Transfers.External_Operand (Address, Immediate => True)),
+                 Size));
+   end Pop_Address;
+
    ------------------
    -- Pop_Argument --
    ------------------

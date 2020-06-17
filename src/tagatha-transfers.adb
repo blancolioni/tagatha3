@@ -159,6 +159,17 @@ package body Tagatha.Transfers is
               Op                => Op_Nop);
    end Control_Transfer;
 
+   -----------------
+   -- Dereference --
+   -----------------
+
+   function Dereference (Item : Transfer_Operand) return Transfer_Operand is
+   begin
+      return Operand : Transfer_Operand := Item do
+         Operand.Modifiers.Dereferenced := True;
+      end return;
+   end Dereference;
+
    -------------------
    -- External_Name --
    -------------------
@@ -1038,6 +1049,8 @@ package body Tagatha.Transfers is
    function Show (Item : Transfer_Operand) return String is
       Indirect : constant String :=
                    (if Item.Modifiers.Indirect then "&" else "");
+      Dereference : constant String :=
+                      (if Item.Modifiers.Dereferenced then "@" else "");
 
       function Image return String;
 
@@ -1091,7 +1104,7 @@ package body Tagatha.Transfers is
       end Image;
 
    begin
-      return Indirect & Image;
+      return Dereference & Indirect & Image;
    end Show;
 
    -------------------

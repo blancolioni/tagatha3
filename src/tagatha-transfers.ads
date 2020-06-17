@@ -184,6 +184,8 @@ package Tagatha.Transfers is
                    Size   : Tagatha_Size)
                   return Transfer_Operand;
 
+   function Dereference (Item : Transfer_Operand) return Transfer_Operand;
+
    function Get_Value (Item : Transfer_Operand)
                       return Tagatha.Constants.Tagatha_Constant;
    function Get_Arg_Offset (Item : Transfer_Operand) return Argument_Offset;

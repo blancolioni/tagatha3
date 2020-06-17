@@ -162,6 +162,12 @@ package Tagatha.Units is
       Size       : Tagatha_Size := Default_Integer_Size;
       External   : Boolean      := False);
 
+   procedure Pop_Address
+     (Unit       : in out Tagatha_Unit;
+      Address    : String;
+      Size       : Tagatha_Size := Default_Integer_Size;
+      External   : Boolean      := False);
+
    procedure Pop_Local (Unit    : in out Tagatha_Unit;
                         Offset  : in     Local_Offset;
                         Size    : in     Tagatha_Size :=
