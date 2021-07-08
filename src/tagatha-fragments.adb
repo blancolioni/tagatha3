@@ -126,11 +126,13 @@ package body Tagatha.Fragments is
    is
       Result : Tagatha_Fragment;
    begin
-      Result.Records.Append ((Fragment_Type    => Branch_Fragment,
-                              Line             => 0,
-                              Column           => 0,
-                              Branch_Target    => Target,
-                              Branch_Condition => Branch_Condition));
+      Result.Records.Append
+        (Fragment_Record'
+           (Fragment_Type    => Branch_Fragment,
+            Line             => 0,
+            Column           => 0,
+            Branch_Target    => Target,
+            Branch_Condition => Branch_Condition));
       return Result;
    end Branch;
 
@@ -164,10 +166,12 @@ package body Tagatha.Fragments is
    is
       Result : Tagatha_Fragment;
    begin
-      Result.Records.Append ((Fragment_Type => Command_Fragment,
-                              Line          => 0,
-                              Column        => 0,
-                              Command       => Cmd));
+      Result.Records.Append
+        (Fragment_Record'
+           (Fragment_Type => Command_Fragment,
+            Line          => 0,
+            Column        => 0,
+            Command       => Cmd));
       return Result;
    end Command;
 
@@ -193,10 +197,12 @@ package body Tagatha.Fragments is
    function Condition (Cond  : Tagatha_Condition) return Tagatha_Fragment is
       Result : Tagatha_Fragment;
    begin
-      Result.Records.Append ((Fragment_Type => Condition_Fragment,
-                              Line          => 0,
-                              Column        => 0,
-                              Condition     => Cond));
+      Result.Records.Append
+        (Fragment_Record'
+           (Fragment_Type => Condition_Fragment,
+            Line          => 0,
+            Column        => 0,
+            Condition     => Cond));
       return Result;
    end Condition;
 
@@ -212,12 +218,13 @@ package body Tagatha.Fragments is
       Result : Tagatha_Fragment;
    begin
       Result.Records.Append
-        ((Fragment_Type => Operand_Fragment,
-          Line          => 0,
-          Column        => 0,
-          Reference     =>
-            Tagatha.Transfers.Constant_Operand
-              (Tagatha.Constants.Integer_Constant (Value)),
+        (Fragment_Record'
+           (Fragment_Type => Operand_Fragment,
+            Line          => 0,
+            Column        => 0,
+            Reference     =>
+              Tagatha.Transfers.Constant_Operand
+                (Tagatha.Constants.Integer_Constant (Value)),
           Size          => Size));
       return Result;
    end Integer_Constant;
@@ -232,7 +239,9 @@ package body Tagatha.Fragments is
    is
    begin
       return Result : Tagatha_Fragment do
-         Result.Records.Append ((Label_Fragment, 0, 0, Index));
+         Result.Records.Append
+           (Fragment_Record'
+              (Label_Fragment, 0, 0, Index));
       end return;
    end Label;
 
@@ -247,11 +256,13 @@ package body Tagatha.Fragments is
    is
       Result : Tagatha_Fragment;
    begin
-      Result.Records.Append ((Fragment_Type => Command_Fragment,
-                              Line          => 0,
-                              Column        => 0,
-                              Command       =>
-                                Tagatha.Commands.Operate (Op, Negate, Size)));
+      Result.Records.Append
+        (Fragment_Record'
+           (Fragment_Type => Command_Fragment,
+            Line          => 0,
+            Column        => 0,
+            Command       =>
+              Tagatha.Commands.Operate (Op, Negate, Size)));
       return Result;
    end Operator;
 
@@ -262,7 +273,9 @@ package body Tagatha.Fragments is
    function Pop return Tagatha_Fragment is
       Result : Tagatha_Fragment;
    begin
-      Result.Records.Append ((Pop_Fragment, 0, 0));
+      Result.Records.Append
+        (Fragment_Record'
+           (Pop_Fragment, 0, 0));
       return Result;
    end Pop;
 
@@ -274,7 +287,9 @@ package body Tagatha.Fragments is
    is
       Result : Tagatha_Fragment;
    begin
-      Result.Records.Append ((Push_Fragment, 0, 0));
+      Result.Records.Append
+        (Fragment_Record'
+           (Push_Fragment, 0, 0));
       return Result;
    end Push;
 
@@ -289,12 +304,14 @@ package body Tagatha.Fragments is
    is
       Result : Tagatha_Fragment;
    begin
-      Result.Records.Append ((Fragment_Type => Operand_Fragment,
-                              Line          => 0,
-                              Column        => 0,
-                              Reference     =>
-                                Tagatha.Transfers.Argument_Operand (Offset),
-                              Size          => Size));
+      Result.Records.Append
+        (Fragment_Record'
+           (Fragment_Type => Operand_Fragment,
+            Line          => 0,
+            Column        => 0,
+            Reference     =>
+              Tagatha.Transfers.Argument_Operand (Offset),
+            Size          => Size));
       return Result;
    end Reference_Argument;
 
@@ -310,13 +327,15 @@ package body Tagatha.Fragments is
    is
       Result : Tagatha_Fragment;
    begin
-      Result.Records.Append ((Fragment_Type => Operand_Fragment,
-                              Line          => 0,
-                              Column        => 0,
-                              Reference     =>
-                                Tagatha.Transfers.External_Operand
-                                  (Name, Immediate),
-                              Size          => Size));
+      Result.Records.Append
+        (Fragment_Record'
+           (Fragment_Type => Operand_Fragment,
+            Line          => 0,
+            Column        => 0,
+            Reference     =>
+              Tagatha.Transfers.External_Operand
+                (Name, Immediate),
+            Size          => Size));
       return Result;
    end Reference_External;
 
@@ -331,12 +350,14 @@ package body Tagatha.Fragments is
    is
       Result : Tagatha_Fragment;
    begin
-      Result.Records.Append ((Fragment_Type => Operand_Fragment,
-                              Line          => 0,
-                              Column        => 0,
-                              Reference     =>
-                                Tagatha.Transfers.Local_Operand (Offset),
-                              Size          => Size));
+      Result.Records.Append
+        (Fragment_Record'
+           (Fragment_Type => Operand_Fragment,
+            Line          => 0,
+            Column        => 0,
+            Reference     =>
+              Tagatha.Transfers.Local_Operand (Offset),
+            Size          => Size));
       return Result;
    end Reference_Local;
 
@@ -350,12 +371,14 @@ package body Tagatha.Fragments is
    is
       Result : Tagatha_Fragment;
    begin
-      Result.Records.Append ((Fragment_Type => Operand_Fragment,
-                              Line          => 0,
-                              Column        => 0,
-                              Reference     =>
-                                Tagatha.Transfers.Result_Operand,
-                              Size          => Size));
+      Result.Records.Append
+        (Fragment_Record'
+           (Fragment_Type => Operand_Fragment,
+            Line          => 0,
+            Column        => 0,
+            Reference     =>
+              Tagatha.Transfers.Result_Operand,
+            Size          => Size));
       return Result;
    end Reference_Result;
 

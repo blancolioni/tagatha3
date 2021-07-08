@@ -132,8 +132,9 @@ package body Tagatha.Units is
    is
    begin
       Unit.Current_Sub.Read_Only_Segment.Append
-        ((String_Data, Unit.Last_Label (Unit.Current_Segment), Size_8,
-         Ada.Strings.Unbounded.To_Unbounded_String (Value)));
+        (Tagatha_Data'
+           (String_Data, Unit.Last_Label (Unit.Current_Segment), Size_8,
+            Ada.Strings.Unbounded.To_Unbounded_String (Value)));
       Increment_Address (Unit, Read_Only);
    end Ascii_String;
 

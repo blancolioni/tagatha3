@@ -48,7 +48,8 @@ package body Tagatha.Registry is
       end if;
 
       Register.Push_Index := Register.Push_Index + 1;
-      Register.Transfers.Append ((LT, Register.Push_Index));
+      Register.Transfers.Append
+        (Transfer_Record'(LT, Register.Push_Index));
       if Trace_Registry then
          Ada.Text_IO.Put_Line
            ("append: transfer"
@@ -290,7 +291,8 @@ package body Tagatha.Registry is
       end if;
       Register.Push_Index := Register.Push_Index + 1;
       Register.Stack.Append
-        ((Expression, Register.Push_Index, Label));
+        (Expression_Record'
+           (Expression, Register.Push_Index, Label));
    end Push;
 
    -----------------
