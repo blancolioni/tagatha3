@@ -635,7 +635,7 @@ package body Tagatha.Code.Pdp11 is
                           (Get_Temporary (Item)));
             begin
                R (1) := 'r';
-               return R;
+               return (if Dereferenced then '(' & R & ')' else R);
             end;
          else
             raise Constraint_Error with
@@ -644,10 +644,7 @@ package body Tagatha.Code.Pdp11 is
       end Eval;
 
    begin
-      return Result : constant String := Eval do
-         Ada.Text_IO.Put_Line
-           (Tagatha.Transfers.Show (Item) & " -> " & Result);
-      end return;
+      return Eval;
    end To_String;
 
    ---------------
