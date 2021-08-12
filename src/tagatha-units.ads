@@ -38,9 +38,15 @@ package Tagatha.Units is
      (Unit           : in out Tagatha_Unit;
       Name           : in     String;
       Argument_Words : in     Natural;
-      Frame_Words    : in     Natural;
       Result_Words   : in     Natural;
       Global         : in     Boolean);
+
+   procedure Begin_Frame
+     (Unit        : in out Tagatha_Unit;
+      Frame_Words : Natural);
+
+   procedure End_Frame
+     (Unit        : in out Tagatha_Unit);
 
    procedure End_Routine
      (Unit : in out Tagatha_Unit);

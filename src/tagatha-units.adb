@@ -159,9 +159,21 @@ package body Tagatha.Units is
       Global         : in     Boolean)
    is
    begin
-      Unit.Begin_Routine (Name, 0, 0, 0, Global);
+      Unit.Begin_Routine (Name, 0, 0, Global);
       Unit.Current_Sub.Has_Frame := False;
    end Begin_Code;
+
+   -----------------
+   -- Begin_Frame --
+   -----------------
+
+   procedure Begin_Frame
+     (Unit        : in out Tagatha_Unit;
+      Frame_Words : in     Natural)
+   is
+   begin
+      Unit.Current_Sub.Frame_Words := Frame_Words;
+   end Begin_Frame;
 
    -------------------
    -- Begin_Routine --
@@ -171,7 +183,6 @@ package body Tagatha.Units is
      (Unit           : in out Tagatha_Unit;
       Name           : in     String;
       Argument_Words : in     Natural;
-      Frame_Words    : in     Natural;
       Result_Words   : in     Natural;
       Global         : in     Boolean)
    is
@@ -181,7 +192,7 @@ package body Tagatha.Units is
       Unit.Current_Sub.Name :=
         Ada.Strings.Unbounded.To_Unbounded_String (Name);
       Unit.Current_Sub.Argument_Words := Argument_Words;
-      Unit.Current_Sub.Frame_Words := Frame_Words;
+      Unit.Current_Sub.Frame_Words := 0;
       Unit.Current_Sub.Result_Words := Result_Words;
       Unit.Current_Sub.Temporary_Words := 0;
       Unit.Current_Sub.Global := Global;
@@ -451,6 +462,10 @@ package body Tagatha.Units is
 
    procedure End_Copy
      (Unit : in out Tagatha_Unit)
+   is null;
+
+   procedure End_Frame
+     (Unit        : in out Tagatha_Unit)
    is null;
 
    -----------------
