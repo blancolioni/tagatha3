@@ -345,8 +345,8 @@ package body Tagatha.Transfers is
       if not Item.Modifiers.Have_Slice then
          return Tagatha_Integer'Last;
       else
-         return (2**Integer (Get_Slice_Bit_Length (Item)) - 1) *
-           Get_Slice_Bit_Offset (Item);
+         return (2 ** Natural (Get_Slice_Bit_Length (Item)) - 1) *
+           2 ** Natural (Get_Slice_Bit_Offset (Item));
       end if;
    end Get_Slice_Mask;
 
@@ -1172,7 +1172,7 @@ package body Tagatha.Transfers is
                        return Boolean
    is
    begin
-      return Get_Slice_Bit_Length (Item) <= 2**(Tagatha_Size'Pos (Size) + 3);
+      return Natural (Get_Slice_Bit_Length (Item)) <= Size_Bits (Size);
    end Slice_Fits;
 
    -------------------
