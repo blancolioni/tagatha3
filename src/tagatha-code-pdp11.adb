@@ -132,7 +132,11 @@ package body Tagatha.Code.Pdp11 is
             Operate (Asm, Get_Operator (Item), Get_Source_1 (Item),
                      Get_Destination (Item));
          else
-            Move (Asm, Get_Source_1 (Item), Get_Destination (Item));
+            if not Same_Operand
+              (Get_Source_1 (Item), Get_Destination (Item))
+            then
+               Move (Asm, Get_Source_1 (Item), Get_Destination (Item));
+            end if;
             Operate (Asm, Get_Operator (Item),
                      Get_Source_2 (Item),
                      Get_Destination (Item));
