@@ -883,10 +883,23 @@ package body Tagatha.Transfers is
       use type Ada.Strings.Unbounded.Unbounded_String;
       use type Tagatha.Constants.Tagatha_Constant;
       use type Tagatha.Temporaries.Temporary;
+      Left_Mod : Source_Modification renames Left.Modifiers;
+      Right_Mod : Source_Modification renames Right.Modifiers;
+
+      Same_Modifiers : constant Boolean :=
+                         Left_Mod.Have_Slice = Right_Mod.Have_Slice
+                             and then
+                               Left_Mod.Indirect = Right_Mod.Indirect
+                                   and then
+                                     Left_Mod.Dereferenced
+                                       = Right_Mod.Dereferenced
+        and then (not Left_Mod.Have_Slice
+                  or else Left_Mod.Slice = Right_Mod.Slice);
+
    begin
       if Left.Op /= Right.Op then
          return False;
-      elsif Left.Modifiers /= Right.Modifiers then
+      elsif not Same_Modifiers then
          return False;
       else
          case Left.Op is
