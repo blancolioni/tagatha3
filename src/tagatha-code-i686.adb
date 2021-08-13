@@ -311,25 +311,25 @@ package body Tagatha.Code.I686 is
                    Dest          : in     String)
    is
    begin
-      case Transfer_Size is
-         when Size_8 =>
-            Instruction (Asm, "movb", Source, Dest);
-         when Size_16 =>
-            Instruction (Asm, "movw", Source, Dest);
-         when Size_32
-            | Default_Size | Default_Integer_Size | Default_Address_Size =>
-            if Source (Source'First) = '%'
-              or else Dest (Dest'First) = '%'
-            then
-               Instruction (Asm, "movl", Source, Dest);
-            else
-               Instruction (Asm, "movl", Source, "%eax");
-               Instruction (Asm, "movl", "%eax", Dest);
-            end if;
-         when Size_64 =>
-            raise Constraint_Error with
-              "64 bit arguments not handled yet";
-      end case;
+      if Transfer_Size = Size_8 then
+         Instruction (Asm, "movb", Source, Dest);
+      elsif Transfer_Size = Size_16 then
+         Instruction (Asm, "movw", Source, Dest);
+      elsif Transfer_Size in
+        Size_32 | Default_Size | Default_Integer_Size | Default_Address_Size
+      then
+         if Source (Source'First) = '%'
+           or else Dest (Dest'First) = '%'
+         then
+            Instruction (Asm, "movl", Source, Dest);
+         else
+            Instruction (Asm, "movl", Source, "%eax");
+            Instruction (Asm, "movl", "%eax", Dest);
+         end if;
+      else
+         raise Constraint_Error with
+           "sizes > 32 bits not handled yet";
+      end if;
    end Move;
 
    -------------

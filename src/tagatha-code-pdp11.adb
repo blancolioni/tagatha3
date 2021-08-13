@@ -327,40 +327,36 @@ package body Tagatha.Code.Pdp11 is
 
       if Is_Null_Operand (Dest) then
          if Source = Stack_Operand then
-            case Transfer_Size is
-               when Size_8 | Size_16
-                  | Default_Size
-                  | Default_Integer_Size | Default_Address_Size =>
-                  Asm.Put_Line ("    tst (sp)+");
-               when Size_32 =>
-                  Asm.Put_Line ("    tst (sp)+");
-                  Asm.Put_Line ("    tst (sp)+");
-               when Size_64 =>
-                  Asm.Put_Line ("    add #8, sp");
-            end case;
+            if Transfer_Size in Size_8 | Size_16
+              | Default_Size | Default_Integer_Size | Default_Address_Size
+            then
+               Asm.Put_Line ("    tst (sp)+");
+            elsif Transfer_Size = Size_32 then
+               Asm.Put_Line ("    tst (sp)+");
+               Asm.Put_Line ("    tst (sp)+");
+            else
+               Asm.Put_Line
+                 ("    add #"
+                  & Size_Octets (Transfer_Size)'Image
+                  & ", sp");
+            end if;
          end if;
       else
-         case Transfer_Size is
-         when Size_8 =>
+         if Transfer_Size = Size_8 then
             Instruction (Asm, "movb",
                          To_String (Source, True),
                          To_String (Dest, False));
-         when Size_16
-            | Default_Size | Default_Integer_Size | Default_Address_Size =>
+         elsif Transfer_Size in Size_16
+           | Default_Size | Default_Integer_Size | Default_Address_Size
+         then
             Instruction (Asm, "mov", To_Src (Source), To_Dst (Dest));
-         when Size_32 =>
-            for I in 0 .. 1 loop
+         else
+            for I in 0 .. Size_Octets (Transfer_Size) / 2 - 1 loop
                Instruction (Asm, "mov",
                             To_Src (Slice (Source, I, Size_16)),
                             To_Dst (Slice (Dest, I, Size_16)));
             end loop;
-         when Size_64 =>
-            for I in 0 .. 3 loop
-               Instruction (Asm, "mov",
-                            To_Src (Slice (Source, I, Size_16)),
-                            To_Dst (Slice (Dest, I, Size_16)));
-            end loop;
-         end case;
+         end if;
       end if;
    end Move;
 
@@ -376,7 +372,7 @@ package body Tagatha.Code.Pdp11 is
       use Tagatha.Transfers;
       Octet : constant Boolean := Get_Size (Dest) = Size_8;
    begin
-      if Get_Size (Dest) in Size_8 .. Size_16 then
+      if Get_Size (Dest) in Size_8 | Size_16 then
          case Op is
             when Op_Negate =>
                Instruction (Asm, "neg", Octet, To_Dst (Dest));
@@ -527,7 +523,7 @@ package body Tagatha.Code.Pdp11 is
          Mnemonic : constant String := Get_Mnemonic (Op);
          Octet     : constant Boolean := Get_Size (Dest) = Size_8;
       begin
-         if Get_Size (Dest) > Size_16 then
+         if Size_Octets (Get_Size (Dest)) > 2 then
             raise Constraint_Error with
               "pdp-11 cannot operate on 32 or 64 bit data (yet)";
          end if;
@@ -607,7 +603,9 @@ package body Tagatha.Code.Pdp11 is
                   elsif Is_Argument (Item) then
                      return Image (Addr) & "(r5)";
                   else
-                     return "-" & Image (Addr) & "(r5)";
+                     return "-"
+                       & Image (Addr - Get_Slice_Bit_Offset (Item) / 8)
+                       & "(r5)";
                   end if;
                elsif Is_Argument (Item) then
                   return Image (Addr) & "(r5)";

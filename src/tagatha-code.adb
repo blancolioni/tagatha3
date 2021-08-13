@@ -118,8 +118,16 @@ package body Tagatha.Code is
          return Image ((Get_Integer (V) and Get_Slice_Mask (From)) /
                        (2 ** Natural (Get_Slice_Bit_Offset (From))));
       elsif Is_Floating_Point (V) then
-         return Floating_Point_Integer'Image
-           (To_Integer (Get_Floating_Point (V)));
+         declare
+            FPI : constant Floating_Point_Integer :=
+                    To_Integer (Get_Floating_Point (V));
+            Int : constant Tagatha_Integer :=
+                    Tagatha_Integer (FPI);
+            Mask : constant Tagatha_Integer := Get_Slice_Mask (From);
+            Offset : constant Natural := Natural (Get_Slice_Bit_Offset (From));
+         begin
+            return Image ((Int and Mask) / 2 ** Offset);
+         end;
       elsif Is_Label (V) then
          if Has_Slice (From) then
             if Slice_Fits (From, Size_8) then

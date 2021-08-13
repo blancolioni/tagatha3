@@ -6,20 +6,7 @@ package body Tagatha is
 
    function Bits_To_Size (Bits : Natural) return Tagatha_Size is
    begin
-      if Bits <= 8 then
-         return Size_8;
-      elsif Bits <= 16 then
-         return Size_16;
-      elsif Bits <= 32 then
-         return Size_32;
-      elsif Bits <= 64 then
-         return Size_64;
-      else
-         raise Constraint_Error with
-           "Size of operand (" & Natural'Image (Bits) & " too large " &
-         "(maximum is 64)";
-      end if;
-
+      return (Tagatha_Custom_Size, (Bits + 7) / 8);
    end Bits_To_Size;
 
    ------------
@@ -53,7 +40,25 @@ package body Tagatha is
 
    function Size_Bits (Size : Tagatha_Size) return Natural is
    begin
-      return 2**(Tagatha_Size'Pos (Size) + 3);
+      return Size_Octets (Size) * 8;
    end Size_Bits;
+
+   -----------------
+   -- Size_Octets --
+   -----------------
+
+   function Size_Octets (Size : Tagatha_Size) return Natural is
+   begin
+      case Size.Category is
+         when Tagatha_Default_Size =>
+            return 4;
+         when Tagatha_Integer_Size =>
+            return 4;
+         when Tagatha_Address_Size =>
+            return 4;
+         when Tagatha_Custom_Size =>
+            return Size.Octets;
+      end case;
+   end Size_Octets;
 
 end Tagatha;

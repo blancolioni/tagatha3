@@ -87,15 +87,16 @@ package body Tagatha.Code.Aqua32 is
       Size : Tagatha_Size)
       return String
    is (Name &
-       (case Size is
-           when Default_Size => "W",
-           when Default_Integer_Size => "W",
-           when Default_Address_Size => "W",
-           when Size_32              => "W",
-           when Size_16              => "H",
-           when Size_8               => "B",
-           when Size_64              =>
-              raise Constraint_Error with "64 bit not supported yet"));
+       (if Size = Size_8 then "B"
+          elsif Size = Size_16 then "H"
+          elsif Size = Size_32 then "W"
+          elsif Size in
+            Default_Size | Default_Integer_Size | Default_Address_Size
+          then "W"
+          elsif Size = Size_64
+          then (raise Constraint_Error with "64 bit not supported yet")
+          else (raise Constraint_Error with
+              "larges sizes not supported yet")));
 
    -------------------
    -- After_Operand --

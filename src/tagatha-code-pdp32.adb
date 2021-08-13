@@ -469,14 +469,18 @@ package body Tagatha.Code.Pdp32 is
 
       if Is_Null_Operand (Dest) then
          if Source = Stack_Operand then
-            case Transfer_Size is
-               when Size_8 | Size_16 | Size_32
-                  | Default_Size
-                  | Default_Integer_Size | Default_Address_Size =>
-                  Asm.Put_Line ("    tst (sp)+");
-               when Size_64 =>
-                  Asm.Put_Line ("    add #8, sp");
-            end case;
+            if Transfer_Size in
+              Size_8 | Size_16 | Size_32
+                | Default_Size
+                  | Default_Integer_Size | Default_Address_Size
+            then
+               Asm.Put_Line ("    tst (sp)+");
+            else
+               Asm.Put_Line
+                 ("    add #"
+                  & Size_Octets (Transfer_Size)'Image
+                  & ", sp");
+            end if;
          end if;
       elsif Is_Condition_Operand (Dest) then
          Instruction (Asm, "tst", Transfer_Size, To_Src (Source));
@@ -958,18 +962,21 @@ package body Tagatha.Code.Pdp32 is
       return String
    is
    begin
-      case Size is
-         when Default_Size | Default_Integer_Size | Default_Address_Size =>
-            return "";
-         when Size_8 =>
-            return ".1";
-         when Size_16 =>
-            return ".2";
-         when Size_32 =>
-            return "";
-         when Size_64 =>
-            return ".8";
-      end case;
+      if Size in
+        Default_Size | Default_Integer_Size | Default_Address_Size
+      then
+         return "";
+      elsif Size = Size_8 then
+         return ".1";
+      elsif Size = Size_16 then
+         return ".2";
+      elsif Size = Size_32 then
+         return "";
+      elsif Size = Size_64 then
+         return ".8";
+      else
+         raise Constraint_Error with "invalid size for suffix";
+      end if;
    end To_Suffix;
 
    ---------------

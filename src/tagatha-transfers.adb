@@ -1023,25 +1023,17 @@ package body Tagatha.Transfers is
                Src_1  : constant String := Show (Item.Src_1);
                Src_2  : constant String := Show (Item.Src_2);
                Op     : constant String := Show_Operator (Item.Op);
-               Sz     : Character;
+               Sz     : constant String :=
+                          (case Item.Dst.Modifiers.Size.Category is
+                              when Tagatha_Custom_Size =>
+                             ('.',
+                              Character'Val
+                                (Item.Dst.Modifiers.Size.Octets
+                                 + 48)),
+                              when Tagatha_Default_Size => "",
+                              when Tagatha_Integer_Size => ".i",
+                              when Tagatha_Address_Size => ".a");
             begin
-               case Item.Dst.Modifiers.Size is
-                  when Size_8 =>
-                     Sz := '1';
-                  when Size_16 =>
-                     Sz := '2';
-                  when Size_32 =>
-                     Sz := '4';
-                  when Size_64 =>
-                     Sz := '8';
-                  when Default_Size =>
-                     Sz := 'd';
-                  when Default_Integer_Size =>
-                     Sz := 'i';
-                  when Default_Address_Size =>
-                     Sz := 'a';
-               end case;
-
                if Item.Op = Op_Nop then
                   return Label_Image & Sz & ':' & Dst & " := " & Src_1;
                else

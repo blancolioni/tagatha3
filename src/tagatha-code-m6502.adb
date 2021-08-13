@@ -854,25 +854,12 @@ package body Tagatha.Code.M6502 is
    -- Size_Octets --
    ----------------
 
-   function Size_Octets (Size : Tagatha_Size) return Positive is
-   begin
-      case Size is
-         when Default_Size =>
-            return 1;
-         when Default_Integer_Size =>
-            return 1;
-         when Default_Address_Size =>
-            return 2;
-         when Size_8 =>
-            return 1;
-         when Size_16 =>
-            return 2;
-         when Size_32 =>
-            return 4;
-         when Size_64 =>
-            return 8;
-      end case;
-   end Size_Octets;
+   function Size_Octets (Size : Tagatha_Size) return Positive
+   is (if Size in Default_Size | Default_Integer_Size | Size_8
+       then 1
+       elsif Size in Default_Address_Size | Size_16
+       then 2
+       else Size_Bits (Size) / 8);
 
    -----------
    -- Start --
