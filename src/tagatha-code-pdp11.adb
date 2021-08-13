@@ -92,18 +92,20 @@ package body Tagatha.Code.Pdp11 is
             T.Reverse_Test := False;
          end;
       elsif Is_Frame_Reservation (Item) then
-         declare
-            Reservation : constant String :=
-              Integer'Image (Get_Reservation (Item) * 2);
-            Operation   : String := "add";
-         begin
-            if Get_Reservation (Item) > 0 then
-               Operation := "sub";
-            end if;
-            Asm.Put_Line ("    " & Operation & " #" &
-                            Reservation (2 .. Reservation'Last) &
-                            ", sp");
-         end;
+         if Get_Reservation (Item) /= 0 then
+            declare
+               Reservation : constant String :=
+                               Integer'Image (Get_Reservation (Item) * 2);
+               Operation   : String := "add";
+            begin
+               if Get_Reservation (Item) > 0 then
+                  Operation := "sub";
+               end if;
+               Asm.Put_Line ("    " & Operation & " #" &
+                               Reservation (2 .. Reservation'Last) &
+                               ", sp");
+            end;
+         end if;
       elsif Is_Native (Item) then
          Asm.Put_Line ("    " & Get_Native_Text (Item));
       elsif Is_Simple (Item) then
