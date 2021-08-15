@@ -347,6 +347,19 @@ package body Tagatha.Code.Pdp11 is
                   & ", sp");
             end if;
          end if;
+      elsif Is_Condition_Operand (Dest) then
+         if Transfer_Size = Size_8 then
+            Instruction (Asm, "tstb",
+                         To_String (Source, True));
+         elsif Transfer_Size in Size_16
+           | Default_Size | Default_Integer_Size | Default_Address_Size
+         then
+            Instruction (Asm, "tst",
+                         To_String (Source, True));
+         else
+            raise Constraint_Error with
+              "pdp11: cannot test size" & Transfer_Size'Image;
+         end if;
       else
          if Transfer_Size = Size_8 then
             Instruction (Asm, "movb",
