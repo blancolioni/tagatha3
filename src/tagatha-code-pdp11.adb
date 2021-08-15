@@ -265,7 +265,7 @@ package body Tagatha.Code.Pdp11 is
 
    procedure Instruction (Asm      : in out Assembly'Class;
                           Mnemonic : in     String;
-                          Octet     : in     Boolean;
+                          Octet    : in     Boolean;
                           Source   : in     String;
                           Dest     : in     String)
    is
@@ -540,7 +540,10 @@ package body Tagatha.Code.Pdp11 is
          Src      : constant String := To_Src (Source);
          Dst      : constant String := To_Dst (Dest);
          Mnemonic : constant String := Get_Mnemonic (Op);
-         Octet     : constant Boolean := Get_Size (Dest) = Size_8;
+         Octet     : constant Boolean :=
+                       Get_Size (Dest) = Size_8
+                         and then Mnemonic /= "add"
+                             and then Mnemonic /= "sub";
       begin
          if Size_Octets (Get_Size (Dest)) > 2 then
             raise Constraint_Error with
