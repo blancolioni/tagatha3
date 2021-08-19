@@ -606,9 +606,13 @@ package body Tagatha.Code.Pdp11 is
          Dereferenced : constant Boolean := Is_Dereferenced (Item);
       begin
          if Is_Constant (Item) then
-            return (if Dereferenced then "@" else "")
-              & "#"
-              & To_String (Get_Value (Item), Item);
+            if Tagatha.Constants.Is_Label (Get_Value (Item)) then
+               return "@#" & To_String (Get_Value (Item));
+            else
+               return (if Dereferenced then "@" else "")
+                 & "#"
+                 & To_String (Get_Value (Item), Item);
+            end if;
          elsif Is_Argument (Item) or else Is_Local (Item) then
             declare
                Addr : Tagatha_Integer;
