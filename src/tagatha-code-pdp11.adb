@@ -358,7 +358,8 @@ package body Tagatha.Code.Pdp11 is
                          To_String (Source, True));
          else
             raise Constraint_Error with
-              "pdp11: cannot test size" & Transfer_Size'Image;
+              "pdp11: cannot test size"
+              & Size_Bits (Transfer_Size)'Image;
          end if;
       else
          if Transfer_Size = Size_8 then
