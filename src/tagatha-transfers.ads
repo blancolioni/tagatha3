@@ -29,29 +29,50 @@ package Tagatha.Transfers is
                           Dst          : Temporaries.Temporary)
                          return Transfer;
 
-   function Constant_Operand (Value : Tagatha.Constants.Tagatha_Constant)
-                             return Transfer_Operand;
+   function Constant_Operand
+     (Value : Tagatha.Constants.Tagatha_Constant;
+      Size  : Tagatha_Size)
+      return Transfer_Operand;
 
    function Argument_Operand
      (Arg_Index     : Argument_Offset;
-      Indirect      : Boolean := False)
+      Indirect      : Boolean := False;
+      Data          : Tagatha_Data_Type := Untyped_Data;
+      Size          : Tagatha_Size := Default_Size)
       return Transfer_Operand;
 
    function Local_Operand
-     (Frame_Index   : Local_Offset;
-      Indirect      : Boolean := False)
+     (Frame_Index : Local_Offset;
+      Indirect    : Boolean := False;
+      Data        : Tagatha_Data_Type := Untyped_Data;
+      Size        : Tagatha_Size := Default_Size)
       return Transfer_Operand;
 
-   function Result_Operand return Transfer_Operand;
-   function Return_Operand return Transfer_Operand;
-   function Iterator_New_Operand return Transfer_Operand;
-   function Iterator_Copy_Operand return Transfer_Operand;
+   function Result_Operand
+     (Data : Tagatha_Data_Type := Untyped_Data;
+      Size : Tagatha_Size := Default_Size)
+      return Transfer_Operand;
+
+   function Return_Operand
+     (Data : Tagatha_Data_Type := Untyped_Data;
+      Size : Tagatha_Size := Default_Size)
+      return Transfer_Operand;
+
+   function Iterator_New_Operand
+      return Transfer_Operand;
+
+   function Iterator_Copy_Operand
+     (Data : Tagatha_Data_Type := Untyped_Data;
+      Size : Tagatha_Size := Default_Size)
+      return Transfer_Operand;
 
    function External_Operand
      (Name      : String;
       Immediate : Boolean;
       Predec    : Boolean := False;
-      Postinc   : Boolean := False)
+      Postinc   : Boolean := False;
+      Data      : Tagatha_Data_Type := Untyped_Data;
+      Size      : Tagatha_Size := Default_Size)
       return Transfer_Operand;
 
    function Text_Operand
@@ -62,15 +83,27 @@ package Tagatha.Transfers is
      (Shelf_Name : String)
       return Transfer_Operand;
 
-   function Label_Operand (Label         : Tagatha.Labels.Tagatha_Label)
-                          return Transfer_Operand;
-
-   function Temporary_Operand
-     (Temp       : Tagatha.Temporaries.Temporary;
-      Indirect   : Boolean := False)
+   function Label_Operand
+     (Label : Tagatha.Labels.Tagatha_Label;
+      Data      : Tagatha_Data_Type := Untyped_Data;
+      Size      : Tagatha_Size := Default_Size)
       return Transfer_Operand;
 
-   function Stack_Operand return Transfer_Operand;
+   function Temporary_Operand
+     (Temp      : Tagatha.Temporaries.Temporary;
+      Indirect  : Boolean := False;
+      Data      : Tagatha_Data_Type := Untyped_Data;
+      Size      : Tagatha_Size := Default_Size)
+      return Transfer_Operand;
+
+   function Stack_Operand
+     (Data : Tagatha_Data_Type := Untyped_Data;
+      Size : Tagatha_Size := Default_Size)
+      return Transfer_Operand;
+
+   function Size_Operand
+     (Size : Tagatha_Size)
+      return Transfer_Operand;
 
    function Condition_Operand return Transfer_Operand;
 
@@ -80,7 +113,6 @@ package Tagatha.Transfers is
    procedure Set_Size (Item : in out Transfer;
                        Size : in     Tagatha_Size);
 
-   function Has_Size (Item : in Transfer_Operand) return Boolean;
    function Get_Size (Item : in Transfer_Operand) return Tagatha_Size;
 
    function Simple_Transfer (From          : Transfer_Operand;
@@ -103,9 +135,10 @@ package Tagatha.Transfers is
                              Changed_Registers : String)
                              return Transfer;
 
-   function Call (Destination : Tagatha.Labels.Tagatha_Label;
+   function Call
+     (Destination : Tagatha.Labels.Tagatha_Label;
       Argument_Count : Natural)
-                  return Transfer;
+      return Transfer;
 
    function Reserve_Stack (Frame_Size : Natural) return Transfer;
    function Restore_Stack (Frame_Size : Natural) return Transfer;
@@ -248,22 +281,19 @@ private
 
    type Source_Modification is
       record
-         Have_Slice   : Boolean;
-         Have_Size    : Boolean;
-         Dereferenced : Boolean;
-         Indirect     : Boolean;
-         Slice        : Bit_Slice;
-         Size         : Tagatha_Size;
+         Have_Slice   : Boolean   := False;
+         Dereferenced : Boolean   := False;
+         Indirect     : Boolean   := False;
+         Slice        : Bit_Slice := (0, 0);
       end record;
 
-   No_Modification : constant Source_Modification :=
-                       (False, False, False, False,
-                        (0, 0),
-                        Default_Integer_Size);
+   No_Modification : constant Source_Modification := (others => <>);
 
    type Transfer_Operand (Op : Transfer_Operand_Type := T_No_Operand) is
       record
-         Modifiers     : Source_Modification;
+         Modifiers     : Source_Modification := No_Modification;
+         Data          : Tagatha_Data_Type   := Untyped_Data;
+         Size          : Tagatha_Size        := Default_Size;
          case Op is
             when T_No_Operand =>
                null;
@@ -297,12 +327,13 @@ private
       end record;
 
    No_Operand : constant Transfer_Operand :=
-                  (T_No_Operand, No_Modification);
+                  (T_No_Operand, No_Modification,
+                   Untyped_Data, Default_Size);
 
    function Shelf_Operand
      (Shelf_Name : String)
       return Transfer_Operand
-   is (T_Shelf, No_Modification,
+   is (T_Shelf, No_Modification, Untyped_Data, Default_Size,
        Ada.Strings.Unbounded.To_Unbounded_String (Shelf_Name));
 
    function Is_Shelf     (Item : Transfer_Operand) return Boolean

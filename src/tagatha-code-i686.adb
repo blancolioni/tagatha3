@@ -293,11 +293,8 @@ package body Tagatha.Code.I686 is
                    Dest      : in     Tagatha.Transfers.Transfer_Operand)
    is
       use Tagatha.Transfers;
-      Transfer_Size : Tagatha_Size := Size_32;
+      Transfer_Size : constant Tagatha_Size := Get_Size (Dest);
    begin
-      if Has_Size (Dest) then
-         Transfer_Size := Get_Size (Dest);
-      end if;
       Move (Asm, Transfer_Size, To_String (Source), To_String (Dest));
    end Move;
 

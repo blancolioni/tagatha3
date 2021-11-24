@@ -20,17 +20,20 @@ package body Tagatha.Commands.Registry is
             case Command.Stack_Op is
                when S_Push =>
                   Register.Record_Push
-                    (Command.Size, Command.Operand);
+                    (Command.Operand);
                when S_Pop =>
-                  Register.Record_Pop (Command.Size, Command.Operand);
+                  Register.Record_Pop (Command.Operand);
                when S_Drop =>
-                  Register.Record_Drop (Command.Size);
+                  Register.Record_Drop (Transfers.Get_Size (Command.Operand));
                when S_Duplicate =>
-                  Register.Record_Duplicate (Command.Size);
+                  Register.Record_Duplicate
+                    (Transfers.Get_Size (Command.Operand));
                when S_Swap =>
-                  Register.Record_Swap (Command.Size);
+                  Register.Record_Swap
+                    (Transfers.Get_Size (Command.Operand));
                when S_Store =>
-                  Register.Record_Store (Command.Size);
+                  Register.Record_Store
+                    (Transfers.Get_Size (Command.Operand));
             end case;
          when T_Operate =>
             Register.Record_Operation (Command.Operator);

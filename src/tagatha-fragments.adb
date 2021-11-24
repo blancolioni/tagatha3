@@ -37,7 +37,7 @@ package body Tagatha.Fragments is
                     Fragment.Records.Element (Last_Reference);
                begin
                   Last_Reference := 0;
-                  Unit.Push_Operand (Ref.Reference, Ref.Size);
+                  Unit.Push_Operand (Ref.Reference);
                end;
             end if;
 
@@ -93,7 +93,7 @@ package body Tagatha.Fragments is
                           Fragment.Records.Element (Last_Reference);
                      begin
                         Last_Reference := 0;
-                        Unit.Push_Operand (Ref.Reference, Ref.Size);
+                        Unit.Push_Operand (Ref.Reference);
                      end;
                   end if;
                when Pop_Fragment =>
@@ -106,7 +106,7 @@ package body Tagatha.Fragments is
                           Fragment.Records.Element (Last_Reference);
                      begin
                         Last_Reference := 0;
-                        Unit.Pop_Operand (Ref.Reference, Ref.Size);
+                        Unit.Pop_Operand (Ref.Reference);
                      end;
                   end if;
                when Label_Fragment =>
@@ -179,12 +179,11 @@ package body Tagatha.Fragments is
    -- Compare --
    -------------
 
-   function Compare (Cond   : Tagatha_Condition;
-                     Size   : Tagatha_Size := Default_Integer_Size)
+   function Compare (Cond   : Tagatha_Condition)
                     return Tagatha_Fragment
    is
       Result : Tagatha_Fragment :=
-        Operator (Op_Compare, Size => Size);
+        Operator (Op_Compare);
    begin
       Append (Result, Condition (Cond));
       return Result;
@@ -224,8 +223,8 @@ package body Tagatha.Fragments is
             Column        => 0,
             Reference     =>
               Tagatha.Transfers.Constant_Operand
-                (Tagatha.Constants.Integer_Constant (Value)),
-          Size          => Size));
+                (Tagatha.Constants.Integer_Constant (Value),
+                 Size => Size)));
       return Result;
    end Integer_Constant;
 
@@ -250,8 +249,7 @@ package body Tagatha.Fragments is
    --------------
 
    function Operator (Op     : Tagatha_Operator;
-                      Negate : Boolean          := False;
-                      Size   : Tagatha_Size     := Default_Integer_Size)
+                      Negate : Boolean          := False)
                      return Tagatha_Fragment
    is
       Result : Tagatha_Fragment;
@@ -262,7 +260,7 @@ package body Tagatha.Fragments is
             Line          => 0,
             Column        => 0,
             Command       =>
-              Tagatha.Commands.Operate (Op, Negate, Size)));
+              Tagatha.Commands.Operate (Op, Negate)));
       return Result;
    end Operator;
 
@@ -310,8 +308,7 @@ package body Tagatha.Fragments is
             Line          => 0,
             Column        => 0,
             Reference     =>
-              Tagatha.Transfers.Argument_Operand (Offset),
-            Size          => Size));
+              Tagatha.Transfers.Argument_Operand (Offset, Size => Size)));
       return Result;
    end Reference_Argument;
 
@@ -334,8 +331,7 @@ package body Tagatha.Fragments is
             Column        => 0,
             Reference     =>
               Tagatha.Transfers.External_Operand
-                (Name, Immediate),
-            Size          => Size));
+                (Name, Immediate, Size => Size)));
       return Result;
    end Reference_External;
 
@@ -356,8 +352,7 @@ package body Tagatha.Fragments is
             Line          => 0,
             Column        => 0,
             Reference     =>
-              Tagatha.Transfers.Local_Operand (Offset),
-            Size          => Size));
+              Tagatha.Transfers.Local_Operand (Offset, Size => Size)));
       return Result;
    end Reference_Local;
 
@@ -377,8 +372,7 @@ package body Tagatha.Fragments is
             Line          => 0,
             Column        => 0,
             Reference     =>
-              Tagatha.Transfers.Result_Operand,
-            Size          => Size));
+              Tagatha.Transfers.Result_Operand (Size => Size)));
       return Result;
    end Reference_Result;
 

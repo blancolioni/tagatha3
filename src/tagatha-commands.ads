@@ -7,16 +7,23 @@ package Tagatha.Commands is
 
    type Tagatha_Command is private;
 
-   function Push (Operand    : Tagatha.Transfers.Transfer_Operand;
-                  Size       : Tagatha_Size := Default_Integer_Size)
-                  return Tagatha_Command;
+   function Push
+     (Operand    : Tagatha.Transfers.Transfer_Operand)
+      return Tagatha_Command;
 
-   function Pop  (Operand    : Tagatha.Transfers.Transfer_Operand;
-                  Size       : Tagatha_Size     := Default_Integer_Size)
-                  return Tagatha_Command;
+   --  function Push
+   --    (Operand    : Tagatha.Transfers.Transfer_Operand;
+   --     Data       : Tagatha_Data_Type := Untyped_Data;
+   --     Size       : Tagatha_Size := Default_Integer_Size)
+   --     return Tagatha_Command;
 
-   function Drop  (Size       : Tagatha_Size     := Default_Integer_Size)
-                   return Tagatha_Command;
+   function Pop
+     (Operand    : Tagatha.Transfers.Transfer_Operand)
+      return Tagatha_Command;
+
+   function Drop
+     (Size       : Tagatha_Size     := Default_Integer_Size)
+      return Tagatha_Command;
 
    function Duplicate return Tagatha_Command;
    function Swap return Tagatha_Command;
@@ -32,12 +39,12 @@ package Tagatha.Commands is
 
    function Copy_Item
      (Direction  : Copy_Direction;
+      Data       : Tagatha_Data_Type := Untyped_Data;
       Size       : Tagatha_Size := Default_Size)
       return Tagatha_Command;
 
    function Operate (Op   : Tagatha_Operator;
-                     Neg  : Boolean           := False;
-                     Size : Tagatha_Size      := Default_Integer_Size)
+                     Neg  : Boolean           := False)
                      return Tagatha_Command;
 
    function Call (Target         : Tagatha.Labels.Tagatha_Label;
@@ -51,13 +58,11 @@ package Tagatha.Commands is
 
    function Loop_Around (Label        : Tagatha.Labels.Tagatha_Label;
                          Loop_Count   : Local_Offset;
-                         Loop_Index   : Local_Offset;
-                         Size         : Tagatha_Size := Default_Integer_Size)
+                         Loop_Index   : Local_Offset)
                         return Tagatha_Command;
 
    function Jump (Target : Tagatha.Labels.Tagatha_Label;
-                  Cond   : Tagatha_Condition := C_Always;
-                  Size   : Tagatha_Size      := Default_Address_Size)
+                  Cond   : Tagatha_Condition := C_Always)
                   return Tagatha_Command
      with Pre => Tagatha.Labels.Has_Label (Target);
 
@@ -102,7 +107,6 @@ private
    type Tagatha_Command_Record
      (Instruction : Tagatha_Instruction := T_Stack) is
       record
-         Size   : Tagatha_Size;
          Label  : Tagatha.Labels.Tagatha_Label;
          Line   : Natural := 0;
          Column : Natural := 0;
@@ -136,7 +140,6 @@ private
 
    function Stack_Command
      (Op      : Stack_Operation;
-      Size    : Tagatha_Size := Default_Size;
       Operand : Tagatha.Transfers.Transfer_Operand :=
         Tagatha.Transfers.No_Operand)
       return Tagatha_Command;
@@ -162,6 +165,6 @@ private
    function Store
      (Size : Tagatha_Size := Default_Size)
       return Tagatha_Command
-   is (Stack_Command (S_Store, Size));
+   is (Stack_Command (S_Store));
 
 end Tagatha.Commands;

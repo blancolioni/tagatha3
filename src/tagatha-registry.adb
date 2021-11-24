@@ -336,7 +336,7 @@ package body Tagatha.Registry is
                           Size     : in     Tagatha_Size)
    is
    begin
-      Record_Pop (Register, Size, Tagatha.Transfers.No_Operand);
+      Record_Pop (Register, Tagatha.Transfers.Size_Operand (Size));
    end Record_Drop;
 
    ----------------------
@@ -349,11 +349,12 @@ package body Tagatha.Registry is
    is
       T : constant Tagatha.Transfers.Transfer_Operand :=
             Tagatha.Transfers.Temporary_Operand
-              (Tagatha.Temporaries.Next_Temporary (Register.Temps));
+              (Tagatha.Temporaries.Next_Temporary (Register.Temps),
+               Size => Size);
    begin
-      Record_Pop (Register, Size, T);
-      Record_Push (Register, Size, T);
-      Record_Push (Register, Size, T);
+      Record_Pop (Register, T);
+      Record_Push (Register, T);
+      Record_Push (Register, T);
    end Record_Duplicate;
 
    -----------------
@@ -366,8 +367,7 @@ package body Tagatha.Registry is
    is
    begin
       if Condition /= C_Always then
-         Record_Pop (Register, Default_Address_Size,
-                     Tagatha.Transfers.Condition_Operand);
+         Record_Pop (Register, Tagatha.Transfers.Condition_Operand);
       end if;
 
       for Operand of Register.Stack loop
@@ -550,8 +550,7 @@ package body Tagatha.Registry is
 
    procedure Record_Pop
      (Register : in out Tagatha_Registry;
-      Size     : in     Tagatha_Size;
-      Operand  : in     Transfers.Transfer_Operand)
+      Operand  : in     Tagatha.Transfers.Transfer_Operand)
    is
       Transfer : Transfers.Transfer_Operand := Operand;
    begin
@@ -607,8 +606,6 @@ package body Tagatha.Registry is
                end if;
             end if;
             if Transfers'Length > 0 then
-               Tagatha.Transfers.Set_Size
-                 (Transfers (Transfers'Last), Size);
                Tagatha.Transfers.Set_Label
                  (Transfers (Transfers'First), Element.Label);
                Register.Insert (Element.Transfer_Index, Transfers);
@@ -623,11 +620,10 @@ package body Tagatha.Registry is
    -- Record_Push --
    -----------------
 
-   procedure Record_Push (Register : in out Tagatha_Registry;
-                          Size     : in     Tagatha_Size;
-                          Operand  : in     Tagatha.Transfers.Transfer_Operand)
+   procedure Record_Push
+     (Register : in out Tagatha_Registry;
+      Operand  : in     Tagatha.Transfers.Transfer_Operand)
    is
-      pragma Unreferenced (Size);
       use Tagatha.Expressions;
       Transfer : Tagatha.Transfers.Transfer_Operand := Operand;
    begin
@@ -682,8 +678,8 @@ package body Tagatha.Registry is
                     Tagatha.Transfers.Temporary_Operand
                       (T_Address, Indirect => True);
    begin
-      Record_Pop (Register, Default_Address_Size, Src_1);
-      Record_Pop (Register, Size, Src_2);
+      Record_Pop (Register, Src_1);
+      Record_Pop (Register, Src_2);
       Register.Append
         (Tagatha.Transfers.Simple_Transfer
            (From => Src_2,
@@ -712,14 +708,14 @@ package body Tagatha.Registry is
                       Tagatha.Temporaries.Next_Temporary
                         (Register.Temps);
             Src_1 : constant Tagatha.Transfers.Transfer_Operand :=
-                      Tagatha.Transfers.Temporary_Operand (T_1);
+                      Tagatha.Transfers.Temporary_Operand (T_1, Size => Size);
             Src_2 : constant Tagatha.Transfers.Transfer_Operand :=
-                      Tagatha.Transfers.Temporary_Operand (T_2);
+                      Tagatha.Transfers.Temporary_Operand (T_2, Size => Size);
          begin
-            Record_Pop (Register, Size, Src_1);
-            Record_Pop (Register, Size, Src_2);
-            Record_Push (Register, Size, Src_1);
-            Record_Push (Register, Size, Src_2);
+            Record_Pop (Register, Src_1);
+            Record_Pop (Register, Src_2);
+            Record_Push (Register, Src_1);
+            Record_Push (Register, Src_2);
             if Trace_Registry then
                Ada.Text_IO.Put_Line
                  ("swap: stack size < 2");

@@ -4,14 +4,21 @@ package Tagatha.Constants is
 
    type Tagatha_Constant is private;
 
-   function Integer_Constant (Value : Tagatha_Integer)
-                              return Tagatha_Constant;
+   function Integer_Constant
+     (Value : Tagatha_Integer)
+      return Tagatha_Constant;
 
-   function Floating_Point_Constant (Value : Tagatha_Floating_Point)
-                                     return Tagatha_Constant;
+   function Address_Constant
+     (Value : Tagatha_Integer)
+      return Tagatha_Constant;
 
-   function Label_Constant (Value : Tagatha.Labels.Tagatha_Label)
-                            return Tagatha_Constant;
+   function Floating_Point_Constant
+     (Value : Tagatha_Floating_Point)
+      return Tagatha_Constant;
+
+   function Label_Constant
+     (Value : Tagatha.Labels.Tagatha_Label)
+      return Tagatha_Constant;
 
    function Is_Integer        (Item : Tagatha_Constant) return Boolean;
    function Is_Floating_Point (Item : Tagatha_Constant) return Boolean;
@@ -33,6 +40,7 @@ private
 
    type Constant_Value_Type is (V_Integer,
                                 V_Floating_Point,
+                                V_Address,
                                 V_Label);
 
    type Tagatha_Constant
@@ -43,6 +51,8 @@ private
                Integer_Value : Tagatha_Integer;
             when V_Floating_Point =>
                Floating_Point_Value : Tagatha_Floating_Point;
+            when V_Address =>
+               Address_Value : Tagatha_Integer;
             when V_Label =>
                Label_Value : Tagatha.Labels.Tagatha_Label;
          end case;

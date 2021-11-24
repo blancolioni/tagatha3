@@ -1,5 +1,17 @@
 package body Tagatha.Constants is
 
+   ----------------------
+   -- Address_Constant --
+   ----------------------
+
+   function Address_Constant
+     (Value : Tagatha_Integer)
+      return Tagatha_Constant
+   is
+   begin
+      return (V_Address, Value);
+   end Address_Constant;
+
    -----------------------------
    -- Floating_Point_Constant --
    -----------------------------
@@ -52,7 +64,7 @@ package body Tagatha.Constants is
    is
    begin
       case From_Constant.Value_Type is
-         when V_Integer =>
+         when V_Integer | V_Address =>
             return Natural (From_Constant.Integer_Value
                             / (2 ** ((Octet_Index - 1) * 8))
                             mod 256);
@@ -122,9 +134,11 @@ package body Tagatha.Constants is
    begin
       case Item.Value_Type is
          when V_Integer =>
-            return Item.Integer_Value'Img;
+            return Item.Integer_Value'Image;
+         when V_Address =>
+            return Item.Address_Value'Image;
          when V_Floating_Point =>
-            return Item.Floating_Point_Value'Img;
+            return Item.Floating_Point_Value'Image;
          when V_Label =>
             return Tagatha.Labels.Show (Item.Label_Value, 'L');
       end case;

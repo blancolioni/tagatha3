@@ -20,7 +20,8 @@ package body Tagatha.Code.Aqua32 is
 
    function Zero_Operand return Tagatha.Transfers.Transfer_Operand
    is (Tagatha.Transfers.Constant_Operand
-       (Tagatha.Constants.Integer_Constant (0)));
+       (Tagatha.Constants.Integer_Constant (0),
+          Default_Size));
 
    function Register_Operand
      (Register : String)
@@ -604,12 +605,8 @@ package body Tagatha.Code.Aqua32 is
                    Dest       : in     Tagatha.Transfers.Transfer_Operand)
    is
       use Tagatha.Transfers;
-      Transfer_Size : Tagatha_Size := Size_32;
+      Transfer_Size : constant Tagatha_Size := Get_Size (Dest);
    begin
-
-      if Has_Size (Dest) then
-         Transfer_Size := Get_Size (Dest);
-      end if;
 
       Translator.Before_Operand (Asm, Dest);
       Translator.Before_Operand (Asm, Source);

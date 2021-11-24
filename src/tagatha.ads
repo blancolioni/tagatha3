@@ -4,9 +4,10 @@ package Tagatha is
 
    type Tagatha_Size is private;
 
-   Default_Size         : constant Tagatha_Size;
-   Default_Integer_Size : constant Tagatha_Size;
-   Default_Address_Size : constant Tagatha_Size;
+   Default_Size                : constant Tagatha_Size;
+   Default_Integer_Size        : constant Tagatha_Size;
+   Default_Address_Size        : constant Tagatha_Size;
+   Default_Floating_Point_Size : constant Tagatha_Size;
 
    Size_8  : constant Tagatha_Size;
    Size_16 : constant Tagatha_Size;
@@ -16,6 +17,9 @@ package Tagatha is
    function Size_Bits (Size : Tagatha_Size) return Natural;
    function Size_Octets (Size : Tagatha_Size) return Natural;
    function Bits_To_Size (Bits : Natural) return Tagatha_Size;
+
+   type Tagatha_Data_Type is
+     (Untyped_Data, Address_Data, Floating_Point_Data);
 
    type Local_Offset is new Positive;
    type Argument_Offset is new Positive;
@@ -70,6 +74,7 @@ private
      (Tagatha_Default_Size,
       Tagatha_Integer_Size,
       Tagatha_Address_Size,
+      Tagatha_Floating_Point_Size,
       Tagatha_Custom_Size);
 
    type Tagatha_Size (Category : Tagatha_Size_Category :=
@@ -91,6 +96,11 @@ private
 
    Default_Address_Size : constant Tagatha_Size :=
                             Tagatha_Size'(Category => Tagatha_Address_Size);
+
+   Default_Floating_Point_Size : constant Tagatha_Size :=
+                                   Tagatha_Size'
+                                     (Category =>
+                                         Tagatha_Floating_Point_Size);
 
    Size_8  : constant Tagatha_Size := (Tagatha_Custom_Size, 1);
    Size_16 : constant Tagatha_Size := (Tagatha_Custom_Size, 2);

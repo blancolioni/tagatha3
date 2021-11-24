@@ -56,6 +56,8 @@ package body Tagatha is
             return 4;
          when Tagatha_Address_Size =>
             return 4;
+         when Tagatha_Floating_Point_Size =>
+            return 4;
          when Tagatha_Custom_Size =>
             return Size.Octets;
       end case;

@@ -132,7 +132,7 @@ package body Tagatha.Units is
    is
    begin
       Unit.Current_Sub.Read_Only_Segment.Append
-        (Tagatha_Data'
+        (Data_Directive'
            (String_Data, Unit.Last_Label (Unit.Current_Segment), Size_8,
             Ada.Strings.Unbounded.To_Unbounded_String (Value)));
       Increment_Address (Unit, Read_Only);
@@ -245,10 +245,11 @@ package body Tagatha.Units is
 
    procedure Copy_From
      (Unit : in out Tagatha_Unit;
-      Size : Tagatha_Size := Default_Size)
+      Data       : Tagatha_Data_Type := Untyped_Data;
+      Size       : Tagatha_Size := Default_Size)
    is
    begin
-      Append (Unit, Commands.Copy_Item (Tagatha.Commands.From, Size));
+      Append (Unit, Commands.Copy_Item (Tagatha.Commands.From, Data, Size));
    end Copy_From;
 
    -------------
@@ -257,10 +258,11 @@ package body Tagatha.Units is
 
    procedure Copy_To
      (Unit : in out Tagatha_Unit;
-      Size : Tagatha_Size := Default_Size)
+      Data       : Tagatha_Data_Type := Untyped_Data;
+      Size       : Tagatha_Size := Default_Size)
    is
    begin
-      Append (Unit, Commands.Copy_Item (Tagatha.Commands.To, Size));
+      Append (Unit, Commands.Copy_Item (Tagatha.Commands.To, Data, Size));
    end Copy_To;
 
    -----------------
@@ -288,7 +290,7 @@ package body Tagatha.Units is
                    Value   : in     Tagatha_Integer;
                    Size    : in     Tagatha_Size     := Default_Integer_Size)
    is
-      New_Value : constant Tagatha_Data :=
+      New_Value : constant Data_Directive :=
                     (Integer_Data, Unit.Last_Label (Unit.Current_Segment),
                      Size, Value);
    begin
@@ -312,7 +314,7 @@ package body Tagatha.Units is
       Size       : in     Tagatha_Size     := Default_Integer_Size)
    is
       Label : Tagatha.Labels.Tagatha_Label;
-      New_Value : Tagatha_Data;
+      New_Value : Data_Directive;
    begin
       Tagatha.Labels.Reference_Label (Unit.Labels, Label,
                                       Label_Name, Import => True);
@@ -350,7 +352,7 @@ package body Tagatha.Units is
    procedure Data (Unit    : in out Tagatha_Unit;
                    Value   : in     Tagatha_Floating_Point)
    is
-      New_Value : constant Tagatha_Data :=
+      New_Value : constant Data_Directive :=
                     (Floating_Point_Data,
                      Unit.Last_Label (Unit.Current_Segment),
                      Default_Size, Value);
@@ -394,11 +396,9 @@ package body Tagatha.Units is
    -- Dereference --
    -----------------
 
-   procedure Dereference (Unit : in out Tagatha_Unit;
-                          Size : in     Tagatha_Size := Default_Integer_Size)
-   is
+   procedure Dereference (Unit : in out Tagatha_Unit) is
    begin
-      Operate (Unit, Op_Dereference, Size);
+      Operate (Unit, Op_Dereference);
    end Dereference;
 
    ---------------
@@ -480,7 +480,7 @@ package body Tagatha.Units is
          declare
             Nop : constant Tagatha.Commands.Tagatha_Command :=
                     Tagatha.Commands.Operate
-                      (Op_Nop, False, Default_Size);
+                      (Op_Nop, False);
          begin
             Commands.Set_Label (Nop, Unit.Last_Label (Executable));
             Unit.Last_Label (Executable) := Labels.No_Label;
@@ -690,11 +690,10 @@ package body Tagatha.Units is
    -------------
 
    procedure Operate (Unit   : in out Tagatha_Unit;
-                      Op     : Tagatha_Operator;
-                      Size   : Tagatha_Size       := Default_Integer_Size)
+                      Op     : Tagatha_Operator)
    is
    begin
-      Append (Unit, Tagatha.Commands.Operate (Op, False, Size));
+      Append (Unit, Tagatha.Commands.Operate (Op, False));
    end Operate;
 
    --------------
@@ -748,6 +747,7 @@ package body Tagatha.Units is
    procedure Pop_Address
      (Unit       : in out Tagatha_Unit;
       Address    : String;
+      Data       : Tagatha_Data_Type := Untyped_Data;
       Size       : Tagatha_Size := Default_Integer_Size;
       External   : Boolean      := False)
    is
@@ -755,8 +755,11 @@ package body Tagatha.Units is
       Append (Unit,
               Commands.Pop
                 (Transfers.Dereference
-                   (Transfers.External_Operand (Address, Immediate => True)),
-                 Size));
+                   (Transfers.External_Operand
+                        (Address,
+                         Immediate => True,
+                         Data      => Data,
+                         Size      => Size))));
    end Pop_Address;
 
    ------------------
@@ -766,11 +769,13 @@ package body Tagatha.Units is
    procedure Pop_Argument
      (Unit       : in out Tagatha_Unit;
       Offset     : in     Argument_Offset;
+      Data       : Tagatha_Data_Type := Untyped_Data;
       Size       : in     Tagatha_Size  := Default_Integer_Size)
    is
    begin
       Append (Unit,
-              Commands.Pop (Transfers.Argument_Operand (Offset), Size));
+              Commands.Pop
+                (Transfers.Argument_Operand (Offset, False, Data, Size)));
    end Pop_Argument;
 
    ---------------
@@ -780,6 +785,7 @@ package body Tagatha.Units is
    procedure Pop_Label
      (Unit       : in out Tagatha_Unit;
       Label_Name : String;
+      Data       : Tagatha_Data_Type := Untyped_Data;
       Size       : Tagatha_Size := Default_Integer_Size;
       External   : Boolean      := False)
    is
@@ -788,7 +794,8 @@ package body Tagatha.Units is
       Tagatha.Labels.Reference_Label (Unit.Labels, Label,
                                       Label_Name, Import => External);
       Append (Unit,
-              Commands.Pop (Transfers.Label_Operand (Label), Size));
+              Commands.Pop (Transfers.Label_Operand
+                (Label, Untyped_Data, Size)));
    end Pop_Label;
 
    ---------------
@@ -798,11 +805,13 @@ package body Tagatha.Units is
    procedure Pop_Local
      (Unit       : in out Tagatha_Unit;
       Offset     : in     Local_Offset;
+      Data       : Tagatha_Data_Type := Untyped_Data;
       Size       : in     Tagatha_Size  := Default_Integer_Size)
    is
    begin
       Append (Unit,
-              Commands.Pop (Transfers.Local_Operand (Offset), Size));
+              Commands.Pop
+                (Transfers.Local_Operand (Offset, False, Data, Size)));
    end Pop_Local;
 
    -----------------
@@ -811,11 +820,10 @@ package body Tagatha.Units is
 
    procedure Pop_Operand
      (Unit      : in out Tagatha_Unit;
-      Op        : in     Tagatha.Transfers.Transfer_Operand;
-      Size      : in     Tagatha_Size)
+      Op        : in     Tagatha.Transfers.Transfer_Operand)
    is
    begin
-      Append (Unit, Commands.Pop (Op, Size));
+      Append (Unit, Commands.Pop (Op));
    end Pop_Operand;
 
    ----------------
@@ -824,11 +832,12 @@ package body Tagatha.Units is
 
    procedure Pop_Result
      (Unit       : in out Tagatha_Unit;
+      Data       : Tagatha_Data_Type := Untyped_Data;
       Size       : in     Tagatha_Size  := Default_Integer_Size)
    is
    begin
       Append (Unit,
-              Commands.Pop (Transfers.Result_Operand, Size));
+              Commands.Pop (Transfers.Result_Operand (Data, Size)));
    end Pop_Result;
 
    ----------
@@ -843,8 +852,8 @@ package body Tagatha.Units is
       Append (Unit,
               Commands.Push
                 (Transfers.Constant_Operand
-                   (Tagatha.Constants.Integer_Constant (Value)),
-                 Size));
+                   (Tagatha.Constants.Integer_Constant (Value),
+                    Size => Size)));
    end Push;
 
    ----------
@@ -858,8 +867,8 @@ package body Tagatha.Units is
       Append (Unit,
               Commands.Push
                 (Transfers.Constant_Operand
-                   (Tagatha.Constants.Floating_Point_Constant (Value)),
-                 Default_Size));
+                   (Tagatha.Constants.Floating_Point_Constant (Value),
+                    Size => Default_Floating_Point_Size)));
    end Push;
 
    -------------------
@@ -869,11 +878,14 @@ package body Tagatha.Units is
    procedure Push_Argument
      (Unit       : in out Tagatha_Unit;
       Offset     : in     Argument_Offset;
+      Data       : Tagatha_Data_Type := Untyped_Data;
       Size       : in     Tagatha_Size  := Default_Integer_Size)
    is
    begin
       Append (Unit,
-              Commands.Push (Transfers.Argument_Operand (Offset), Size));
+              Commands.Push
+                (Transfers.Argument_Operand
+                   (Offset, Size => Size)));
    end Push_Argument;
 
    ---------------------------
@@ -888,8 +900,8 @@ package body Tagatha.Units is
       Append (Unit,
               Commands.Push
                 (Transfers.Argument_Operand
-                   (Offset, Indirect => True),
-                 Default_Address_Size));
+                   (Offset, Indirect => True,
+                 Data => Address_Data, Size => Default_Address_Size)));
    end Push_Argument_Address;
 
    ----------------
@@ -899,6 +911,7 @@ package body Tagatha.Units is
    procedure Push_Label
      (Unit       : in out Tagatha_Unit;
       Label_Name : in     String;
+      Data       : Tagatha_Data_Type := Untyped_Data;
       Size       : in     Tagatha_Size  := Default_Integer_Size;
       External   : in     Boolean       := False)
    is
@@ -907,7 +920,9 @@ package body Tagatha.Units is
       Tagatha.Labels.Reference_Label (Unit.Labels, Label,
                                       Label_Name, Import => External);
       Append (Unit,
-              Commands.Push (Transfers.Label_Operand (Label), Size));
+              Commands.Push
+                (Transfers.Label_Operand
+                   (Label, Data => Data, Size => Size)));
    end Push_Label;
 
    ------------------------
@@ -933,11 +948,14 @@ package body Tagatha.Units is
    procedure Push_Local
      (Unit       : in out Tagatha_Unit;
       Offset     : in     Local_Offset;
+      Data       : Tagatha_Data_Type := Untyped_Data;
       Size       : in     Tagatha_Size  := Default_Integer_Size)
    is
    begin
       Append (Unit,
-              Commands.Push (Transfers.Local_Operand (Offset), Size));
+              Commands.Push
+                (Transfers.Local_Operand
+                   (Offset, Data => Data, Size => Size)));
    end Push_Local;
 
    ------------------------
@@ -952,8 +970,9 @@ package body Tagatha.Units is
       Append (Unit,
               Commands.Push
                 (Transfers.Local_Operand
-                   (Offset, Indirect => True),
-                 Default_Address_Size));
+                   (Offset, Indirect => True,
+                    Data             => Address_Data,
+                    Size             => Default_Address_Size)));
    end Push_Local_Address;
 
    ------------------
@@ -962,11 +981,10 @@ package body Tagatha.Units is
 
    procedure Push_Operand
      (Unit      : in out Tagatha_Unit;
-      Op        : in     Tagatha.Transfers.Transfer_Operand;
-      Size      : in     Tagatha_Size)
+      Op        : in     Tagatha.Transfers.Transfer_Operand)
    is
    begin
-      Append (Unit, Commands.Push (Op, Size));
+      Append (Unit, Commands.Push (Op));
    end Push_Operand;
 
    ----------------
@@ -975,11 +993,12 @@ package body Tagatha.Units is
 
    procedure Push_Result
      (Unit       : in out Tagatha_Unit;
-      Size       : in     Tagatha_Size  := Default_Integer_Size)
+      Data       : Tagatha_Data_Type := Untyped_Data;
+      Size       : Tagatha_Size  := Default_Integer_Size)
    is
    begin
       Append (Unit,
-              Commands.Push (Transfers.Result_Operand, Size));
+              Commands.Push (Transfers.Result_Operand (Data, Size)));
    end Push_Result;
 
    -----------------
@@ -988,11 +1007,12 @@ package body Tagatha.Units is
 
    procedure Push_Return
      (Unit       : in out Tagatha_Unit;
+      Data       : Tagatha_Data_Type := Untyped_Data;
       Size       : in     Tagatha_Size  := Default_Integer_Size)
    is
    begin
       Append (Unit,
-              Commands.Push (Transfers.Return_Operand, Size));
+              Commands.Push (Transfers.Return_Operand (Data, Size)));
    end Push_Return;
 
    ---------------

@@ -360,11 +360,8 @@ package body Tagatha.Code.X86_64 is
                    Dest      : in     Tagatha.Transfers.Transfer_Operand)
    is
       use Tagatha.Transfers;
-      Transfer_Size : Tagatha_Size := Size_32;
+      Transfer_Size : constant Tagatha_Size := Get_Size (Dest);
    begin
-      if Has_Size (Dest) then
-         Transfer_Size := Get_Size (Dest);
-      end if;
       Move (T, Asm, Transfer_Size,
             To_String (T, Source), To_String (T, Dest));
    end Move;

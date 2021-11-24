@@ -1,6 +1,8 @@
 with Ada.Strings.Fixed;
 --  with Ada.Strings.Fixed;
 
+with Tagatha.Constants;
+
 package body Tagatha.Commands is
 
    ----------
@@ -12,7 +14,7 @@ package body Tagatha.Commands is
                   return Tagatha_Command
    is
    begin
-      return new Tagatha_Command_Record'(T_Call, Default_Address_Size,
+      return new Tagatha_Command_Record'(T_Call,
                                          Tagatha.Labels.No_Label, 0, 0, False,
                                          Target, False, Argument_Count);
    end Call;
@@ -23,15 +25,16 @@ package body Tagatha.Commands is
 
    function Copy_Item
      (Direction  : Copy_Direction;
+      Data       : Tagatha_Data_Type := Untyped_Data;
       Size       : Tagatha_Size := Default_Size)
       return Tagatha_Command
    is
    begin
       case Direction is
          when From =>
-            return Push (Tagatha.Transfers.Iterator_Copy_Operand, Size);
+            return Push (Tagatha.Transfers.Iterator_Copy_Operand (Data, Size));
          when To =>
-            return Pop (Tagatha.Transfers.Iterator_Copy_Operand, Size);
+            return Pop (Tagatha.Transfers.Iterator_Copy_Operand (Data, Size));
       end case;
    end Copy_Item;
 
@@ -43,10 +46,13 @@ package body Tagatha.Commands is
                    return Tagatha_Command
    is
    begin
-      return new Tagatha_Command_Record'(T_Stack, Size,
-                                         Tagatha.Labels.No_Label,
-                                         0, 0, False,
-                                         S_Drop, Transfers.No_Operand);
+      return new Tagatha_Command_Record'
+        (T_Stack,
+         Tagatha.Labels.No_Label,
+         0, 0, False,
+         S_Drop,
+         Transfers.Constant_Operand
+           (Tagatha.Constants.Integer_Constant (0), Size));
    end Drop;
 
    --------------------------
@@ -115,7 +121,6 @@ package body Tagatha.Commands is
    begin
       return new Tagatha_Command_Record'
         (Instruction       => T_Call,
-         Size              => Default_Address_Size,
          Label             => Tagatha.Labels.No_Label,
          Line              => 0,
          Column            => 0,
@@ -130,12 +135,11 @@ package body Tagatha.Commands is
    ----------
 
    function Jump (Target : Tagatha.Labels.Tagatha_Label;
-                  Cond   : Tagatha_Condition := C_Always;
-                  Size   : Tagatha_Size      := Default_Address_Size)
+                  Cond   : Tagatha_Condition := C_Always)
                   return Tagatha_Command
    is
    begin
-      return new Tagatha_Command_Record'(T_Jump, Size,
+      return new Tagatha_Command_Record'(T_Jump,
                                          Tagatha.Labels.No_Label,
                                          0, 0, False, Cond, Target);
    end Jump;
@@ -146,12 +150,11 @@ package body Tagatha.Commands is
 
    function Loop_Around (Label        : Tagatha.Labels.Tagatha_Label;
                          Loop_Count   : Local_Offset;
-                         Loop_Index   : Local_Offset;
-                         Size         : Tagatha_Size := Default_Integer_Size)
+                         Loop_Index   : Local_Offset)
                          return Tagatha_Command
    is
    begin
-      return new Tagatha_Command_Record'(T_Loop, Size,
+      return new Tagatha_Command_Record'(T_Loop,
                                          Tagatha.Labels.No_Label,
                                          0, 0, False,
                                          Loop_Count, Loop_Index, Label);
@@ -182,7 +185,7 @@ package body Tagatha.Commands is
 --        end if;
 
       return new Tagatha_Command_Record'
-        (T_Native, Default_Size,
+        (T_Native,
          Tagatha.Labels.No_Label,
          1, 1, False,
          Ada.Strings.Unbounded.To_Unbounded_String (Name),
@@ -195,44 +198,46 @@ package body Tagatha.Commands is
    -------------
 
    function Operate (Op   : Tagatha_Operator;
-                     Neg  : Boolean           := False;
-                     Size : Tagatha_Size      := Default_Integer_Size)
+                     Neg  : Boolean           := False)
                      return Tagatha_Command
    is
    begin
-      return new Tagatha_Command_Record'(T_Operate, Size,
-                                         Tagatha.Labels.No_Label, 0, 0,
-                                         Neg, Op);
+      return new Tagatha_Command_Record'
+        (T_Operate,
+         Tagatha.Labels.No_Label, 0, 0,
+         Neg, Op);
    end Operate;
 
    ---------
    -- Pop --
    ---------
 
-   function Pop (Operand    : Tagatha.Transfers.Transfer_Operand;
-                 Size       : Tagatha_Size     := Default_Integer_Size)
-                 return Tagatha_Command
+   function Pop
+     (Operand    : Tagatha.Transfers.Transfer_Operand)
+      return Tagatha_Command
    is
    begin
-      return new Tagatha_Command_Record'(T_Stack, Size,
-                                         Tagatha.Labels.No_Label,
-                                         0, 0, False,
-                                         S_Pop, Operand);
+      return new Tagatha_Command_Record'
+        (T_Stack,
+         Tagatha.Labels.No_Label,
+         0, 0, False,
+         S_Pop, Operand);
    end Pop;
 
    ----------
    -- Push --
    ----------
 
-   function Push (Operand    : Tagatha.Transfers.Transfer_Operand;
-                  Size       : Tagatha_Size     := Default_Integer_Size)
-                  return Tagatha_Command
+   function Push
+     (Operand    : Tagatha.Transfers.Transfer_Operand)
+      return Tagatha_Command
    is
    begin
-      return new Tagatha_Command_Record'(T_Stack, Size,
-                                         Tagatha.Labels.No_Label,
-                                         0, 0, False,
-                                         S_Push, Operand);
+      return new Tagatha_Command_Record'
+        (T_Stack,
+         Tagatha.Labels.No_Label,
+         0, 0, False,
+         S_Push, Operand);
    end Push;
 
    -------------
@@ -339,13 +344,12 @@ package body Tagatha.Commands is
 
    function Stack_Command
      (Op      : Stack_Operation;
-      Size    : Tagatha_Size := Default_Size;
       Operand : Tagatha.Transfers.Transfer_Operand :=
         Tagatha.Transfers.No_Operand)
       return Tagatha_Command
    is
    begin
-      return new Tagatha_Command_Record'(T_Stack, Size,
+      return new Tagatha_Command_Record'(T_Stack,
                                          Tagatha.Labels.No_Label,
                                          0, 0, False,
                                          Op, Operand);

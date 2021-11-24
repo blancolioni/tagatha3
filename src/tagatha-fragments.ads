@@ -41,16 +41,14 @@ package Tagatha.Fragments is
 
    function Pop return Tagatha_Fragment;
 
-   function Operator (Op    : Tagatha_Operator;
-                      Negate : Boolean         := False;
-                      Size  : Tagatha_Size     := Default_Integer_Size)
-                     return Tagatha_Fragment;
+   function Operator (Op     : Tagatha_Operator;
+                      Negate : Boolean          := False)
+                      return Tagatha_Fragment;
 
    function Condition (Cond  : Tagatha_Condition) return Tagatha_Fragment;
 
-   function Compare (Cond   : Tagatha_Condition;
-                     Size   : Tagatha_Size := Default_Integer_Size)
-                    return Tagatha_Fragment;
+   function Compare (Cond   : Tagatha_Condition)
+                     return Tagatha_Fragment;
 
    function Branch (Target           : Positive;
                     Branch_Condition : Boolean  := True)
@@ -94,7 +92,6 @@ private
                Command       : Tagatha.Commands.Tagatha_Command;
             when Operand_Fragment =>
                Reference        : Tagatha.Transfers.Transfer_Operand;
-               Size             : Tagatha_Size;
             when Condition_Fragment =>
                Condition        : Tagatha_Condition;
             when Branch_Fragment =>

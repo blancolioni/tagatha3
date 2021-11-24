@@ -18,12 +18,10 @@ package Tagatha.Registry is
 
    procedure Record_Push
      (Register : in out Tagatha_Registry;
-      Size     : in     Tagatha_Size;
       Operand  : in     Tagatha.Transfers.Transfer_Operand);
 
    procedure Record_Pop
      (Register : in out Tagatha_Registry;
-      Size     : in     Tagatha_Size;
       Operand  : in     Tagatha.Transfers.Transfer_Operand);
 
    procedure Record_Drop

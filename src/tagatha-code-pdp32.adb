@@ -461,11 +461,11 @@ package body Tagatha.Code.Pdp32 is
                    Dest      : in     Tagatha.Transfers.Transfer_Operand)
    is
       use Tagatha.Transfers;
-      Transfer_Size : Tagatha_Size := Size_32;
+      Transfer_Size : constant Tagatha_Size :=
+                        (if Is_Null_Operand (Dest)
+                         then Get_Size (Source)
+                         else Get_Size (Dest));
    begin
-      if Has_Size (Dest) then
-         Transfer_Size := Get_Size (Dest);
-      end if;
 
       if Is_Null_Operand (Dest) then
          if Source = Stack_Operand then

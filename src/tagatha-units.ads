@@ -130,6 +130,7 @@ package Tagatha.Units is
    procedure Push_Label
      (Unit       : in out Tagatha_Unit;
       Label_Name : in     String;
+      Data       : Tagatha_Data_Type := Untyped_Data;
       Size       : in     Tagatha_Size  := Default_Integer_Size;
       External   : in     Boolean       := False);
 
@@ -137,21 +138,27 @@ package Tagatha.Units is
      (Unit : in out Tagatha_Unit;
       Text : String);
 
-   procedure Push_Local (Unit    : in out Tagatha_Unit;
-                         Offset  : in     Local_Offset;
-                         Size    : Tagatha_Size := Default_Integer_Size);
+   procedure Push_Local
+     (Unit       : in out Tagatha_Unit;
+      Offset     : in     Local_Offset;
+      Data       : Tagatha_Data_Type := Untyped_Data;
+      Size       : in     Tagatha_Size  := Default_Integer_Size);
 
-   procedure Push_Argument (Unit    : in out Tagatha_Unit;
-                            Offset  : in     Argument_Offset;
-                            Size    : Tagatha_Size := Default_Integer_Size);
+   procedure Push_Argument
+     (Unit       : in out Tagatha_Unit;
+      Offset     : in     Argument_Offset;
+      Data       : Tagatha_Data_Type := Untyped_Data;
+      Size       : in     Tagatha_Size  := Default_Integer_Size);
 
    procedure Push_Result
-     (Unit    : in out Tagatha_Unit;
-      Size    : in     Tagatha_Size := Default_Integer_Size);
+     (Unit       : in out Tagatha_Unit;
+      Data       : Tagatha_Data_Type := Untyped_Data;
+      Size       : Tagatha_Size  := Default_Integer_Size);
 
    procedure Push_Return
-     (Unit    : in out Tagatha_Unit;
-      Size    : in     Tagatha_Size := Default_Integer_Size);
+     (Unit       : in out Tagatha_Unit;
+      Data       : Tagatha_Data_Type := Untyped_Data;
+      Size       : in     Tagatha_Size  := Default_Integer_Size);
 
    --  procedure Push_Label_Address (Unit       : in out Tagatha_Unit;
    --                                Label_Name : String);
@@ -165,31 +172,35 @@ package Tagatha.Units is
    procedure Pop_Label
      (Unit       : in out Tagatha_Unit;
       Label_Name : String;
+      Data       : Tagatha_Data_Type := Untyped_Data;
       Size       : Tagatha_Size := Default_Integer_Size;
       External   : Boolean      := False);
 
    procedure Pop_Address
      (Unit       : in out Tagatha_Unit;
       Address    : String;
+      Data       : Tagatha_Data_Type := Untyped_Data;
       Size       : Tagatha_Size := Default_Integer_Size;
       External   : Boolean      := False);
 
-   procedure Pop_Local (Unit    : in out Tagatha_Unit;
-                        Offset  : in     Local_Offset;
-                        Size    : in     Tagatha_Size :=
-                          Default_Integer_Size);
+   procedure Pop_Local
+     (Unit       : in out Tagatha_Unit;
+      Offset     : in     Local_Offset;
+      Data       : Tagatha_Data_Type := Untyped_Data;
+      Size       : in     Tagatha_Size  := Default_Integer_Size);
 
    procedure Pop_Argument
-     (Unit    : in out Tagatha_Unit;
-      Offset  : in     Argument_Offset;
-      Size    : in     Tagatha_Size := Default_Integer_Size);
+     (Unit       : in out Tagatha_Unit;
+      Offset     : in     Argument_Offset;
+      Data       : in     Tagatha_Data_Type := Untyped_Data;
+      Size       : in     Tagatha_Size  := Default_Integer_Size);
 
    procedure Pop_Result
-     (Unit    : in out Tagatha_Unit;
-      Size    : in     Tagatha_Size := Default_Integer_Size);
+     (Unit       : in out Tagatha_Unit;
+      Data       : Tagatha_Data_Type := Untyped_Data;
+      Size       : in     Tagatha_Size  := Default_Integer_Size);
 
-   procedure Dereference (Unit : in out Tagatha_Unit;
-                          Size : in     Tagatha_Size := Default_Integer_Size);
+   procedure Dereference (Unit : in out Tagatha_Unit);
 
    procedure Store (Unit : in out Tagatha_Unit;
                     Size : Tagatha_Size := Default_Size);
@@ -197,8 +208,7 @@ package Tagatha.Units is
    --  Store the value at the address
 
    procedure Operate (Unit   : in out Tagatha_Unit;
-                      Op     : Tagatha_Operator;
-                      Size   : Tagatha_Size       := Default_Integer_Size);
+                      Op     : Tagatha_Operator);
 
    procedure Call
      (Unit           : in out Tagatha_Unit;
@@ -230,13 +240,11 @@ package Tagatha.Units is
 
    procedure Pop_Operand
      (Unit      : in out Tagatha_Unit;
-      Op        : in     Tagatha.Transfers.Transfer_Operand;
-      Size      : in     Tagatha_Size);
+      Op        : in     Tagatha.Transfers.Transfer_Operand);
 
    procedure Push_Operand
      (Unit      : in out Tagatha_Unit;
-      Op        : in     Tagatha.Transfers.Transfer_Operand;
-      Size      : in     Tagatha_Size);
+      Op        : in     Tagatha.Transfers.Transfer_Operand);
 
    procedure Duplicate (Unit : in out Tagatha_Unit);
 
@@ -252,13 +260,15 @@ package Tagatha.Units is
 
    procedure Copy_To
      (Unit : in out Tagatha_Unit;
-      Size : Tagatha_Size := Default_Size);
+      Data       : Tagatha_Data_Type := Untyped_Data;
+      Size       : Tagatha_Size := Default_Size);
    --  Copy an item of the given size from stack top to the current
    --  bulk copy address.  Increment the address.
 
    procedure Copy_From
      (Unit : in out Tagatha_Unit;
-      Size : Tagatha_Size := Default_Size);
+      Data       : Tagatha_Data_Type := Untyped_Data;
+      Size       : Tagatha_Size := Default_Size);
    --  Push an item of the given size from the current bulk copy address.
    --  Increment the address.
 
@@ -297,11 +307,11 @@ package Tagatha.Units is
 
 private
 
-   type Tagatha_Data_Type is
+   type Data_Directive_Type is
      (Integer_Data, Floating_Point_Data,
       String_Data, Label_Data);
 
-   type Tagatha_Data (Data_Type : Tagatha_Data_Type := Integer_Data) is
+   type Data_Directive (Data_Type : Data_Directive_Type := Integer_Data) is
       record
          Label : Tagatha.Labels.Tagatha_Label;
          Size : Tagatha_Size;
@@ -318,7 +328,7 @@ private
       end record;
 
    package Data_Vector is
-     new Ada.Containers.Vectors (Positive, Tagatha_Data);
+     new Ada.Containers.Vectors (Positive, Data_Directive);
 
    type Segment_Length_Array is array (Tagatha_Segment) of Natural;
    type Last_Label_Array is

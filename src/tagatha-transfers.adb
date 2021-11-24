@@ -11,13 +11,15 @@ package body Tagatha.Transfers is
 
    function Argument_Operand
      (Arg_Index     : Argument_Offset;
-      Indirect      : Boolean := False)
+      Indirect      : Boolean := False;
+      Data          : Tagatha_Data_Type := Untyped_Data;
+      Size          : Tagatha_Size := Default_Size)
       return Transfer_Operand
    is
    begin
       return (T_Argument,
               (No_Modification with delta Indirect => Indirect),
-              Arg_Index);
+              Data, Size, Arg_Index);
    end Argument_Operand;
 
    ----------------------
@@ -116,18 +118,20 @@ package body Tagatha.Transfers is
 
    function Condition_Operand return Transfer_Operand is
    begin
-      return (T_Condition, No_Modification);
+      return (T_Condition, No_Modification, Untyped_Data, Default_Size);
    end Condition_Operand;
 
    ----------------------
    -- Constant_Operand --
    ----------------------
 
-   function Constant_Operand (Value : Tagatha.Constants.Tagatha_Constant)
-                              return Transfer_Operand
+   function Constant_Operand
+     (Value : Tagatha.Constants.Tagatha_Constant;
+      Size  : Tagatha_Size)
+      return Transfer_Operand
    is
    begin
-      return (T_Immediate, No_Modification, Value);
+      return (T_Immediate, No_Modification, Untyped_Data, Size, Value);
    end Constant_Operand;
 
    ----------------------
@@ -187,11 +191,13 @@ package body Tagatha.Transfers is
      (Name      : String;
       Immediate : Boolean;
       Predec    : Boolean := False;
-      Postinc   : Boolean := False)
+      Postinc   : Boolean := False;
+      Data      : Tagatha_Data_Type := Untyped_Data;
+      Size      : Tagatha_Size := Default_Size)
       return Transfer_Operand
    is
    begin
-      return (T_External, No_Modification,
+      return (T_External, No_Modification, Data, Size,
               Ada.Strings.Unbounded.To_Unbounded_String (Name),
               Immediate, Predec, Postinc);
    end External_Operand;
@@ -305,7 +311,7 @@ package body Tagatha.Transfers is
 
    function Get_Size (Item : Transfer_Operand) return Tagatha_Size is
    begin
-      return Item.Modifiers.Size;
+      return Item.Size;
    end Get_Size;
 
    --------------------------
@@ -453,15 +459,6 @@ package body Tagatha.Transfers is
    begin
       return Item.Op /= Op_Nop;
    end Has_Operator;
-
-   --------------
-   -- Has_Size --
-   --------------
-
-   function Has_Size (Item : in Transfer_Operand) return Boolean is
-   begin
-      return Item.Modifiers.Have_Size;
-   end Has_Size;
 
    ---------------
    -- Has_Slice --
@@ -647,9 +644,13 @@ package body Tagatha.Transfers is
    -- Iterator_Copy_Operand --
    ---------------------------
 
-   function Iterator_Copy_Operand return Transfer_Operand is
+   function Iterator_Copy_Operand
+     (Data : Tagatha_Data_Type := Untyped_Data;
+      Size : Tagatha_Size := Default_Size)
+      return Transfer_Operand
+   is
    begin
-      return (T_Iterator, No_Modification,
+      return (T_Iterator, No_Modification, Data, Size,
               New_Iterator => False, Copy_Iterator => True);
    end Iterator_Copy_Operand;
 
@@ -659,7 +660,7 @@ package body Tagatha.Transfers is
 
    function Iterator_New_Operand return Transfer_Operand is
    begin
-      return (T_Iterator, No_Modification,
+      return (T_Iterator, No_Modification, Untyped_Data, Default_Size,
               New_Iterator => True, Copy_Iterator => False);
    end Iterator_New_Operand;
 
@@ -667,11 +668,14 @@ package body Tagatha.Transfers is
    -- Label_Operand --
    -------------------
 
-   function Label_Operand (Label         : Tagatha.Labels.Tagatha_Label)
-                           return Transfer_Operand
+   function Label_Operand
+     (Label : Tagatha.Labels.Tagatha_Label;
+      Data      : Tagatha_Data_Type := Untyped_Data;
+      Size      : Tagatha_Size := Default_Size)
+      return Transfer_Operand
    is
    begin
-      return (T_Immediate, No_Modification,
+      return (T_Immediate, No_Modification, Data, Size,
               Constants.Label_Constant (Label));
    end Label_Operand;
 
@@ -680,14 +684,16 @@ package body Tagatha.Transfers is
    -------------------
 
    function Local_Operand
-     (Frame_Index   : Local_Offset;
-      Indirect      : Boolean := False)
+     (Frame_Index : Local_Offset;
+      Indirect    : Boolean := False;
+      Data        : Tagatha_Data_Type := Untyped_Data;
+      Size        : Tagatha_Size := Default_Size)
       return Transfer_Operand
    is
    begin
       return (T_Local,
               (No_Modification with delta Indirect => Indirect),
-              Frame_Index);
+              Data, Size, Frame_Index);
    end Local_Operand;
 
    ---------------------
@@ -861,18 +867,26 @@ package body Tagatha.Transfers is
    -- Result_Operand --
    --------------------
 
-   function Result_Operand return Transfer_Operand is
+   function Result_Operand
+     (Data : Tagatha_Data_Type := Untyped_Data;
+      Size : Tagatha_Size := Default_Size)
+      return Transfer_Operand
+   is
    begin
-      return (T_Result, No_Modification);
+      return (T_Result, No_Modification, Data, Size);
    end Result_Operand;
 
    --------------------
    -- Return_Operand --
    --------------------
 
-   function Return_Operand return Transfer_Operand is
+   function Return_Operand
+     (Data : Tagatha_Data_Type := Untyped_Data;
+      Size : Tagatha_Size := Default_Size)
+      return Transfer_Operand
+   is
    begin
-      return (T_Return, No_Modification);
+      return (T_Return, No_Modification, Data, Size);
    end Return_Operand;
 
    ------------------
@@ -971,8 +985,7 @@ package body Tagatha.Transfers is
                        Size : in     Tagatha_Size)
    is
    begin
-      Item.Modifiers.Have_Size := True;
-      Item.Modifiers.Size     := Size;
+      Item.Size     := Size;
    end Set_Size;
 
    --------------
@@ -1024,14 +1037,15 @@ package body Tagatha.Transfers is
                Src_2  : constant String := Show (Item.Src_2);
                Op     : constant String := Show_Operator (Item.Op);
                Sz     : constant String :=
-                          (case Item.Dst.Modifiers.Size.Category is
+                          (case Item.Dst.Size.Category is
                               when Tagatha_Custom_Size =>
                              ('.',
                               Character'Val
-                                (Item.Dst.Modifiers.Size.Octets
+                                (Item.Dst.Size.Octets
                                  + 48)),
                               when Tagatha_Default_Size => "",
                               when Tagatha_Integer_Size => ".i",
+                              when Tagatha_Floating_Point_Size => ".f",
                               when Tagatha_Address_Size => ".a");
             begin
                if Item.Op = Op_Nop then
@@ -1150,6 +1164,22 @@ package body Tagatha.Transfers is
               Op                => Op_Nop);
    end Simple_Transfer;
 
+   ------------------
+   -- Size_Operand --
+   ------------------
+
+   function Size_Operand
+     (Size : Tagatha_Size)
+      return Transfer_Operand
+   is
+   begin
+      return Transfer_Operand'
+        (Op               => T_No_Operand,
+         Modifiers        => <>,
+         Data             => <>,
+         Size             => Size);
+   end Size_Operand;
+
    -----------
    -- Slice --
    -----------
@@ -1184,9 +1214,13 @@ package body Tagatha.Transfers is
    -- Stack_Operand --
    -------------------
 
-   function Stack_Operand return Transfer_Operand is
+   function Stack_Operand
+     (Data : Tagatha_Data_Type := Untyped_Data;
+      Size : Tagatha_Size := Default_Size)
+      return Transfer_Operand
+   is
    begin
-      return (T_Stack, No_Modification);
+      return (T_Stack, No_Modification, Data, Size);
    end Stack_Operand;
 
    -----------------------
@@ -1194,14 +1228,16 @@ package body Tagatha.Transfers is
    -----------------------
 
    function Temporary_Operand
-     (Temp       : Tagatha.Temporaries.Temporary;
-      Indirect   : Boolean := False)
+     (Temp      : Tagatha.Temporaries.Temporary;
+      Indirect  : Boolean := False;
+      Data      : Tagatha_Data_Type := Untyped_Data;
+      Size      : Tagatha_Size := Default_Size)
       return Transfer_Operand
    is
    begin
       return (T_Temporary,
               (No_Modification with delta Dereferenced => Indirect),
-              Temp);
+              Data, Size, Temp);
    end Temporary_Operand;
 
    ------------------
@@ -1213,7 +1249,7 @@ package body Tagatha.Transfers is
       return Transfer_Operand
    is
    begin
-      return (T_Text, No_Modification,
+      return (T_Text, No_Modification, Untyped_Data, Default_Size,
               Ada.Strings.Unbounded.To_Unbounded_String (Text));
    end Text_Operand;
 
@@ -1221,10 +1257,11 @@ package body Tagatha.Transfers is
    -- To_Temporary --
    ------------------
 
-   function To_Temporary (Src_1, Src_2 : Transfer_Operand;
-                          Op           : Tagatha_Operator;
-                          Dst          : Temporaries.Temporary)
-                          return Transfer
+   function To_Temporary
+     (Src_1, Src_2 : Transfer_Operand;
+      Op           : Tagatha_Operator;
+      Dst          : Temporaries.Temporary)
+      return Transfer
    is
    begin
       return (Trans             => T_Data,
@@ -1241,7 +1278,9 @@ package body Tagatha.Transfers is
               Call              => False,
               Src_1             => Src_1,
               Src_2             => Src_2,
-              Dst               => (T_Temporary, No_Modification, Dst),
+              Dst               =>
+                (T_Temporary, No_Modification,
+                 Src_1.Data, Src_1.Size, Dst),
               To_Address        => False,
               Op                => Op);
    end To_Temporary;
