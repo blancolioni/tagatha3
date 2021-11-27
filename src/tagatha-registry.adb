@@ -670,13 +670,14 @@ package body Tagatha.Registry is
                       (Register.Temps);
       Src_1     : constant Tagatha.Transfers.Transfer_Operand :=
                     Tagatha.Transfers.Temporary_Operand
-                      (T_Address);
+                      (T_Address, Size => Default_Address_Size);
       Src_2     : constant Tagatha.Transfers.Transfer_Operand :=
                     Tagatha.Transfers.Temporary_Operand
-                      (T_Value);
+                      (T_Value, Size => Size);
       Dst       : constant Tagatha.Transfers.Transfer_Operand :=
                     Tagatha.Transfers.Temporary_Operand
-                      (T_Address, Indirect => True);
+                      (T_Address, Indirect => True,
+                       Size                => Size);
    begin
       Record_Pop (Register, Src_1);
       Record_Pop (Register, Src_2);

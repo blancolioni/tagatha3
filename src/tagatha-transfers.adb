@@ -1072,6 +1072,7 @@ package body Tagatha.Transfers is
                       (if Item.Modifiers.Dereferenced then "@" else "");
 
       function Image return String;
+      function Size_Image return String;
 
       -----------
       -- Image --
@@ -1122,8 +1123,25 @@ package body Tagatha.Transfers is
          end case;
       end Image;
 
+      ----------------
+      -- Size_Image --
+      ----------------
+
+      function Size_Image return String is
+         Img : constant String :=
+                 (case Item.Size.Category is
+                     when Tagatha_Default_Size => "",
+                     when Tagatha_Integer_Size => "/i",
+                     when Tagatha_Address_Size => "/a",
+                     when Tagatha_Floating_Point_Size => "/f",
+                     when Tagatha_Custom_Size         =>
+                    ('/', Character'Val (Item.Size.Octets + 48)));
+      begin
+         return Img;
+      end Size_Image;
+
    begin
-      return Dereference & Indirect & Image;
+      return Dereference & Indirect & Image & Size_Image;
    end Show;
 
    -------------------

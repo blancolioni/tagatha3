@@ -165,6 +165,6 @@ private
    function Store
      (Size : Tagatha_Size := Default_Size)
       return Tagatha_Command
-   is (Stack_Command (S_Store));
+   is (Stack_Command (S_Store, Tagatha.Transfers.Size_Operand (Size)));
 
 end Tagatha.Commands;
