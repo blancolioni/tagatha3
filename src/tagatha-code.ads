@@ -12,6 +12,20 @@ package Tagatha.Code is
 
    type Translator is abstract tagged private;
 
+   function Address_Bits (T : Translator) return Natural is abstract;
+   function Default_Size_Bits (T : Translator) return Natural is abstract;
+
+   function Default_Integer_Bits (T : Translator) return Natural
+   is (Translator'Class (T).Default_Size_Bits);
+
+   function Default_Floating_Point_Bits (T : Translator) return Natural
+   is (32);
+
+   function Size_Bits
+     (T    : Translator'Class;
+      Size : Tagatha_Size)
+      return Natural;
+
    procedure File_Preamble (T                : in out Translator;
                             Asm              : in out Assembly'Class;
                             Source_File_Name : in     String)
@@ -86,6 +100,17 @@ package Tagatha.Code is
 
    function Get_Translator (Name : String) return Translator'Class;
 
+   type Standard_Translator (Bits : Natural) is
+     abstract new Translator with private;
+
+   overriding function Address_Bits (T : Standard_Translator) return Natural
+   is (T.Bits);
+
+   overriding function Default_Size_Bits
+     (T : Standard_Translator)
+      return Natural
+   is (T.Bits);
+
 private
 
    type Translator is abstract tagged null record;
@@ -97,5 +122,8 @@ private
       From : Tagatha.Transfers.Transfer_Operand :=
         Tagatha.Transfers.No_Operand)
       return String;
+
+   type Standard_Translator (Bits : Natural) is
+     abstract new Translator with null record;
 
 end Tagatha.Code;

@@ -51,7 +51,7 @@ private
 
    type Register_Info_Array is array (Register) of Register_Info;
 
-   type M6502_Translator is new Translator with
+   type M6502_Translator is new Standard_Translator (16) with
       record
          Reverse_Test  : Boolean := False;
          MSB_First     : Boolean := False;

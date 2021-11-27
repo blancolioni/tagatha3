@@ -32,7 +32,7 @@ package Tagatha.Code.Pdp11 is
 
 private
 
-   type Pdp11_Translator is new Translator with
+   type Pdp11_Translator is new Standard_Translator (16) with
       record
          Reverse_Test : Boolean := False;
       end record;

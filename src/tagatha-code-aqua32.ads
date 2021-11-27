@@ -73,7 +73,7 @@ private
 
    type Category_Array is array (Register_Category) of Category_Record;
 
-   type Aqua32_Translator is new Translator with
+   type Aqua32_Translator is new Standard_Translator (32) with
       record
          Reverse_Test   : Boolean := False;
          Has_Frame      : Boolean := False;

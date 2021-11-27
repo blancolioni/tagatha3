@@ -286,10 +286,12 @@ package body Tagatha.Code.X86_64 is
 
    function Get_Translator return Translator'Class is
       Result : constant X86_64_Translator :=
-        (Current_Unit_Name => Ada.Strings.Unbounded.Null_Unbounded_String,
-         Reverse_Test      => False,
-         Arg_Size          => 0,
-         Frame_Size        => 0);
+                 (Bits              => 64,
+                  Current_Unit_Name =>
+                    Ada.Strings.Unbounded.Null_Unbounded_String,
+                  Reverse_Test      => False,
+                  Arg_Size          => 0,
+                  Frame_Size        => 0);
    begin
       return Translator'Class (Result);
    end Get_Translator;

@@ -32,7 +32,7 @@ package Tagatha.Code.I686 is
 
 private
 
-   type I686_Translator is new Translator with
+   type I686_Translator is new Standard_Translator (32) with
       record
          Reverse_Test : Boolean := False;
       end record;

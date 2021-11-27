@@ -102,6 +102,30 @@ package body Tagatha.Code is
    end Segment;
 
    ---------------
+   -- Size_Bits --
+   ---------------
+
+   function Size_Bits
+     (T    : Translator'Class;
+      Size : Tagatha_Size)
+      return Natural
+   is
+   begin
+      case Size.Category is
+         when Tagatha_Default_Size =>
+            return T.Default_Size_Bits;
+         when Tagatha_Integer_Size =>
+            return T.Default_Integer_Bits;
+         when Tagatha_Address_Size =>
+            return T.Address_Bits;
+         when Tagatha_Floating_Point_Size =>
+            return T.Default_Floating_Point_Bits;
+         when Tagatha_Custom_Size =>
+            return Size.Octets * 8;
+      end case;
+   end Size_Bits;
+
+   ---------------
    -- To_String --
    ---------------
 

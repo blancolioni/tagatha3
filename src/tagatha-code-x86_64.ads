@@ -2,7 +2,7 @@ with Ada.Strings.Unbounded;
 
 package Tagatha.Code.X86_64 is
 
-   type X86_64_Translator is new Translator with private;
+   type X86_64_Translator is new Standard_Translator (64) with private;
 
    overriding
    procedure Start (T      : in out X86_64_Translator;
@@ -47,7 +47,7 @@ package Tagatha.Code.X86_64 is
 
 private
 
-   type X86_64_Translator is new Translator with
+   type X86_64_Translator is new Standard_Translator (64) with
       record
          Current_Unit_Name : Ada.Strings.Unbounded.Unbounded_String;
          Reverse_Test      : Boolean;
