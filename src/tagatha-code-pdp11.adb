@@ -94,16 +94,23 @@ package body Tagatha.Code.Pdp11 is
       elsif Is_Frame_Reservation (Item) then
          if Get_Reservation (Item) /= 0 then
             declare
-               Reservation : constant String :=
-                               Integer'Image (Get_Reservation (Item) * 2);
-               Operation   : String := "add";
+               Word_Count  : constant Integer := Get_Reservation (Item) * 2;
+               Reservation : constant String := Word_Count'Image;
             begin
-               if Get_Reservation (Item) > 0 then
-                  Operation := "sub";
+               if Word_Count = 0 then
+                  null;
+               elsif Word_Count = 2 then
+                  Asm.Put_Line ("    tst -(sp)");
+               elsif Word_Count = -2 then
+                  Asm.Put_Line ("    tst (sp)+");
+               else
+                  Asm.Put_Line
+                    ("    "
+                     & (if Word_Count > 0 then "sub" else "add")
+                     & " #"
+                     & Reservation (2 .. Reservation'Last)
+                     & ", sp");
                end if;
-               Asm.Put_Line ("    " & Operation & " #" &
-                               Reservation (2 .. Reservation'Last) &
-                               ", sp");
             end;
          end if;
       elsif Is_Native (Item) then
@@ -389,9 +396,10 @@ package body Tagatha.Code.Pdp11 is
       Dest     : in     Tagatha.Transfers.Transfer_Operand)
    is
       use Tagatha.Transfers;
-      Octet : constant Boolean := Get_Size (Dest) = Size_8;
+      Octet : constant Boolean :=
+                Size_Bits (Get_Size (Dest)) = 8;
    begin
-      if Get_Size (Dest) in Size_8 | Size_16 then
+      if Size_Bits (Get_Size (Dest)) <= 16 then
          case Op is
             when Op_Negate =>
                Instruction (Asm, "neg", Octet, To_Dst (Dest));
@@ -408,7 +416,8 @@ package body Tagatha.Code.Pdp11 is
          end case;
       else
          raise Constraint_Error with
-           "Pdp11 cannot handle 32 or 64 bit arguments (yet)";
+           "Pdp11 cannot handle" & Size_Bits (Get_Size (Dest))'Image
+           & " bit data (yet)";
       end if;
 
    end Operate;
@@ -547,7 +556,8 @@ package body Tagatha.Code.Pdp11 is
       begin
          if Size_Octets (Get_Size (Dest)) > 2 then
             raise Constraint_Error with
-              "pdp-11 cannot operate on 32 or 64 bit data (yet)";
+              "Pdp11 cannot handle" & Size_Bits (Get_Size (Dest))'Image
+              & " bit data (yet)";
          end if;
          Instruction (Asm, Mnemonic, Octet, Src, Dst);
       end;
