@@ -51,6 +51,9 @@ package Tagatha is
    subtype Two_Argument_Operator is
      Tagatha_Operator range Op_Add .. Op_Change_Size;
 
+   subtype Condition_Operator is
+     Tagatha_Operator range Op_Equal .. Op_Less_Equal;
+
    type Tagatha_Condition is
      (C_Always,
       C_Equal, C_Not_Equal,
