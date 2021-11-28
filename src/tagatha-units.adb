@@ -689,8 +689,9 @@ package body Tagatha.Units is
    -- Operate --
    -------------
 
-   procedure Operate (Unit   : in out Tagatha_Unit;
-                      Op     : Tagatha_Operator)
+   procedure Operate
+     (Unit   : in out Tagatha_Unit;
+      Op     : Tagatha_Operator)
    is
    begin
       Append (Unit, Tagatha.Commands.Operate (Op, False));
