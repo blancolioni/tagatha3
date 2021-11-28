@@ -34,6 +34,7 @@ private
 
    type Pdp11_Translator is new Standard_Translator (16) with
       record
+         Operator     : Tagatha_Operator := Op_Nop;
          Reverse_Test : Boolean := False;
       end record;
 

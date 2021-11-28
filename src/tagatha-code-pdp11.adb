@@ -12,6 +12,10 @@ package body Tagatha.Code.Pdp11 is
                        Negated : Boolean)
                       return String;
 
+   function To_String (Op      : Condition_Operator;
+                       Negated : Boolean)
+                       return String;
+
    procedure Move (Asm       : in out Assembly'Class;
                    Source    : in     Tagatha.Transfers.Transfer_Operand;
                    Dest      : in     Tagatha.Transfers.Transfer_Operand);
@@ -87,9 +91,17 @@ package body Tagatha.Code.Pdp11 is
             Cond : constant Tagatha_Condition := Get_Condition (Item);
             Dest : constant Tagatha_Label     := Get_Destination (Item);
          begin
-            Asm.Put_Line ("    b" & To_String (Cond, T.Reverse_Test) &
-                            " " & Show (Dest, '_'));
+            if T.Operator in Condition_Operator
+              and then Cond in C_Equal | C_Not_Equal
+            then
+               Asm.Put_Line ("    b" & To_String (T.Operator, Cond = C_Equal)
+                             & " " & Show (Dest, '_'));
+            else
+               Asm.Put_Line ("    b" & To_String (Cond, T.Reverse_Test) &
+                               " " & Show (Dest, '_'));
+            end if;
             T.Reverse_Test := False;
+            T.Operator := Op_Nop;
          end;
       elsif Is_Frame_Reservation (Item) then
          if Get_Reservation (Item) /= 0 then
@@ -138,6 +150,18 @@ package body Tagatha.Code.Pdp11 is
          elsif Same_Operand (Get_Source_2 (Item), Get_Destination (Item)) then
             Operate (Asm, Get_Operator (Item), Get_Source_1 (Item),
                      Get_Destination (Item));
+         elsif Get_Operator (Item) in Condition_Operator
+           and then Is_Condition_Operand (Get_Destination (Item))
+         then
+            if Is_Constant_Zero (Get_Source_2 (Item)) then
+               Instruction (Asm, "tst",
+                            Get_Size (Get_Source_1 (Item)) = Size_8,
+                            To_String (Get_Source_1 (Item), True));
+            else
+               Operate (Asm, Op_Compare,
+                        Get_Source_1 (Item), Get_Source_2 (Item));
+            end if;
+            T.Operator := Get_Operator (Item);
          else
             if not Same_Operand
               (Get_Source_1 (Item), Get_Destination (Item))
@@ -737,6 +761,27 @@ package body Tagatha.Code.Pdp11 is
          when C_At_Most =>
             return "le";
       end case;
+   end To_String;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Op      : Condition_Operator;
+                       Negated : Boolean)
+                       return String
+   is
+      Cond : constant Tagatha_Condition :=
+               (case Op is
+                   when Op_Equal         => C_Equal,
+                   when Op_Not_Equal     => C_Not_Equal,
+                   when Op_Greater       => C_Greater,
+                   when Op_Greater_Equal => C_At_Least,
+                   when Op_Less          => C_Less,
+                   when Op_Less_Equal    => C_At_Most);
+
+   begin
+      return To_String (Cond, Negated);
    end To_String;
 
    ---------------
