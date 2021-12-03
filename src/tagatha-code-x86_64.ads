@@ -32,8 +32,10 @@ package Tagatha.Code.X86_64 is
                           Local_Count     : Natural;
                           Temporary_Count : Natural);
 
-   overriding
-   function General_Registers (T : X86_64_Translator) return Positive;
+   overriding function Get_Register_Range
+     (Translator : X86_64_Translator;
+      Data       : Tagatha_Data_Type)
+      return Register_Range_Record;
 
    overriding
    function Word_Size (T : X86_64_Translator) return Tagatha_Size;

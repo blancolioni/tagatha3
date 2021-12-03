@@ -5,6 +5,11 @@ with Tagatha.Temporaries;
 package body Tagatha.Code.Pdp11 is
 
    Result_Register : constant String := "r0";
+   Next_Label      : Positive := 1;
+
+   function Register_Image
+     (Index : Positive)
+      return String;
 
    function To_String (Cond    : Tagatha_Condition;
                        Negated : Boolean)
@@ -178,6 +183,25 @@ package body Tagatha.Code.Pdp11 is
                         Get_Source_1 (Item), Get_Source_2 (Item));
             end if;
             T.Operator := Get_Operator (Item);
+         elsif Get_Operator (Item) in Condition_Operator then
+            declare
+               Op : constant Condition_Operator :=
+                      Get_Operator (Item);
+               Dst       : constant String :=
+                             To_Dst (Get_Destination (Item));
+               Dst_Octet : constant Boolean :=
+                             Size_Bits (Get_Size (Get_Destination (Item)))
+                             <= 8;
+            begin
+               Instruction (Asm, "clr", Dst_Octet, "r0");
+               Operate (Asm, Op, Get_Source_1 (Item), Get_Source_2 (Item));
+               Asm.Put_Line ("    b" & To_String (Op, True)
+                             & Next_Label'Image);
+               Instruction (Asm, "inc", Dst_Octet, "r0");
+               Asm.Put_Line (Next_Label'Image & ":");
+               Instruction (Asm, "mov", Dst_Octet, "r0", Dst);
+               Next_Label := Next_Label + 1;
+            end;
          else
             if not Same_Operand
               (Get_Source_1 (Item), Get_Destination (Item))
@@ -205,21 +229,6 @@ package body Tagatha.Code.Pdp11 is
       Asm.Put_Line ("    rts pc");
    end Finish;
 
-   -----------------------
-   -- General_Registers --
-   -----------------------
-
-   overriding
-   function General_Registers (T : Pdp11_Translator) return Positive is
-      pragma Unreferenced (T);
-   begin
-      --  R1 .. R4
-      --  R0 is used for passing arguments and returning results
-      --  R5 is the frame pointer.
-      --  R6 is the stack, R7 is the PC
-      return 4;
-   end General_Registers;
-
    ------------------
    -- Get_Mnemonic --
    ------------------
@@ -246,8 +255,7 @@ package body Tagatha.Code.Pdp11 is
          when Op_Bit_Set =>
             return "bis";
          when Op_Equal .. Op_Less_Equal =>
-            raise Constraint_Error with
-              "compare operators not implemented on pdp-11";
+            return "cmp";
          when Op_Bit_Slice =>
             raise Constraint_Error with
               "no native slicing on the pdp-11";
@@ -270,6 +278,29 @@ package body Tagatha.Code.Pdp11 is
               "should not be getting a mnemonic for dereference";
       end case;
    end Get_Mnemonic;
+
+   ------------------------
+   -- Get_Register_Range --
+   ------------------------
+
+   overriding function Get_Register_Range
+     (Translator : Pdp11_Translator;
+      Data       : Tagatha_Data_Type)
+      return Register_Range_Record
+   is
+   begin
+      case Data is
+         when Untyped_Data | Address_Data =>
+            --  R1 .. R4
+            --  R0 is used for passing arguments and returning results
+            --  R5 is the frame pointer.
+            --  R6 is the stack, R7 is the PC
+            return (1, 4);
+         when Floating_Point_Data =>
+            --  AC1 .. AC3
+            return (5, 7);
+      end case;
+   end Get_Register_Range;
 
    --------------------
    -- Get_Translator --
@@ -592,14 +623,37 @@ package body Tagatha.Code.Pdp11 is
                          and then Mnemonic /= "add"
                              and then Mnemonic /= "sub";
       begin
-         if Size_Octets (Get_Size (Dest)) > 2 then
-            raise Constraint_Error with
-              "Pdp11 cannot handle" & Size_Bits (Get_Size (Dest))'Image
-              & " bit data (yet)";
+         if Get_Data (Source) = Floating_Point_Data then
+            Asm.Put_Line ("    ldf ac0," & Src);
+            Asm.Put_Line ("    ldf ac1," & Dst);
+            Asm.Put_Line ("    cmpf ac0,ac1");
+         else
+            if Size_Octets (Get_Size (Dest)) > 2 then
+               raise Constraint_Error with
+                 "Pdp11 cannot handle" & Size_Bits (Get_Size (Dest))'Image
+                 & " bit data (yet)";
+            end if;
+
+            Instruction (Asm, Mnemonic, Octet, Src, Dst);
          end if;
-         Instruction (Asm, Mnemonic, Octet, Src, Dst);
       end;
    end Operate;
+
+   --------------------
+   -- Register_Image --
+   --------------------
+
+   function Register_Image
+     (Index : Positive)
+      return String
+   is
+   begin
+      if Index <= 4 then
+         return ('r', Character'Val (Index + 48));
+      else
+         return ('a', 'c', Character'Val (Index + 48 - 3));
+      end if;
+   end Register_Image;
 
    -----------
    -- Start --
@@ -701,12 +755,11 @@ package body Tagatha.Code.Pdp11 is
               & External_Name (Item);
          elsif Is_Temporary (Item) then
             declare
-               R : String :=
-                     Positive'Image
+               R : constant String :=
+                     Register_Image
                        (Tagatha.Temporaries.Get_Register
                           (Get_Temporary (Item)));
             begin
-               R (1) := 'r';
                return (if Dereferenced then '(' & R & ')' else R);
             end;
          else

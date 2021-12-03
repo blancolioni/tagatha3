@@ -442,17 +442,6 @@ package body Tagatha.Code.Aqua32 is
 
    end Finish;
 
-   -----------------------
-   -- General_Registers --
-   -----------------------
-
-   overriding
-   function General_Registers (T : Aqua32_Translator) return Positive is
-      pragma Unreferenced (T);
-   begin
-      return 100;
-   end General_Registers;
-
    ------------------
    -- Get_Mnemonic --
    ------------------
@@ -519,6 +508,21 @@ package body Tagatha.Code.Aqua32 is
               "should not be getting a mnemonic for dereference";
       end case;
    end Get_Mnemonic;
+
+   -----------------------
+   -- General_Registers --
+   -----------------------
+
+   overriding function Get_Register_Range
+     (Translator : Aqua32_Translator;
+      Data       : Tagatha_Data_Type)
+      return Register_Range_Record
+   is
+   begin
+      case Data is
+         when others => return (1, 100);
+      end case;
+   end Get_Register_Range;
 
    ------------------
    -- Get_Reversed --

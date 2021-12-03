@@ -17,7 +17,7 @@ package body Tagatha.Units is
 
    procedure Allocate_Registers
      (Unit : Tagatha_Unit;
-      Register_Count : Positive);
+      Target : Tagatha.Code.Translator'Class);
 
    procedure Write
      (Unit   : in     Tagatha_Unit;
@@ -66,31 +66,56 @@ package body Tagatha.Units is
    ------------------------
 
    procedure Allocate_Registers
-     (Unit : Tagatha_Unit;
-      Register_Count : Positive)
+     (Unit   : Tagatha_Unit;
+      Target : Tagatha.Code.Translator'Class)
    is
-      Allocation   : Transfers.Register_Allocation_Array (1 .. Register_Count);
       Base_Address : Natural := 0;
+      First        : constant Positive := 1;
+      Last         : Natural := 0;
    begin
-      for Sub of Unit.Subprograms loop
-         for Offset in 1 .. Sub.Transfers.Last_Index loop
-            declare
-               Address  : constant Positive := Base_Address + Offset;
-            begin
-               Tagatha.Transfers.Reference_Temporaries
-                 (Sub.Transfers (Offset), Address);
-            end;
-         end loop;
-         Base_Address := Base_Address + Sub.Executable_Segment.Last_Index;
+      for Data in Tagatha_Data_Type loop
+         declare
+            Regs : constant Tagatha.Code.Register_Range_Record :=
+                     Target.Get_Register_Range (Data);
+         begin
+            Last := Natural'Max (Last, Regs.Last);
+         end;
       end loop;
 
-      for Sub of Unit.Subprograms loop
-         Sub.Temporary_Words := 0;
-         for Offset in 1 .. Sub.Transfers.Last_Index loop
-            Tagatha.Transfers.Assign_Registers
-              (Sub.Transfers (Offset), Allocation, Sub.Temporary_Words);
+      declare
+         Allocation : Transfers.Register_Allocation_Array (First .. Last);
+      begin
+         for Data in Tagatha_Data_Type loop
+            declare
+               Regs : constant Tagatha.Code.Register_Range_Record :=
+                        Target.Get_Register_Range (Data);
+            begin
+               for I in Regs.First .. Regs.Last loop
+                  Allocation (I).Allowed_Data_Type (Data) := True;
+               end loop;
+            end;
          end loop;
-      end loop;
+
+         for Sub of Unit.Subprograms loop
+            for Offset in 1 .. Sub.Transfers.Last_Index loop
+               declare
+                  Address  : constant Positive := Base_Address + Offset;
+               begin
+                  Tagatha.Transfers.Reference_Temporaries
+                    (Sub.Transfers (Offset), Address);
+               end;
+            end loop;
+            Base_Address := Base_Address + Sub.Executable_Segment.Last_Index;
+         end loop;
+
+         for Sub of Unit.Subprograms loop
+            Sub.Temporary_Words := 0;
+            for Offset in 1 .. Sub.Transfers.Last_Index loop
+               Tagatha.Transfers.Assign_Registers
+                 (Sub.Transfers (Offset), Allocation, Sub.Temporary_Words);
+            end loop;
+         end loop;
+      end;
    end Allocate_Registers;
 
    ------------
@@ -1345,7 +1370,7 @@ package body Tagatha.Units is
       Target : Tagatha.Code.Translator'Class :=
                  Tagatha.Code.Get_Translator (Target_Name);
    begin
-      Allocate_Registers (Unit, Target.General_Registers);
+      Allocate_Registers (Unit, Target);
       Write (Unit, Target, Directory_Path);
    end Write;
 

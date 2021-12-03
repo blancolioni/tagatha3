@@ -451,21 +451,6 @@ package body Tagatha.Code.M6502 is
       null;
    end Finish_Operand;
 
-   -----------------------
-   -- General_Registers --
-   -----------------------
-
-   overriding function General_Registers
-     (T : M6502_Translator)
-      return Positive
-   is
-      pragma Unreferenced (T);
-   begin
-      --  use zero page for registers
-      --  let's use 4 of them
-      return 4;
-   end General_Registers;
-
    ----------------
    -- Get_Offset --
    ----------------
@@ -486,6 +471,24 @@ package body Tagatha.Code.M6502 is
            with "attempt to get offset from non-stack object";
       end if;
    end Get_Offset;
+
+   ------------------------
+   -- Get_Register_Range --
+   ------------------------
+
+   overriding function Get_Register_Range
+     (Translator : M6502_Translator;
+      Data       : Tagatha_Data_Type)
+      return Register_Range_Record
+   is
+   begin
+      case Data is
+         when Untyped_Data | Address_Data =>
+            return (1, 4);  --  four zero page 'registers'
+         when Floating_Point_Data =>
+            return (5, 6);  --  two zero page floating point 'registers'
+      end case;
+   end Get_Register_Range;
 
    --------------------
    -- Get_Translator --

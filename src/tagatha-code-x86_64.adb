@@ -207,20 +207,6 @@ package body Tagatha.Code.X86_64 is
       Asm.Put_Line ("    .ident ""Tagatha""");
    end Finish;
 
-   -----------------------
-   -- General_Registers --
-   -----------------------
-
-   overriding
-   function General_Registers
-     (T : X86_64_Translator)
-      return Positive
-   is
-      pragma Unreferenced (T);
-   begin
-      return 4;
-   end General_Registers;
-
    ------------------
    -- Get_Mnemonic --
    ------------------
@@ -279,6 +265,24 @@ package body Tagatha.Code.X86_64 is
               "should not be getting a mnemonic for dereference";
       end case;
    end Get_Mnemonic;
+
+   ------------------------
+   -- Get_Register_Range --
+   ------------------------
+
+   overriding function Get_Register_Range
+     (Translator : X86_64_Translator;
+      Data       : Tagatha_Data_Type)
+      return Register_Range_Record
+   is
+   begin
+      case Data is
+         when Untyped_Data | Address_Data =>
+            return (1, 4);
+         when Floating_Point_Data =>
+            return (5, 8);
+      end case;
+   end Get_Register_Range;
 
    --------------------
    -- Get_Translator --

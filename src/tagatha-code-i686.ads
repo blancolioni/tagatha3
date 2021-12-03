@@ -22,8 +22,10 @@ package Tagatha.Code.I686 is
                     Asm   : in out Assembly'Class;
                     Label : in     Tagatha.Labels.Tagatha_Label);
 
-   overriding
-   function General_Registers (T : I686_Translator) return Positive;
+   overriding function Get_Register_Range
+     (Translator : I686_Translator;
+      Data       : Tagatha_Data_Type)
+      return Register_Range_Record;
 
    overriding
    function Word_Size (T : I686_Translator) return Tagatha_Size;

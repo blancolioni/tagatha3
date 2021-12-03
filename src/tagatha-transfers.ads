@@ -114,6 +114,7 @@ package Tagatha.Transfers is
                        Size : in     Tagatha_Size);
 
    function Get_Size (Item : in Transfer_Operand) return Tagatha_Size;
+   function Get_Data (Item : Transfer_Operand) return Tagatha_Data_Type;
 
    function Simple_Transfer (From          : Transfer_Operand;
                              To            : Transfer_Operand;
@@ -246,9 +247,12 @@ package Tagatha.Transfers is
      (Item    : in out Transfer;
       Address : Positive);
 
+   type Allowed_Data_Set is array (Tagatha_Data_Type) of Boolean;
+
    type Register_Allocation is
       record
-         Start, Finish : Natural := 0;
+         Allowed_Data_Type : Allowed_Data_Set := (others => False);
+         Start, Finish     : Natural := 0;
       end record;
 
    type Register_Allocation_Array is

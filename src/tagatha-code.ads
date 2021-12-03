@@ -76,8 +76,17 @@ package Tagatha.Code is
                     Label : in     Tagatha.Labels.Tagatha_Label)
      is abstract;
 
-   function General_Registers (T : Translator) return Positive
-                               is abstract;
+   type Register_Range_Record is
+      record
+         First : Positive;
+         Last  : Natural;
+      end record;
+
+   function Get_Register_Range
+     (T    : Translator;
+      Data : Tagatha_Data_Type)
+      return Register_Range_Record
+      is abstract;
 
    procedure Segment
      (T     : Translator;

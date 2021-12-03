@@ -22,8 +22,10 @@ package Tagatha.Code.Pdp11 is
                     Asm   : in out Assembly'Class;
                     Label : in     Tagatha.Labels.Tagatha_Label);
 
-   overriding
-   function General_Registers (T : Pdp11_Translator) return Positive;
+   overriding function Get_Register_Range
+     (Translator : Pdp11_Translator;
+      Data       : Tagatha_Data_Type)
+      return Register_Range_Record;
 
    overriding
    function Word_Size (T : Pdp11_Translator) return Tagatha_Size;

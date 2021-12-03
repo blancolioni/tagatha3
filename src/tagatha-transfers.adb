@@ -48,10 +48,12 @@ package body Tagatha.Transfers is
                declare
                   R : Register_Allocation renames Rs (I);
                begin
-                  if R.Finish < Temporaries.First_Reference (Op.Temp) then
+                  if R.Allowed_Data_Type (Op.Data)
+                    and then R.Finish < Temporaries.First_Reference (Op.Temp)
+                  then
                      Temporaries.Assign_Register (Op.Temp, I);
-                     R := (Temporaries.First_Reference (Op.Temp),
-                           Temporaries.Last_Reference (Op.Temp));
+                     R.Start := Temporaries.First_Reference (Op.Temp);
+                     R.Finish := Temporaries.Last_Reference (Op.Temp);
                      Assigned := True;
                      Last := Natural'Max (Last, I);
                      exit;
@@ -228,6 +230,15 @@ package body Tagatha.Transfers is
    begin
       return T.Condition;
    end Get_Condition;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data (Item : Transfer_Operand) return Tagatha_Data_Type is
+   begin
+      return Item.Data;
+   end Get_Data;
 
    ---------------------
    -- Get_Destination --

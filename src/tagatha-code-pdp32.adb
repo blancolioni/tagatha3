@@ -262,17 +262,6 @@ package body Tagatha.Code.Pdp32 is
       Asm.Put_Line ("    rts");
    end Finish;
 
-   -----------------------
-   -- General_Registers --
-   -----------------------
-
-   overriding
-   function General_Registers (T : Pdp32_Translator) return Positive is
-      pragma Unreferenced (T);
-   begin
-      return 6;
-   end General_Registers;
-
    ------------------
    -- Get_Mnemonic --
    ------------------
@@ -339,6 +328,24 @@ package body Tagatha.Code.Pdp32 is
               "should not be getting a mnemonic for dereference";
       end case;
    end Get_Mnemonic;
+
+   ------------------------
+   -- Get_Register_Range --
+   ------------------------
+
+   overriding function Get_Register_Range
+     (Translator : Pdp32_Translator;
+      Data       : Tagatha_Data_Type)
+      return Register_Range_Record
+   is
+   begin
+      case Data is
+         when Untyped_Data | Address_Data =>
+            return (1, 6);
+         when Floating_Point_Data =>
+            return (7, 10);
+      end case;
+   end Get_Register_Range;
 
    ------------------
    -- Get_Reversed --
