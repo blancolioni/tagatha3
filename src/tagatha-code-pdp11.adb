@@ -1,5 +1,3 @@
-with Ada.Text_IO;
-
 with Tagatha.Constants;
 with Tagatha.Labels;
 with Tagatha.Temporaries;
@@ -103,6 +101,24 @@ package body Tagatha.Code.Pdp11 is
             T.Reverse_Test := False;
             T.Operator := Op_Nop;
          end;
+      elsif Is_Call (Item) then
+         declare
+            use Tagatha.Labels;
+            Dest : constant Tagatha_Label := Get_Destination (Item);
+            Args : constant Natural := Get_Argument_Count (Item);
+         begin
+            Asm.Put_Line
+              ("    jsr pc," & Tagatha.Labels.Show (Dest, 'L'));
+            if Args = 0 then
+               null;
+            elsif Args = 1 then
+               Asm.Put_Line ("    tst (sp)+");
+            else
+               Asm.Put_Line ("    add #" & Positive'Image (Args * 2)
+                             & ", sp");
+            end if;
+         end;
+
       elsif Is_Frame_Reservation (Item) then
          if Get_Reservation (Item) /= 0 then
             declare
@@ -497,8 +513,6 @@ package body Tagatha.Code.Pdp11 is
             if Quick_Ops (I).Op = Op and then
               Quick_Ops (I).Source_Value = Get_Value (Source)
             then
-               Ada.Text_IO.Put_Line ("quick: " &
-                                       Quick_Ops (I).Mnemonic);
                Instruction (Asm, Quick_Ops (I).Mnemonic, To_Dst (Dest));
                return;
             end if;
