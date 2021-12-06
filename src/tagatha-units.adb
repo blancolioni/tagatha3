@@ -196,8 +196,14 @@ package body Tagatha.Units is
      (Unit        : in out Tagatha_Unit;
       Frame_Words : in     Natural)
    is
+      Current_Size : Natural := 0;
    begin
-      Unit.Current_Sub.Frame_Words := Frame_Words;
+      Unit.Current_Sub.Frames.Append (Frame_Words);
+      for Frame of Unit.Current_Sub.Frames loop
+         Current_Size := Current_Size + Frame;
+      end loop;
+      Unit.Current_Sub.Frame_Words :=
+        Natural'Max (@, Current_Size);
    end Begin_Frame;
 
    -------------------
@@ -489,9 +495,16 @@ package body Tagatha.Units is
      (Unit : in out Tagatha_Unit)
    is null;
 
+   ---------------
+   -- End_Frame --
+   ---------------
+
    procedure End_Frame
      (Unit        : in out Tagatha_Unit)
-   is null;
+   is
+   begin
+      Unit.Current_Sub.Frames.Delete_Last;
+   end End_Frame;
 
    -----------------
    -- End_Routine --

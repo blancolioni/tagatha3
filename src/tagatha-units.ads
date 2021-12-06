@@ -354,15 +354,19 @@ private
    package List_Of_Source_References is
       new Ada.Containers.Doubly_Linked_Lists (Source_Reference);
 
+   package Stack_Of_Frames is
+     new Ada.Containers.Doubly_Linked_Lists (Natural);
+
    type Tagatha_Subprogram_Record is
       record
          Name               : Ada.Strings.Unbounded.Unbounded_String;
          Current_Segment    : Tagatha_Segment        := Executable;
          Next_Address       : Segment_Length_Array   := (others => 1);
          Argument_Words     : Natural;
-         Frame_Words        : Natural;
          Result_Words       : Natural;
          Temporary_Words    : Natural;
+         Frame_Words        : Natural;
+         Frames             : Stack_Of_Frames.List;
          Last_Label         : Tagatha.Labels.Tagatha_Label;
          Global             : Boolean := True;
          Has_Frame          : Boolean := True;
