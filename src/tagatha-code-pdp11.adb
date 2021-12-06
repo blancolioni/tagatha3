@@ -23,6 +23,11 @@ package body Tagatha.Code.Pdp11 is
                    Source    : in     Tagatha.Transfers.Transfer_Operand;
                    Dest      : in     Tagatha.Transfers.Transfer_Operand);
 
+   procedure Move_Address
+     (Asm       : in out Assembly'Class;
+      Source    : in     Tagatha.Transfers.Transfer_Operand;
+      Dest      : in     Tagatha.Transfers.Transfer_Operand);
+
    procedure Instruction (Asm      : in out Assembly'Class;
                           Mnemonic : in     String;
                           Dest     : in     String);
@@ -454,6 +459,8 @@ package body Tagatha.Code.Pdp11 is
               "pdp11: cannot test size"
               & Get_Bits (Transfer_Size)'Image;
          end if;
+      elsif Is_Indirect (Source) then
+         Move_Address (Asm, Source, Dest);
       else
          if Transfer_Size = Size_8 then
             Instruction (Asm, "movb",
@@ -472,6 +479,37 @@ package body Tagatha.Code.Pdp11 is
          end if;
       end if;
    end Move;
+
+   ------------------
+   -- Move_Address --
+   ------------------
+
+   procedure Move_Address
+     (Asm       : in out Assembly'Class;
+      Source    : in     Tagatha.Transfers.Transfer_Operand;
+      Dest      : in     Tagatha.Transfers.Transfer_Operand)
+   is
+      use Tagatha.Transfers;
+   begin
+      if Is_Argument (Source) or else Is_Local (Source) then
+         declare
+            Addr : Tagatha_Integer;
+         begin
+            if Is_Argument (Source) then
+               Addr := Tagatha_Integer (Get_Arg_Offset (Source) * 2 + 2);
+            else
+               Addr := Tagatha_Integer (Get_Local_Offset (Source) * 2);
+            end if;
+            Asm.Put_Line ("    mov r5," & To_Dst (Dest));
+            Asm.Put_Line ("    "
+                          & (if Is_Argument (Source) then "add" else "sub")
+                          & " #" & Addr'Image & "," & To_Dst (Dest));
+         end;
+      else
+         raise Constraint_Error with
+           "can't move address of " & Tagatha.Transfers.Show (Source);
+      end if;
+   end Move_Address;
 
    -------------
    -- Operate --
