@@ -45,6 +45,22 @@ package body Tagatha.Code.Pdp11 is
 
    function Get_Mnemonic (Op : Tagatha_Operator) return String;
 
+   function Get_Bits (Size : Tagatha_Size) return Natural
+   is (case Size.Category is
+          when Tagatha_Default_Size => 16,
+          when Tagatha_Integer_Size => 16,
+          when Tagatha_Address_Size => 16,
+          when Tagatha_Floating_Point_Size => 32,
+          when Tagatha_Custom_Size  => Size.Octets * 8);
+
+   function Get_Octets (Size : Tagatha_Size) return Natural
+   is (case Size.Category is
+          when Tagatha_Default_Size        => 2,
+          when Tagatha_Integer_Size        => 2,
+          when Tagatha_Address_Size        => 2,
+          when Tagatha_Floating_Point_Size => 4,
+          when Tagatha_Custom_Size         => Size.Octets);
+
    function To_String
      (Item : Tagatha.Transfers.Transfer_Operand;
       Source : Boolean)
@@ -190,7 +206,7 @@ package body Tagatha.Code.Pdp11 is
                Dst       : constant String :=
                              To_Dst (Get_Destination (Item));
                Dst_Octet : constant Boolean :=
-                             Size_Bits (Get_Size (Get_Destination (Item)))
+                             Get_Bits (Get_Size (Get_Destination (Item)))
                              <= 8;
             begin
                Instruction (Asm, "clr", Dst_Octet, "r0");
@@ -420,7 +436,7 @@ package body Tagatha.Code.Pdp11 is
             else
                Asm.Put_Line
                  ("    add #"
-                  & Size_Octets (Transfer_Size)'Image
+                  & Get_Octets (Transfer_Size)'Image
                   & ", sp");
             end if;
          end if;
@@ -436,7 +452,7 @@ package body Tagatha.Code.Pdp11 is
          else
             raise Constraint_Error with
               "pdp11: cannot test size"
-              & Size_Bits (Transfer_Size)'Image;
+              & Get_Bits (Transfer_Size)'Image;
          end if;
       else
          if Transfer_Size = Size_8 then
@@ -448,7 +464,7 @@ package body Tagatha.Code.Pdp11 is
          then
             Instruction (Asm, "mov", To_Src (Source), To_Dst (Dest));
          else
-            for I in 0 .. Size_Octets (Transfer_Size) / 2 - 1 loop
+            for I in 0 .. Get_Octets (Transfer_Size) / 2 - 1 loop
                Instruction (Asm, "mov",
                             To_Src (Slice (Source, I, Size_16)),
                             To_Dst (Slice (Dest, I, Size_16)));
@@ -468,9 +484,9 @@ package body Tagatha.Code.Pdp11 is
    is
       use Tagatha.Transfers;
       Octet : constant Boolean :=
-                Size_Bits (Get_Size (Dest)) = 8;
+                Get_Bits (Get_Size (Dest)) = 8;
    begin
-      if Size_Bits (Get_Size (Dest)) <= 16 then
+      if Get_Bits (Get_Size (Dest)) <= 16 then
          case Op is
             when Op_Negate =>
                Instruction (Asm, "neg", Octet, To_Dst (Dest));
@@ -487,7 +503,7 @@ package body Tagatha.Code.Pdp11 is
          end case;
       else
          raise Constraint_Error with
-           "Pdp11 cannot handle" & Size_Bits (Get_Size (Dest))'Image
+           "Pdp11 cannot handle" & Get_Bits (Get_Size (Dest))'Image
            & " bit data (yet)";
       end if;
 
@@ -559,7 +575,7 @@ package body Tagatha.Code.Pdp11 is
                   Instruction (Asm, "mov", "r0", "-(sp)");
                   Instruction (Asm, "mov", Dst, "r0");
                   Instruction (Asm, "clr", Dst);
-                  for I in 1 .. Size_Bits (Get_Size (Dest)) loop
+                  for I in 1 .. Get_Bits (Get_Size (Dest)) loop
                      if Mul mod 2 = 1 then
                         if I > Last then
                            Instruction (Asm, "asl",
@@ -628,12 +644,11 @@ package body Tagatha.Code.Pdp11 is
             Asm.Put_Line ("    ldf ac1," & Dst);
             Asm.Put_Line ("    cmpf ac0,ac1");
          else
-            if Size_Octets (Get_Size (Dest)) > 2 then
+            if Get_Bits (Get_Size (Dest)) > 16 then
                raise Constraint_Error with
-                 "Pdp11 cannot handle" & Size_Bits (Get_Size (Dest))'Image
+                 "Pdp11 cannot handle" & Get_Bits (Get_Size (Dest))'Image
                  & " bit data (yet)";
             end if;
-
             Instruction (Asm, Mnemonic, Octet, Src, Dst);
          end if;
       end;
