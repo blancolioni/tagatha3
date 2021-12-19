@@ -1193,22 +1193,6 @@ package body Tagatha.Transfers is
               Op                => Op_Nop);
    end Simple_Transfer;
 
-   ------------------
-   -- Size_Operand --
-   ------------------
-
-   function Size_Operand
-     (Size : Tagatha_Size)
-      return Transfer_Operand
-   is
-   begin
-      return Transfer_Operand'
-        (Op               => T_No_Operand,
-         Modifiers        => <>,
-         Data             => <>,
-         Size             => Size);
-   end Size_Operand;
-
    -----------
    -- Slice --
    -----------
@@ -1313,5 +1297,22 @@ package body Tagatha.Transfers is
               To_Address        => False,
               Op                => Op);
    end To_Temporary;
+
+   ------------------
+   -- Type_Operand --
+   ------------------
+
+   function Type_Operand
+     (Data : Tagatha_Data_Type;
+      Size : Tagatha_Size)
+      return Transfer_Operand
+   is
+   begin
+      return Transfer_Operand'
+        (Op               => T_No_Operand,
+         Modifiers        => <>,
+         Data             => Data,
+         Size             => Size);
+   end Type_Operand;
 
 end Tagatha.Transfers;

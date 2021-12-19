@@ -101,8 +101,9 @@ package Tagatha.Transfers is
       Size : Tagatha_Size := Default_Size)
       return Transfer_Operand;
 
-   function Size_Operand
-     (Size : Tagatha_Size)
+   function Type_Operand
+     (Data : Tagatha_Data_Type;
+      Size : Tagatha_Size)
       return Transfer_Operand;
 
    function Condition_Operand return Transfer_Operand;

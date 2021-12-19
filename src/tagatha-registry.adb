@@ -336,7 +336,8 @@ package body Tagatha.Registry is
                           Size     : in     Tagatha_Size)
    is
    begin
-      Record_Pop (Register, Tagatha.Transfers.Size_Operand (Size));
+      Record_Pop (Register,
+                  Tagatha.Transfers.Type_Operand (Untyped_Data, Size));
    end Record_Drop;
 
    ----------------------
