@@ -1093,7 +1093,12 @@ package body Tagatha.Transfers is
       begin
          case Item.Op is
          when T_No_Operand =>
-            return "<>";
+            if Item.Size /= Default_Size or else Item.Data /= Untyped_Data then
+               return "<" & Size_Image (Item.Size)
+                 & "." & Data_Image (Item.Data) & ">";
+            else
+               return "<>";
+            end if;
          when T_Stack =>
             return "<stack>";
          when T_Condition =>
