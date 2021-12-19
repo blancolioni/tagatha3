@@ -96,6 +96,11 @@ package Tagatha.Transfers is
       Size      : Tagatha_Size := Default_Size)
       return Transfer_Operand;
 
+   function Temporary_Operand
+     (Temp      : Tagatha.Temporaries.Temporary;
+      Based_On  : Transfer_Operand)
+      return Transfer_Operand;
+
    function Stack_Operand
      (Data : Tagatha_Data_Type := Untyped_Data;
       Size : Tagatha_Size := Default_Size)

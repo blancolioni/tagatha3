@@ -1253,6 +1253,20 @@ package body Tagatha.Transfers is
               Data, Size, Temp);
    end Temporary_Operand;
 
+   -----------------------
+   -- Temporary_Operand --
+   -----------------------
+
+   function Temporary_Operand
+     (Temp      : Tagatha.Temporaries.Temporary;
+      Based_On  : Transfer_Operand)
+      return Transfer_Operand
+   is
+   begin
+      return Temporary_Operand (Temp, Based_On.Modifiers.Indirect,
+                                Based_On.Data, Based_On.Size);
+   end Temporary_Operand;
+
    ------------------
    -- Text_Operand --
    ------------------
