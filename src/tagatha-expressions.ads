@@ -24,6 +24,12 @@ package Tagatha.Expressions is
       Left, Right : Expression)
      return Expression;
 
+   function New_Dereference_Expression
+     (Arg  : Expression;
+      Data : Tagatha_Data_Type;
+      Size : Tagatha_Size)
+      return Expression;
+
    function Get_Transfers
      (Temps   : Tagatha.Temporaries.Temporary_Source;
       Address : Expression;

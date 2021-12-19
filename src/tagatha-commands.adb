@@ -38,6 +38,23 @@ package body Tagatha.Commands is
       end case;
    end Copy_Item;
 
+   -----------------
+   -- Dereference --
+   -----------------
+
+   function Dereference
+     (Data : Tagatha_Data_Type := Untyped_Data;
+      Size : Tagatha_Size      := Default_Size)
+      return Tagatha_Command
+   is
+   begin
+      return new Tagatha_Command_Record'
+        (Instruction       => T_Dereference,
+         Data              => Data,
+         Size              => Size,
+         others            => <>);
+   end Dereference;
+
    ----------
    -- Drop --
    ----------
@@ -203,9 +220,12 @@ package body Tagatha.Commands is
    is
    begin
       return new Tagatha_Command_Record'
-        (T_Operate,
-         Tagatha.Labels.No_Label, 0, 0,
-         Neg, Op);
+        (Instruction       => T_Operate,
+         Label             => Tagatha.Labels.No_Label,
+         Line              => 0,
+         Column            => 0,
+         Negate            => Neg,
+         Operator          => Op);
    end Operate;
 
    ---------
@@ -310,7 +330,11 @@ package body Tagatha.Commands is
                               when S_Swap      =>
                                  "swap"),
                            when T_Operate =>
-                              Command.Operator'Img,
+                             Command.Operator'Image,
+                           when T_Dereference =>
+                             "@"
+                        & Data_Image (Command.Data)
+                        & "." & Size_Image (Command.Size),
                            when T_Call    =>
                           (if Command.Indirect
                            then "call (indirect)"

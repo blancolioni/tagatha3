@@ -328,6 +328,24 @@ package body Tagatha.Registry is
 
    end Record_Call;
 
+   ------------------------
+   -- Record_Dereference --
+   ------------------------
+
+   procedure Record_Dereference
+     (Register : in out Tagatha_Registry;
+      Data     : Tagatha_Data_Type;
+      Size     : Tagatha_Size)
+   is
+      use Tagatha.Expressions;
+      Left : constant Expression_Record := Pop (Register);
+      Expr : constant Expression :=
+               New_Dereference_Expression (Left.Expression, Data, Size);
+   begin
+      Register.Push
+        (Expr, Left.Label);
+   end Record_Dereference;
+
    -----------------
    -- Record_Drop --
    -----------------
@@ -496,8 +514,9 @@ package body Tagatha.Registry is
    -- Record_Operation --
    ----------------------
 
-   procedure Record_Operation (Register : in out Tagatha_Registry;
-                               Operator : in     Tagatha_Operator)
+   procedure Record_Operation
+     (Register : in out Tagatha_Registry;
+      Operator : in     Tagatha_Operator)
    is
       use Tagatha.Expressions;
    begin

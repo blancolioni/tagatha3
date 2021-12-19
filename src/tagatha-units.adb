@@ -427,9 +427,13 @@ package body Tagatha.Units is
    -- Dereference --
    -----------------
 
-   procedure Dereference (Unit : in out Tagatha_Unit) is
+   procedure Dereference
+     (Unit : in out Tagatha_Unit;
+      Data : Tagatha_Data_Type := Untyped_Data;
+      Size : Tagatha_Size  := Default_Integer_Size) is
    begin
-      Operate (Unit, Op_Dereference);
+      Append (Unit,
+              Tagatha.Commands.Dereference (Data, Size));
    end Dereference;
 
    ---------------

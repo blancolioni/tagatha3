@@ -43,6 +43,18 @@ package body Tagatha.Expressions is
                if E.Op in Zero_Argument_Operator then
                   raise Constraint_Error with
                     "attempt to get transfers for a zero argument operator";
+               elsif E.Op = Op_Dereference then
+                  declare
+                     Left_Op     : constant Transfer_Operand :=
+                                     Subexpression_Transfer_Op (E.Left);
+                     Left_Exprs  : constant Array_Of_Transfers :=
+                                     Subexpression_Transfers (E.Left, Left_Op);
+                  begin
+                     return Left_Exprs &
+                       Operation_Transfer (Left_Op, E.Right.Term,
+                                           E.Op, Dst);
+                  end;
+
                elsif E.Op in One_Argument_Operator then
                   declare
                      Left_Op     : constant Transfer_Operand :=
@@ -89,7 +101,11 @@ package body Tagatha.Expressions is
                   T : constant Tagatha.Temporaries.Temporary :=
                     Tagatha.Temporaries.Next_Temporary (Temps);
                begin
-                  return Temporary_Operand (T);
+                  if Sub.Op = Op_Dereference then
+                     return Temporary_Operand (T, Sub.Right.Term);
+                  else
+                     return Temporary_Operand (T);
+                  end if;
                end;
          end case;
       end Subexpression_Transfer_Op;
@@ -177,6 +193,26 @@ package body Tagatha.Expressions is
             end if;
       end case;
    end Image;
+
+   --------------------------------
+   -- New_Dereference_Expression --
+   --------------------------------
+
+   function New_Dereference_Expression
+     (Arg  : Expression;
+      Data : Tagatha_Data_Type;
+      Size : Tagatha_Size)
+      return Expression
+   is
+   begin
+      return new Expression_Record'
+        (Class => Structured,
+         Op    => Op_Dereference,
+         Left  => Arg,
+         Right =>
+           New_Simple_Expression
+             (Tagatha.Transfers.Type_Operand (Data, Size)));
+   end New_Dereference_Expression;
 
    -----------------------------
    -- New_Operator_Expression --

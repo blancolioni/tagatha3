@@ -37,6 +37,8 @@ package body Tagatha.Commands.Registry is
             end case;
          when T_Operate =>
             Register.Record_Operation (Command.Operator);
+         when T_Dereference =>
+            Register.Record_Dereference (Command.Data, Command.Size);
          when T_Call =>
             Register.Record_Call (Command.Subroutine, Command.Arguments);
          when T_Loop =>

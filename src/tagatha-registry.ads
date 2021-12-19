@@ -39,8 +39,14 @@ package Tagatha.Registry is
      (Register : in out Tagatha_Registry;
       Size     : in     Tagatha_Size);
 
-   procedure Record_Operation (Register : in out Tagatha_Registry;
-                               Operator : in     Tagatha_Operator);
+   procedure Record_Operation
+     (Register : in out Tagatha_Registry;
+      Operator : in     Tagatha_Operator);
+
+   procedure Record_Dereference
+     (Register : in out Tagatha_Registry;
+      Data     : Tagatha_Data_Type;
+      Size     : Tagatha_Size);
 
    procedure Record_Native_Operation
      (Register          : in out Tagatha_Registry;

@@ -47,6 +47,11 @@ package Tagatha.Commands is
                      Neg  : Boolean           := False)
                      return Tagatha_Command;
 
+   function Dereference
+     (Data : Tagatha_Data_Type := Untyped_Data;
+      Size : Tagatha_Size      := Default_Size)
+      return Tagatha_Command;
+
    function Call (Target         : Tagatha.Labels.Tagatha_Label;
                   Argument_Count : Natural)
                   return Tagatha_Command
@@ -95,6 +100,8 @@ private
 
       T_Operate,   --  operate on stack elements (e.g. add/subtract)
 
+      T_Dereference,
+
       T_Call,      --  call another unit
 
       T_Loop,      --  bounded loop
@@ -107,16 +114,20 @@ private
    type Tagatha_Command_Record
      (Instruction : Tagatha_Instruction := T_Stack) is
       record
-         Label  : Tagatha.Labels.Tagatha_Label;
+         Label  : Tagatha.Labels.Tagatha_Label :=
+                    Tagatha.Labels.No_Label;
          Line   : Natural := 0;
          Column : Natural := 0;
-         Negate : Boolean;
+         Negate : Boolean := False;
          case Instruction is
             when T_Stack =>
                Stack_Op          : Stack_Operation;
                Operand           : Tagatha.Transfers.Transfer_Operand;
             when T_Operate =>
                Operator          : Tagatha_Operator;
+            when T_Dereference =>
+               Data              : Tagatha_Data_Type;
+               Size              : Tagatha_Size;
             when T_Call =>
                Subroutine        : Tagatha.Labels.Tagatha_Label;
                Indirect          : Boolean;

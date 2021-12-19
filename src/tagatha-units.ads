@@ -200,7 +200,10 @@ package Tagatha.Units is
       Data       : Tagatha_Data_Type := Untyped_Data;
       Size       : in     Tagatha_Size  := Default_Integer_Size);
 
-   procedure Dereference (Unit : in out Tagatha_Unit);
+   procedure Dereference
+     (Unit : in out Tagatha_Unit;
+      Data : Tagatha_Data_Type := Untyped_Data;
+      Size : in     Tagatha_Size  := Default_Integer_Size);
 
    procedure Store (Unit : in out Tagatha_Unit;
                     Size : Tagatha_Size := Default_Size);
