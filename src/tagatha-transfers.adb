@@ -1023,7 +1023,21 @@ package body Tagatha.Transfers is
                       & Trim (Item.Line'Img, Left)
                       & ","
                       & Trim (Item.Column'Img, Left)
-                      & "]";
+                    & "]";
+
+      function Custom_Size_Image (Size : Tagatha_Size) return String;
+
+      -----------------------
+      -- Custom_Size_Image --
+      -----------------------
+
+      function Custom_Size_Image (Size : Tagatha_Size) return String is
+         Cust : String := Size.Octets'Image;
+      begin
+         Cust (Cust'First) := '.';
+         return Cust;
+      end Custom_Size_Image;
+
    begin
       case Item.Trans is
          when T_Change_Stack =>
@@ -1050,10 +1064,7 @@ package body Tagatha.Transfers is
                Sz     : constant String :=
                           (case Item.Dst.Size.Category is
                               when Tagatha_Custom_Size =>
-                             ('.',
-                              Character'Val
-                                (Item.Dst.Size.Octets
-                                 + 48)),
+                                Custom_Size_Image (Item.Dst.Size),
                               when Tagatha_Default_Size => "",
                               when Tagatha_Integer_Size => ".i",
                               when Tagatha_Floating_Point_Size => ".f",
@@ -1144,6 +1155,20 @@ package body Tagatha.Transfers is
       ----------------
 
       function Size_Image return String is
+
+         function Custom_Size_Image return String;
+
+         -----------------------
+         -- Custom_Size_Image --
+         -----------------------
+
+         function Custom_Size_Image return String is
+            Cust : String := Item.Size.Octets'Image;
+         begin
+            Cust (Cust'First) := '/';
+            return Cust;
+         end Custom_Size_Image;
+
          Img : constant String :=
                  (case Item.Size.Category is
                      when Tagatha_Default_Size => "",
@@ -1151,7 +1176,7 @@ package body Tagatha.Transfers is
                      when Tagatha_Address_Size => "/a",
                      when Tagatha_Floating_Point_Size => "/f",
                      when Tagatha_Custom_Size         =>
-                    ('/', Character'Val (Item.Size.Octets + 48)));
+                       Custom_Size_Image);
       begin
          return Img;
       end Size_Image;
