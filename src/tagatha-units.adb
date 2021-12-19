@@ -1156,7 +1156,6 @@ package body Tagatha.Units is
       Column : Positive)
    is
    begin
-      pragma Assert (Line >= Unit.Current_Line);
       Unit.Current_Line := Line;
       Unit.Current_Column := Column;
    end Source_Location;
