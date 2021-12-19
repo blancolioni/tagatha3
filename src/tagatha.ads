@@ -18,8 +18,12 @@ package Tagatha is
    function Size_Octets (Size : Tagatha_Size) return Natural;
    function Bits_To_Size (Bits : Natural) return Tagatha_Size;
 
+   function Size_Image (Size : Tagatha_Size) return String;
+
    type Tagatha_Data_Type is
      (Untyped_Data, Address_Data, Floating_Point_Data);
+
+   function Data_Image (Data : Tagatha_Data_Type) return String;
 
    type Local_Offset is new Positive;
    type Argument_Offset is new Positive;
